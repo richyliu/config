@@ -38,12 +38,14 @@ autocmd BufWritePre *.js,*.jsx,*.mjs,*.ts,*.tsx,*.css,*.less,*.scss,*.json,*.gra
 let g:syntastic_typescript_checkers = ['tslint']
 
 let g:tsuquyomi_completion_detail = 1
+
+let g:monokai_term_italic = 1
+let g:monokai_gui_italic = 0
 " }}}
 
 
 " Settings {{{
 set expandtab
-set tabstop=2
 set softtabstop=2
 set shiftwidth=2
 set autoindent
@@ -57,10 +59,11 @@ set showcmd
 set number
 set hlsearch
 
-set timeoutlen=500
+let &timeoutlen = 500
 set ttimeoutlen=0
 set scrolloff=5
 set smartcase
+set ignorecase
 set wildmenu
 set hidden
 
@@ -81,6 +84,12 @@ noremap <leader>r :!!<cr>
 nnoremap <leader>ev :vsplit $MYVIMRC<cr>
 " Save and close file
 noremap <leader>z :call CloseFile()<cr>
+" Split window
+nnoremap <leader>wl :leftabove vsplit<cr>
+nnoremap <leader>wu :leftabove split<cr>
+nnoremap <leader>wr :rightbelow vsplit<cr>
+nnoremap <leader>wd :rightbelow split<cr>
+nnoremap <leader>wo :only<cr>
 
 " No need for shift to type commands
 nnoremap ; :
@@ -100,6 +109,7 @@ inoremap <c-d> <c-o>dd
 
 " Go to previous command with Ctrl-K
 cnoremap <c-k> <up>
+nnoremap <c-k> :<up>
 
 
 " Close and save: buffer, if >1 buffer, or file
@@ -146,7 +156,7 @@ augroup END
 
 augroup filetype_html
   autocmd!
-  autocmd Filetype html,php innoremap <buffer> <localleader>/ I<!--<c-o>A--><esc>
+  autocmd Filetype html,php inoremap <buffer> <localleader>/ I<!--<c-o>A--><esc>
 augroup END
 
  
