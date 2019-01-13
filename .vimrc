@@ -9,19 +9,31 @@ Plugin 'VundleVim/Vundle.vim'
 
 Plugin 'vim-airline/vim-airline'
 Plugin 'kshenoy/vim-signature'
-Plugin 'ervandew/supertab'
-Plugin 'prettier/vim-prettier'
-Plugin 'jiangmiao/auto-pairs'
+Plugin 'scrooloose/nerdtree'
 Plugin 'airblade/vim-gitgutter'
+Plugin 'tpope/vim-commentary'
+" Plugin 'mhinz/vim-startify'
+" Plugin 'thaerkh/vim-workspace'
+
+Plugin 'jiangmiao/auto-pairs'
 Plugin 'tpope/vim-surround'
+Plugin 'prettier/vim-prettier'
+Plugin 'valloric/youcompleteme'
+" Plugin 'vim-syntastic/syntastic'
+Plugin 'ctrlpvim/ctrlp.vim'
+" Plugin 'alvan/vim-closetag'
+
+Plugin 'sirver/ultisnips'
+Plugin 'honza/vim-snippets'
 
 Plugin 'posva/vim-vue'
 Plugin 'mxw/vim-jsx'
 Plugin 'plasticboy/vim-markdown'
+Plugin 'valloric/matchtagalways'
 
 Plugin 'quramy/tsuquyomi'
 Plugin 'leafgarland/typescript-vim'
-Plugin 'vim-syntastic/syntastic'
+Plugin 'peitalin/vim-jsx-typescript'
 
 " All of your Plugins must be added before the following line
 call vundle#end()            " required
@@ -34,42 +46,69 @@ let g:airline#extensions#tabline#enabled = 1
 
 let g:prettier#autoformat = 0
 let g:prettier#config#parser = 'typescript'
-autocmd BufWritePre *.js,*.jsx,*.mjs,*.ts,*.tsx,*.css,*.less,*.scss,*.json,*.graphql,*.md,*.vue,*.yaml,*.html PrettierAsync
-
-let g:syntastic_typescript_checkers = ['tslint']
-
-let g:tsuquyomi_completion_detail = 1
+autocmd BufWritePre *.ts,*.tsx PrettierAsync
 
 let g:monokai_term_italic = 1
 let g:monokai_gui_italic = 0
+
+" Expand snips on ctrl-space (sends ^J)
+let g:UltiSnipsExpandTrigger="<c-j>"
+let g:UltiSnipsJumpForwardTrigger="<c-t>"
+let g:UltiSnipsJumpBackwardTrigger="<c-b>"
+
+augroup tsu_custom_opt
+  autocmd!
+  autocmd FileType typescript nnoremap <buffer> <leader>t : <c-u>echo tsuquyomi#hint()<cr>
+augroup END
+
+let g:ctrlp_user_command = ['.git/', 'git --git-dir=%s/.git ls-files -oc --exclude-standard']
+let g:ctrlp_by_filename = 1
+
+" make sure relative line numbers are used for NERD tree
+autocmd FileType nerdtree setlocal relativenumber
+
+augroup prettier_ft
+  au!
+  autocmd BufNewFile,BufRead .prettierrc set filetype=json
+augroup END
+
+let g:closetag_filenames = "*.html,*.php,*.tsx"
+
+" Enabled filetypes for html tag highlighting
+let g:mta_filetypes = { 'html' : 1, 'php' : 1, 'typescript' : 1, 'javascript' : 1 }
+
+" Close preview window for YCMD after leave insert mode
+let g:ycm_autoclose_preview_window_after_completion = 1
 " }}}
 
 
 " Settings {{{
-set expandtab
-set softtabstop=2
-set shiftwidth=2
 set autoindent
 set backspace=indent,eol,start
-set relativenumber
-set title
-
-set ruler
-syntax on
-set showcmd
-set number
-set hlsearch
-set incsearch
-
-let &timeoutlen = 500
-set ttimeoutlen=0
-set scrolloff=5
-set smartcase
-set ignorecase
-set wildmenu
-set hidden
-set textwidth=0
 set clipboard=unnamed
+set cursorline
+set expandtab
+set hidden
+set hlsearch
+set ignorecase
+set incsearch
+set mouse=a
+set number
+set relativenumber
+set ruler
+set scrolloff=5
+set shiftwidth=2
+set showcmd
+set smartcase
+set softtabstop=2
+set textwidth=0
+set timeoutlen=500
+set title
+set ttimeoutlen=0
+set wildmenu
+
+syntax on
+filetype plugin on
 
 colorscheme monokai
 " }}}
@@ -78,28 +117,41 @@ colorscheme monokai
 " Keymaps and Abbrev {{{
 let mapleader = ","
 let maplocalleader = "L"
-" Save and prettify file
-noremap <leader>s :write<cr>
+" Save all file
+noremap <leader>s :wall<cr>
 " Source current file
 noremap <leader>so :source %<cr>
 " Run the previous command
 noremap <leader>r :!!<cr>
 " Open vimrc file on a adjacent window
-nnoremap <leader>ev :vsplit $MYVIMRC<cr>
+nnoremap <leader>ev :e $MYVIMRC<cr>
+" Open typescript snippets
+nnoremap <leader>es :vsplit $HOME/.vim/UltiSnips/typescript.snippets<cr>
+" Format code
+nnoremap <leader>f gg=G
 " Save and close file
 noremap <leader>z :call CloseFile()<cr>
 noremap <leader>za :xa<cr>
-" Split window
-nnoremap <leader>wl :leftabove vsplit<cr>
-nnoremap <leader>wu :leftabove split<cr>
-nnoremap <leader>wr :rightbelow vsplit<cr>
-nnoremap <leader>wd :rightbelow split<cr>
+" Navigate split window
+nnoremap <leader>wl <c-w>l
+nnoremap <leader>wh <c-w>h
+nnoremap <leader>wj <c-w>j
+nnoremap <leader>wk <c-w>k
 " Nagivate windows
 nnoremap <leader>wo :only<cr>
 nnoremap <leader>ww <c-w>w
 nnoremap <leader>wq <c-w>q
 " Stop highlighting search
 nnoremap <leader>nh :nohlsearch<cr>
+" Open nerdtree
+nnoremap <leader>n :NERDTreeToggle<cr>
+" Manage sessions
+let g:sessions_dir = '~/.vim/vim-sessions/'
+exec 'nnoremap <Leader>ss :mksession! ' . g:sessions_dir . '<c-d>'
+exec 'nnoremap <Leader>sl :source ' . g:sessions_dir. '<c-d>'
+" Delete and change without modifying current register
+nnoremap <leader>d "_d
+nnoremap <leader>c "_c
 
 " No need for shift to type commands
 nnoremap ; :
@@ -120,19 +172,21 @@ inoremap <c-l> <del>
 " Delete line in insert mode
 inoremap <c-d> <c-o>dd
 " Go to next line on ctrl-enter (^J code)
-inoremap <c-j> <c-o>o
+"inoremap <c-j> <esc>o
 
 " Go to previous command with Ctrl-K
 cnoremap <c-k> <up>
 nnoremap <c-k> :<up>
-cnoremap <c-s-h> <del>
+" Delete with alt-h
+cnoremap ˙ <del>
 
 
 " Close and save: buffer, if >1 buffer, or file
 function CloseFile()
   update
   if len(getbufinfo({'buflisted':1})) - 1
-    bdelete
+    " Ensures window stays
+    bprevious | bdelete #
   else
     execute "normal! ZZ"
   endif
@@ -152,48 +206,16 @@ onoremap an" :<c-u>normal! f"va"<cr>
 
 
 " Autocommands and abbreviations {{{
-augroup prettier_ft
-  au!
-  autocmd BufNewFile,BufRead .prettierrc set filetype=json
-augroup END
 
-
-
-" Abbreviations/keymaps
-
-augroup filetype_js
-  autocmd!
-  autocmd Filetype typescript,javascript inoremap <buffer> <tab> <c-x><c-o>
-  autocmd Filetype typescript,javascript nnoremap <buffer> <localleader>c I//<esc>
-
-  autocmd Filetype typescript,javascript iabbrev <buffer> if if ()<left>
-  autocmd Filetype typescript,javascript iabbrev <buffer> ret return;<left>
-
-  autocmd Filetype typescript,javascript " Untrain fingers
-  autocmd Filetype typescript,javascript iabbrev <buffer> return NOPE
-augroup END
-
-
-augroup filetype_html
-  autocmd!
-  autocmd Filetype html,php inoremap <buffer> <localleader>c I<!--<c-o>A--><esc>
-augroup END
-
- 
+" Abbreviations/keymaps {{{
 augroup filetype_vim
   autocmd!
   autocmd Filetype vim nnoremap <buffer> <localleader>c I"<esc>
   autocmd Filetype vim iabbrev <buffer> iab iabbrev <buffer>
   autocmd Filetype vim setlocal foldmethod=marker
 augroup END
+" }}}
 
- 
-augroup filetype_java
-  autocmd!
-  autocmd Filetype java nnoremap <buffer> <localleader>c I//<esc>
-
-  autocmd Filetype java iabbrev <buffer> psvm public static void main(String[] args) {<cr>}<up>
-augroup END
 " }}}
 
 
@@ -224,13 +246,25 @@ endfunction
 " Options togglers {{{
 
 " Fold column {{{
-nnoremap <leader>f :call <SID>FoldColumnToggle()<cr>
+" nnoremap <leader>f :call <SID>FoldColumnToggle()<cr>
 
-function! s:FoldColumnToggle()
-  if &foldcolumn
-    setlocal foldcolumn=0
+" function! s:FoldColumnToggle()
+"   if &foldcolumn
+"     setlocal foldcolumn=0
+"   else
+"     setlocal foldcolumn=4
+"   endif
+" endfunction
+" }}}
+
+" Relative line number {{{
+nnoremap <leader>l :call <SID>RelativeNumberToggle()<cr>
+
+function! s:RelativeNumberToggle()
+  if &relativenumber
+    setlocal norelativenumber
   else
-    setlocal foldcolumn=4
+    setlocal relativenumber
   endif
 endfunction
 " }}}
