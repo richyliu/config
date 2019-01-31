@@ -35,6 +35,8 @@ Plugin 'quramy/tsuquyomi'
 Plugin 'leafgarland/typescript-vim'
 Plugin 'peitalin/vim-jsx-typescript'
 
+Plugin 'elmcast/elm-vim'
+
 " All of your Plugins must be added before the following line
 call vundle#end()            " required
 filetype plugin indent on    " required
