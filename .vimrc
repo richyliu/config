@@ -14,6 +14,7 @@ Plugin 'airblade/vim-gitgutter'
 Plugin 'tpope/vim-commentary'
 " Plugin 'mhinz/vim-startify'
 " Plugin 'thaerkh/vim-workspace'
+Plugin 'crusoexia/vim-monokai'
 
 Plugin 'jiangmiao/auto-pairs'
 Plugin 'tpope/vim-surround'
@@ -35,6 +36,8 @@ Plugin 'quramy/tsuquyomi'
 Plugin 'leafgarland/typescript-vim'
 Plugin 'peitalin/vim-jsx-typescript'
 
+Plugin 'Shougo/vimproc.vim'
+Plugin 'idanarye/vim-vebugger'
 Plugin 'elmcast/elm-vim'
 
 " All of your Plugins must be added before the following line
@@ -48,7 +51,7 @@ let g:airline#extensions#tabline#enabled = 1
 
 let g:prettier#autoformat = 0
 let g:prettier#config#parser = 'typescript'
-autocmd BufWritePre *.ts,*.tsx PrettierAsync
+" autocmd BufWritePre *.ts,*.tsx PrettierAsync
 
 let g:monokai_term_italic = 1
 let g:monokai_gui_italic = 0
@@ -81,12 +84,14 @@ let g:mta_filetypes = { 'html' : 1, 'php' : 1, 'typescript' : 1, 'javascript' : 
 
 " Close preview window for YCMD after leave insert mode
 let g:ycm_autoclose_preview_window_after_completion = 1
+let g:ycm_confirm_extra_conf = 0
 " }}}
 
 
 " Settings {{{
 set autoindent
 set backspace=indent,eol,start
+set backupcopy=yes
 set clipboard=unnamed
 set cursorline
 set expandtab
@@ -103,6 +108,7 @@ set shiftwidth=2
 set showcmd
 set smartcase
 set softtabstop=2
+set tabstop=4
 set textwidth=0
 set timeoutlen=500
 set title
