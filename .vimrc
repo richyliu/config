@@ -38,6 +38,7 @@ Plugin 'peitalin/vim-jsx-typescript'
 
 Plugin 'Shougo/vimproc.vim'
 Plugin 'idanarye/vim-vebugger'
+Plugin 'elmcast/elm-vim'
 
 " All of your Plugins must be added before the following line
 call vundle#end()            " required
