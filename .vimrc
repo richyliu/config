@@ -218,6 +218,14 @@ augroup filetype_vim
 augroup END
 " }}}
 
+augroup filetype_elm
+  autocmd!
+  autocmd Filetype elm setlocal tabstop=4
+  autocmd Filetype elm setlocal softtabstop=4
+  autocmd Filetype elm setlocal shiftwidth=4
+  autocmd Filetype elm setlocal expandtab
+augroup END
+
 " }}}
 
 
