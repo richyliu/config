@@ -8,11 +8,13 @@ call vundle#begin()
 Plugin 'VundleVim/Vundle.vim'
 
 Plugin 'vim-airline/vim-airline'
+Plugin 'vim-airline/vim-airline-themes'
 Plugin 'kshenoy/vim-signature'
 Plugin 'scrooloose/nerdtree'
 Plugin 'airblade/vim-gitgutter'
 Plugin 'tpope/vim-commentary'
-Plugin 'crusoexia/vim-monokai'
+Plugin 'NLKNguyen/papercolor-theme'
+
 
 Plugin 'jiangmiao/auto-pairs'
 Plugin 'tpope/vim-surround'
@@ -48,9 +50,6 @@ let g:airline#extensions#tabline#enabled = 1
 let g:prettier#autoformat = 0
 let g:prettier#config#parser = 'typescript'
 " autocmd BufWritePre *.ts,*.tsx PrettierAsync
-
-let g:monokai_term_italic = 1
-let g:monokai_gui_italic = 0
 
 " Expand snips on ctrl-space (sends ^J)
 let g:UltiSnipsExpandTrigger="<c-j>"
@@ -117,7 +116,7 @@ set wildmenu
 syntax on
 filetype plugin on
 
-colorscheme monokai
+colorscheme PaperColor
 " }}}
 
 
@@ -159,6 +158,8 @@ exec 'nnoremap <Leader>sl :source ' . g:sessions_dir. '<c-d>'
 " Delete and change without modifying current register
 nnoremap <leader>d "_d
 nnoremap <leader>c "_c
+" Toggle between dark and light background
+nnoremap <leader>b :let &background = ( &background == "dark" ? "light" : "dark" )<CR>
 
 " No need for shift to type commands
 nnoremap ; :
