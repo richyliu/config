@@ -12,17 +12,13 @@ Plugin 'kshenoy/vim-signature'
 Plugin 'scrooloose/nerdtree'
 Plugin 'airblade/vim-gitgutter'
 Plugin 'tpope/vim-commentary'
-" Plugin 'mhinz/vim-startify'
-" Plugin 'thaerkh/vim-workspace'
 Plugin 'crusoexia/vim-monokai'
 
 Plugin 'jiangmiao/auto-pairs'
 Plugin 'tpope/vim-surround'
 Plugin 'prettier/vim-prettier'
 Plugin 'valloric/youcompleteme'
-" Plugin 'vim-syntastic/syntastic'
 Plugin 'ctrlpvim/ctrlp.vim'
-" Plugin 'alvan/vim-closetag'
 
 Plugin 'sirver/ultisnips'
 Plugin 'honza/vim-snippets'
@@ -85,6 +81,9 @@ let g:mta_filetypes = { 'html' : 1, 'php' : 1, 'typescript' : 1, 'javascript' : 
 " Close preview window for YCMD after leave insert mode
 let g:ycm_autoclose_preview_window_after_completion = 1
 let g:ycm_confirm_extra_conf = 0
+
+" Typescript suffix for making tags (for ftplugin/typescript.vim)
+let makeElementSuf = '\\'
 " }}}
 
 
