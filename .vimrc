@@ -138,15 +138,9 @@ nnoremap <leader>f gg=G
 " Save and close file
 noremap <leader>z :call CloseFile()<cr>
 noremap <leader>za :xa<cr>
-" Navigate split window
-nnoremap <leader>wl <c-w>l
-nnoremap <leader>wh <c-w>h
-nnoremap <leader>wj <c-w>j
-nnoremap <leader>wk <c-w>k
-" Nagivate windows
-nnoremap <leader>wo :only<cr>
-nnoremap <leader>ww <c-w>w
-nnoremap <leader>wq <c-w>q
+" Split windows
+nnoremap <leader>ws :split<cr>
+nnoremap <leader>wv :vsplit<cr>
 " Stop highlighting search
 nnoremap <leader>nh :nohlsearch<cr>
 " Open nerdtree
