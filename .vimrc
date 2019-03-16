@@ -87,6 +87,7 @@ let makeElementSuf = '\\'
 
 
 " Settings {{{
+set autochdir
 set autoindent
 set backspace=indent,eol,start
 set backupcopy=yes
@@ -142,21 +143,15 @@ noremap <leader>za :xa<cr>
 nnoremap <leader>ws :split<cr>
 nnoremap <leader>wv :vsplit<cr>
 " Stop highlighting search
-nnoremap <leader>nh :nohlsearch<cr>
+nnoremap <leader>n :nohlsearch<cr>
 " Open nerdtree
-nnoremap <leader>n :NERDTreeToggle<cr>
-" Manage sessions
-let g:sessions_dir = '~/.vim/vim-sessions/'
-exec 'nnoremap <Leader>ss :mksession! ' . g:sessions_dir . '<c-d>'
-exec 'nnoremap <Leader>sl :source ' . g:sessions_dir. '<c-d>'
-" Delete and change without modifying current register
-nnoremap <leader>d "_d
-nnoremap <leader>c "_c
+nnoremap <leader>nt :NERDTreeToggle<cr>
 " Toggle between dark and light background
 nnoremap <leader>b :let &background = ( &background == "dark" ? "light" : "dark" )<CR>
 
 " No need for shift to type commands
 nnoremap ; :
+vnoremap ; :
 " Move line forward or backward
 nnoremap _ ddkP
 nnoremap + ddp
@@ -179,6 +174,8 @@ inoremap <c-d> <c-o>dd
 " Go to previous command with Ctrl-K
 cnoremap <c-k> <up>
 nnoremap <c-k> :<up>
+" Or next command with Ctrl-J
+cnoremap <c-j> <down>
 " Delete with alt-h
 cnoremap ˙ <del>
 
