@@ -10,7 +10,6 @@ Plugin 'VundleVim/Vundle.vim'
 Plugin 'vim-airline/vim-airline'
 Plugin 'vim-airline/vim-airline-themes'
 Plugin 'kshenoy/vim-signature'
-Plugin 'scrooloose/nerdtree'
 Plugin 'airblade/vim-gitgutter'
 Plugin 'tpope/vim-commentary'
 Plugin 'NLKNguyen/papercolor-theme'
@@ -19,8 +18,6 @@ Plugin 'NLKNguyen/papercolor-theme'
 Plugin 'jiangmiao/auto-pairs'
 Plugin 'tpope/vim-surround'
 Plugin 'prettier/vim-prettier'
-Plugin 'valloric/youcompleteme'
-Plugin 'ctrlpvim/ctrlp.vim'
 
 Plugin 'sirver/ultisnips'
 Plugin 'honza/vim-snippets'
@@ -64,9 +61,6 @@ augroup END
 let g:ctrlp_user_command = ['.git/', 'git --git-dir=%s/.git ls-files -oc --exclude-standard']
 let g:ctrlp_by_filename = 1
 
-" make sure relative line numbers are used for NERD tree
-autocmd FileType nerdtree setlocal relativenumber
-
 augroup prettier_ft
   au!
   autocmd BufNewFile,BufRead .prettierrc set filetype=json
@@ -87,11 +81,11 @@ let makeElementSuf = '\\'
 
 
 " Settings {{{
-set autochdir
 set autoindent
 set backspace=indent,eol,start
 set backupcopy=yes
 set clipboard=unnamed
+set completefunc=ListSnippets
 set cursorline
 set expandtab
 set hidden
@@ -100,6 +94,7 @@ set ignorecase
 set incsearch
 set mouse=a
 set number
+set path+=**
 set relativenumber
 set ruler
 set scrolloff=5
@@ -108,6 +103,7 @@ set showcmd
 set smartcase
 set softtabstop=2
 set tabstop=4
+set tags+=.tags
 set textwidth=0
 set timeoutlen=500
 set title
@@ -137,15 +133,13 @@ nnoremap <leader>es :vsplit $HOME/.vim/UltiSnips/typescript.snippets<cr>
 " Format code
 nnoremap <leader>f gg=G
 " Save and close file
-noremap <leader>z :call CloseFile()<cr>
-noremap <leader>za :xa<cr>
+nnoremap <leader>z :call CloseFile()<cr>
+nnoremap <leader>za :xa<cr>
 " Split windows
 nnoremap <leader>ws :split<cr>
 nnoremap <leader>wv :vsplit<cr>
 " Stop highlighting search
 nnoremap <leader>n :nohlsearch<cr>
-" Open nerdtree
-nnoremap <leader>nt :NERDTreeToggle<cr>
 " Toggle between dark and light background
 nnoremap <leader>b :let &background = ( &background == "dark" ? "light" : "dark" )<CR>
 
@@ -184,12 +178,15 @@ cnoremap ˙ <del>
 function CloseFile()
   update
   if len(getbufinfo({'buflisted':1})) - 1
-    " Ensures window stays
-    bprevious | bdelete #
+    bdelete
   else
     execute "normal! ZZ"
   endif
 endfunction
+
+
+" Make the `tags` file
+command! MakeTags !ctags -f .tags -R .
 
 
 " Operator pending mappings
@@ -299,6 +296,37 @@ function! s:QuickfixToggle()
 endfunction
 " }}}
 
+" }}}
+
+" UltiSnips completion with <C-x C-u> {{{
+function! ListSnippets(findstart, base) abort
+  if empty(UltiSnips#SnippetsInCurrentScope(1))
+    return ''
+  endif
+
+  if a:findstart
+    " locate the start of the word
+    let line = getline('.')
+    let start = col('.') - 1
+    while start > 0 && (line[start - 1] =~ '\a')
+      let start -= 1
+    endwhile
+    return start
+  else
+    " find classes matching "a:base"
+    let res = []
+    for m in keys(g:current_ulti_dict_info)
+      if m =~ a:base
+        let n = {
+              \ 'word': m,
+              \ 'menu': '[snip] '. g:current_ulti_dict_info[m]['description']
+              \ }
+        call add(res, n)
+      endif
+    endfor
+    return res
+  endif
+endfunction
 " }}}
 
 " }}}
