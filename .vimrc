@@ -223,6 +223,11 @@ augroup filetype_elm
   autocmd Filetype elm setlocal expandtab
 augroup END
 
+augroup filetype_snippets
+  autocmd!
+  autocmd Filetype snippets setlocal expandtab
+augroup END
+
 " }}}
 
 
