@@ -13,6 +13,7 @@ Plugin 'kshenoy/vim-signature'
 Plugin 'airblade/vim-gitgutter'
 Plugin 'tpope/vim-commentary'
 Plugin 'NLKNguyen/papercolor-theme'
+Plugin 'majutsushi/tagbar'
 
 
 Plugin 'jiangmiao/auto-pairs'
@@ -77,6 +78,20 @@ let g:ycm_confirm_extra_conf = 0
 
 " Typescript suffix for making tags (for ftplugin/typescript.vim)
 let makeElementSuf = '\\'
+
+" Tagbar setting for Elm
+let g:tagbar_type_elm = {
+  \ 'ctagstype': 'elm',
+  \ 'kinds': [
+    \ 'a:alias',
+    \ 'c:constructor',
+    \ 'f:function',
+    \ 'm:module',
+    \ 'n:namespace:1:0',
+    \ 'p:port',
+    \ 't:type',
+  \ ]
+\ }
 " }}}
 
 
@@ -109,6 +124,7 @@ set timeoutlen=500
 set title
 set ttimeoutlen=0
 set wildmenu
+set wildmode=longest:full,full
 
 syntax on
 filetype plugin on
@@ -173,6 +189,9 @@ cnoremap <c-j> <down>
 " Delete with alt-h
 cnoremap ˙ <del>
 
+" Make ctrl-c work correctly in insert and visual mode
+inoremap <c-c> <esc>
+vnoremap <c-c> <esc>
 
 " Close and save: buffer, if >1 buffer, or file
 function CloseFile()
