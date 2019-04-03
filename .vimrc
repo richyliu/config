@@ -117,6 +117,7 @@ set shiftwidth=2
 set showcmd
 set smartcase
 set softtabstop=2
+set splitright
 set tabstop=4
 set tags+=.tags
 set textwidth=0
@@ -144,8 +145,8 @@ noremap <leader>so :source %<cr>
 noremap <leader>r :!!<cr>
 " Open vimrc file on a adjacent window
 nnoremap <leader>ev :e $MYVIMRC<cr>
-" Open typescript snippets
-nnoremap <leader>es :vsplit $HOME/.vim/UltiSnips/typescript.snippets<cr>
+" Open snippets
+nnoremap <leader>es :vsplit $HOME/.vim/UltiSnips<cr>
 " Format code
 nnoremap <leader>f gg=G
 " Save and close file
@@ -158,6 +159,8 @@ nnoremap <leader>wv :vsplit<cr>
 nnoremap <leader>n :nohlsearch<cr>
 " Toggle between dark and light background
 nnoremap <leader>b :let &background = ( &background == "dark" ? "light" : "dark" )<CR>
+" cd to current file directory
+nnoremap <leader>c :cd %:p:h<cr>
 
 " No need for shift to type commands
 nnoremap ; :
@@ -205,7 +208,7 @@ endfunction
 
 
 " Make the `tags` file
-command! MakeTags !ctags -f .tags -R .
+command! MAKETAGS !ctags -f .tags -R .
 
 
 " Operator pending mappings
@@ -266,6 +269,7 @@ function! s:GrepOperator(type)
 
   silent execute "grep! -R " . shellescape(@@) . " ."
   copen
+  redraw!
 
   let @@ = saved_unnamed_register
 endfunction
