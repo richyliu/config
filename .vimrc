@@ -90,8 +90,12 @@ let g:tagbar_type_elm = {
     \ 'n:namespace:1:0',
     \ 'p:port',
     \ 't:type',
-  \ ]
+  \ ],
+  \ 'sort': '0'
 \ }
+
+" Tagbar time to update current tag
+set updatetime=750
 " }}}
 
 
@@ -161,6 +165,8 @@ nnoremap <leader>n :nohlsearch<cr>
 nnoremap <leader>b :let &background = ( &background == "dark" ? "light" : "dark" )<CR>
 " cd to current file directory
 nnoremap <leader>c :cd %:p:h<cr>
+" toggle tagbar
+nnoremap <leader>t :TagbarToggle<cr>
 
 " No need for shift to type commands
 nnoremap ; :
