@@ -27,6 +27,8 @@ Plugin 'posva/vim-vue'
 Plugin 'mxw/vim-jsx'
 Plugin 'plasticboy/vim-markdown'
 Plugin 'valloric/matchtagalways'
+Plugin 'hail2u/vim-css3-syntax'
+Plugin 'ap/vim-css-color'
 
 Plugin 'quramy/tsuquyomi'
 Plugin 'leafgarland/typescript-vim'
@@ -53,11 +55,6 @@ let g:prettier#config#parser = 'typescript'
 let g:UltiSnipsExpandTrigger="<c-j>"
 let g:UltiSnipsJumpForwardTrigger="<c-t>"
 let g:UltiSnipsJumpBackwardTrigger="<c-b>"
-
-augroup tsu_custom_opt
-  autocmd!
-  autocmd FileType typescript nnoremap <buffer> <leader>t : <c-u>echo tsuquyomi#hint()<cr>
-augroup END
 
 let g:ctrlp_user_command = ['.git/', 'git --git-dir=%s/.git ls-files -oc --exclude-standard']
 let g:ctrlp_by_filename = 1
@@ -92,6 +89,23 @@ let g:tagbar_type_elm = {
     \ 't:type',
   \ ]
 \ }
+
+" Tagbar setting for typescript
+let g:tagbar_type_typescript = {
+  \ 'ctagstype' : 'typescript',
+  \ 'kinds': [
+    \ 'a:abstractclasses:0:1',
+    \ 'e:enums:0:1',
+    \ 'f:function:0:1',
+    \ 't:types:0:1',
+    \ 'n:modules:0:1',
+    \ 'i:interface:0:1',
+    \ 'c:classes:0:1',
+    \ 'l:varlambda:0:1',
+    \ 'v:variable:0:1',
+    \ 'm:members:0:1',
+  \ ]
+\ }
 " }}}
 
 
@@ -124,6 +138,7 @@ set textwidth=0
 set timeoutlen=500
 set title
 set ttimeoutlen=0
+set wildignore+=**/node_modules/**
 set wildmenu
 set wildmode=longest:full,full
 
@@ -161,6 +176,8 @@ nnoremap <leader>n :nohlsearch<cr>
 nnoremap <leader>b :let &background = ( &background == "dark" ? "light" : "dark" )<CR>
 " cd to current file directory
 nnoremap <leader>c :cd %:p:h<cr>
+" Open tagbar
+nnoremap <leader>t :TagbarToggle<cr>
 
 " No need for shift to type commands
 nnoremap ; :
@@ -208,7 +225,7 @@ endfunction
 
 
 " Make the `tags` file
-command! MAKETAGS !ctags -f .tags -R .
+command! MakeTags !ctags -f .tags -R .
 
 
 " Operator pending mappings
