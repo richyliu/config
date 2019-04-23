@@ -1,0 +1,44 @@
+snippet modelcmd "( { model }, Cmd.none )" b
+( { model | $1 }, ${2:Cmd.none} )
+endsnippet
+
+snippet Cmd.none "Cmd.none" w
+Cmd.none
+endsnippet
+
+snippet type "normal type" b
+type ${1:TypeName}
+    = $0
+endsnippet
+
+snippet typea "type alias" b
+type alias ${1:TypeName}
+    = $0
+endsnippet
+
+snippet view "view function" b
+view$1 : Model -> Html Msg
+view$1 model =
+    $0
+endsnippet
+
+snippet elem "html element" w
+${1:div} [$2] [$0]
+endsnippet
+
+snippet case "case of" bA
+case ${1:model} of
+    ${2:FirstThing} ->
+        $0
+endsnippet
+
+snippet : "function with type signature" bA
+${1:functionName} : ${2:Input} -> ${3:Output}
+$1 ${4:param} =
+    $0
+endsnippet
+
+snippet {-| "comment" bA
+{-| $0
+-
+endsnippet
