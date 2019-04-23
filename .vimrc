@@ -15,6 +15,8 @@ Plugin 'tpope/vim-commentary'
 Plugin 'NLKNguyen/papercolor-theme'
 Plugin 'majutsushi/tagbar'
 
+Plugin 'yuratomo/w3m.vim'
+Plugin 'francoiscabrol/ranger.vim'
 
 Plugin 'jiangmiao/auto-pairs'
 Plugin 'tpope/vim-surround'
@@ -114,6 +116,7 @@ set updatetime=750
 
 " Settings {{{
 set autoindent
+set background=dark
 set backspace=indent,eol,start
 set backupcopy=yes
 set clipboard=unnamed
@@ -125,6 +128,7 @@ set hlsearch
 set ignorecase
 set incsearch
 set mouse=a
+set nrformats-=octal
 set number
 set path+=**
 set relativenumber
