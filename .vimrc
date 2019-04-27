@@ -211,6 +211,8 @@ nnoremap <c-k> :<up>
 cnoremap <c-j> <down>
 " Delete with alt-h
 cnoremap ˙ <del>
+" Go to beginning of line with ctrl-a
+cnoremap <c-a> <c-b>
 
 " Make ctrl-c work correctly in insert and visual mode
 inoremap <c-c> <esc>
@@ -225,6 +227,19 @@ function CloseFile()
     execute "normal! ZZ"
   endif
 endfunction
+
+" source: https://vim.fandom.com/wiki/Search_for_visually_selected_text
+" Search for selected text, forwards or backwards.
+vnoremap <silent> * :<C-U>
+  \let old_reg=getreg('"')<Bar>let old_regtype=getregtype('"')<CR>
+  \gvy/<C-R><C-R>=substitute(
+  \escape(@", '/\.*$^~['), '\_s\+', '\\_s\\+', 'g')<CR><CR>
+  \gV:call setreg('"', old_reg, old_regtype)<CR>
+vnoremap <silent> # :<C-U>
+  \let old_reg=getreg('"')<Bar>let old_regtype=getregtype('"')<CR>
+  \gvy?<C-R><C-R>=substitute(
+  \escape(@", '?\.*$^~['), '\_s\+', '\\_s\\+', 'g')<CR><CR>
+  \gV:call setreg('"', old_reg, old_regtype)<CR>
 
 
 " Make the `tags` file
