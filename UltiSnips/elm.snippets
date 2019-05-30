@@ -6,19 +6,28 @@ snippet Cmd.none "Cmd.none" w
 Cmd.none
 endsnippet
 
-snippet type "normal type" b
+snippet type "type definition" bA
 type ${1:TypeName}
-    = $0
-endsnippet
-
-snippet typea "type alias" b
-type alias ${1:TypeName}
     = $0
 endsnippet
 
 snippet view "view function" b
 view$1 : Model -> Html Msg
 view$1 model =
+    $0
+endsnippet
+
+snippet update "update function" bA
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        ${1:NoOp} ->
+            ( ${0:model}, Cmd.none )
+endsnippet
+
+snippet subscriptions "sub function" bA
+subscriptions : Model -> Sub Msg
+subscriptions model =
     $0
 endsnippet
 
@@ -41,4 +50,8 @@ endsnippet
 snippet {-| "comment" bA
 {-| $0
 -
+endsnippet
+
+snippet import "import exposing" bA
+import ${1:Html} exposing (${0:..})
 endsnippet

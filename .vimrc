@@ -14,6 +14,7 @@ Plugin 'airblade/vim-gitgutter'
 Plugin 'tpope/vim-commentary'
 Plugin 'NLKNguyen/papercolor-theme'
 Plugin 'majutsushi/tagbar'
+Plugin 'matchit.zip'
 
 Plugin 'yuratomo/w3m.vim'
 Plugin 'francoiscabrol/ranger.vim'
@@ -21,6 +22,7 @@ Plugin 'francoiscabrol/ranger.vim'
 Plugin 'jiangmiao/auto-pairs'
 Plugin 'tpope/vim-surround'
 Plugin 'prettier/vim-prettier'
+Plugin 'alvan/vim-closetag'
 
 Plugin 'sirver/ultisnips'
 Plugin 'honza/vim-snippets'
@@ -111,6 +113,8 @@ let g:tagbar_type_typescript = {
 \ }
 " Tagbar time to update current tag
 set updatetime=750
+" Tagbar show relative line numbers
+let g:tagbar_show_linenumbers=2
 " }}}
 
 
@@ -146,6 +150,7 @@ set timeoutlen=500
 set title
 set ttimeoutlen=0
 set wildignore+=**/node_modules/**
+set wildignorecase
 set wildmenu
 set wildmode=longest:full,full
 
@@ -153,11 +158,14 @@ syntax on
 filetype plugin on
 
 colorscheme PaperColor
+
+" Prevent weird mouse bugs on urxvt
+call timer_start(500, { tid -> execute('set ttymouse=xterm') })
 " }}}
 
 
 " Keymaps and Abbrev {{{
-let mapleader = ","
+let mapleader = " "
 let maplocalleader = "L"
 " Save all file
 noremap <leader>s :wall<cr>
@@ -185,6 +193,8 @@ nnoremap <leader>b :let &background = ( &background == "dark" ? "light" : "dark"
 nnoremap <leader>c :cd %:p:h<cr>
 " toggle tagbar
 nnoremap <leader>t :TagbarToggle<cr>
+" source vimrc (to fix mouse bug on tmux)
+nnoremap <leader>m :source $MYVIMRC<cr>
 
 " No need for shift to type commands
 nnoremap ; :
@@ -221,6 +231,9 @@ cnoremap <c-a> <c-b>
 " Make ctrl-c work correctly in insert and visual mode
 inoremap <c-c> <esc>
 vnoremap <c-c> <esc>
+
+" change comma to semicolon (repeat previous t or f)
+nnoremap , ;
 
 " Close and save: buffer, if >1 buffer, or file
 function CloseFile()
