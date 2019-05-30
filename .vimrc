@@ -16,9 +16,6 @@ Plugin 'NLKNguyen/papercolor-theme'
 Plugin 'majutsushi/tagbar'
 Plugin 'matchit.zip'
 
-Plugin 'yuratomo/w3m.vim'
-Plugin 'francoiscabrol/ranger.vim'
-
 Plugin 'jiangmiao/auto-pairs'
 Plugin 'tpope/vim-surround'
 Plugin 'prettier/vim-prettier'
@@ -134,7 +131,7 @@ set incsearch
 set mouse=a
 set nrformats-=octal
 set number
-set path+=**
+set path=.,,**
 set relativenumber
 set ruler
 set scrolloff=5
@@ -178,7 +175,7 @@ nnoremap <leader>ev :e $MYVIMRC<cr>
 " Open snippets
 nnoremap <leader>es :vsplit $HOME/.vim/UltiSnips<cr>
 " Format code
-nnoremap <leader>f gg=G
+nnoremap <leader>f :find
 " Save and close file
 nnoremap <leader>z :call CloseFile()<cr>
 nnoremap <leader>za :xa<cr>
