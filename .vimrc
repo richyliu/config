@@ -15,6 +15,7 @@ Plugin 'tpope/vim-commentary'
 Plugin 'NLKNguyen/papercolor-theme'
 Plugin 'majutsushi/tagbar'
 Plugin 'matchit.zip'
+Plugin 'tpope/vim-abolish'
 
 Plugin 'jiangmiao/auto-pairs'
 Plugin 'tpope/vim-surround'
@@ -175,7 +176,7 @@ nnoremap <leader>ev :e $MYVIMRC<cr>
 " Open snippets
 nnoremap <leader>es :vsplit $HOME/.vim/UltiSnips<cr>
 " Format code
-nnoremap <leader>f :find
+nnoremap <leader>f :find 
 " Save and close file
 nnoremap <leader>z :call CloseFile()<cr>
 nnoremap <leader>za :xa<cr>
@@ -203,8 +204,8 @@ nnoremap + ddp
 nnoremap <tab> :bnext<cr>
 nnoremap <s-tab> :bprevious<cr>
 " Go down a page
-nnoremap f <c-d>
-vnoremap f <c-d>
+" nnoremap f <c-d>
+" vnoremap f <c-d>
 " Yank until end of line
 nnoremap Y y$
 
@@ -231,6 +232,7 @@ vnoremap <c-c> <esc>
 
 " change comma to semicolon (repeat previous t or f)
 nnoremap , ;
+vnoremap , ;
 
 " Close and save: buffer, if >1 buffer, or file
 function CloseFile()

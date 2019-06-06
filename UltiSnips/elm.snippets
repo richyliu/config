@@ -53,5 +53,19 @@ snippet {-| "comment" bA
 endsnippet
 
 snippet import "import exposing" bA
-import ${1:Html} exposing (${0:..})
+import ${1:Html} exposing (${2:$1})$0
+endsnippet
+
+snippet log "Debug.log" w
+Debug.log "${0:Logged}" 
+endsnippet
+
+snippet module "module declaration" bA
+module ${1:Main} exposing (..)
+$0
+endsnippet
+
+snippet -> "case of branch" bA
+${1:Constructor} ->
+    ( { model | $0 }, Cmd.none)
 endsnippet
