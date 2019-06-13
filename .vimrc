@@ -7,38 +7,38 @@ call vundle#begin()
 " let Vundle manage Vundle, required
 Plugin 'VundleVim/Vundle.vim'
 
-Plugin 'vim-airline/vim-airline'
-Plugin 'vim-airline/vim-airline-themes'
-Plugin 'kshenoy/vim-signature'
-Plugin 'airblade/vim-gitgutter'
-Plugin 'tpope/vim-commentary'
-Plugin 'NLKNguyen/papercolor-theme'
-Plugin 'majutsushi/tagbar'
-Plugin 'matchit.zip'
-Plugin 'tpope/vim-abolish'
+Plugin 'vim-airline/vim-airline'        " For status line
+Plugin 'vim-airline/vim-airline-themes' " To customize status line for PaperColor theme
+Plugin 'kshenoy/vim-signature'          " To display marks in the sidebar
+Plugin 'airblade/vim-gitgutter'         " To display git changes in the sidebar
+Plugin 'NLKNguyen/papercolor-theme'     " Theme
+Plugin 'majutsushi/tagbar'              " Display tags in an outline format
 
-Plugin 'jiangmiao/auto-pairs'
-Plugin 'tpope/vim-surround'
-Plugin 'prettier/vim-prettier'
-Plugin 'alvan/vim-closetag'
+Plugin 'tpope/vim-commentary'           " Allow for easy commenting via 'gcc'
+Plugin 'matchit.zip'                    " Extend '%' matching ability
+Plugin 'tpope/vim-abolish'              " Smart find and replace that preserves case
+Plugin 'jiangmiao/auto-pairs'           " Auto pair quotes, braces, etc.
+Plugin 'tpope/vim-surround'             " For changin surroundings (with 's')
+Plugin 'alvan/vim-closetag'             " Automatically close html tags
 
-Plugin 'sirver/ultisnips'
-Plugin 'honza/vim-snippets'
+Plugin 'neoclide/coc.nvim'              " For autocomplete and language server support
+Plugin 'quramy/tsuquyomi'               " Typescript lanaguage server
 
-Plugin 'posva/vim-vue'
-Plugin 'mxw/vim-jsx'
-Plugin 'plasticboy/vim-markdown'
-Plugin 'valloric/matchtagalways'
-Plugin 'hail2u/vim-css3-syntax'
-Plugin 'ap/vim-css-color'
+Plugin 'sirver/ultisnips'               " Snippet support
+Plugin 'honza/vim-snippets'             " Provides the snippets
 
-Plugin 'quramy/tsuquyomi'
-Plugin 'leafgarland/typescript-vim'
-Plugin 'peitalin/vim-jsx-typescript'
+Plugin 'prettier/vim-prettier'          " Prettier support for JS/TS
+Plugin 'mxw/vim-jsx'                    " JSX language support
+Plugin 'leafgarland/typescript-vim'     " General typescript support
+Plugin 'peitalin/vim-jsx-typescript'    " TSX support
+Plugin 'posva/vim-vue'                  " Vue language support
+Plugin 'plasticboy/vim-markdown'        " Markdown language support
+Plugin 'hail2u/vim-css3-syntax'         " CSS3 language support
+Plugin 'ap/vim-css-color'               " Highlights CSS color variables with color
+Plugin 'richyliu/elm-vim'               " Elm support
 
-Plugin 'Shougo/vimproc.vim'
-Plugin 'idanarye/vim-vebugger'
-Plugin 'elmcast/elm-vim'
+Plugin 'Shougo/vimproc.vim'             " Required for vebugger
+Plugin 'idanarye/vim-vebugger'          " C/C++ debugger
 
 " All of your Plugins must be added before the following line
 call vundle#end()            " required
@@ -129,6 +129,7 @@ set hidden
 set hlsearch
 set ignorecase
 set incsearch
+set nomodeline
 set mouse=a
 set nrformats-=octal
 set number
@@ -168,7 +169,7 @@ let maplocalleader = "L"
 " Save all file
 noremap <leader>s :wall<cr>
 " Source current file
-noremap <leader>so :source %<cr>
+noremap <leader>o :source %<cr>
 " Run the previous command
 noremap <leader>r :!!<cr>
 " Open vimrc file on a adjacent window
