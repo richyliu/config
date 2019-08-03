@@ -20,6 +20,7 @@ Plugin 'tpope/vim-abolish'              " Smart find and replace that preserves 
 Plugin 'jiangmiao/auto-pairs'           " Auto pair quotes, braces, etc.
 Plugin 'tpope/vim-surround'             " For changin surroundings (with 's')
 Plugin 'alvan/vim-closetag'             " Automatically close html tags
+Plugin 'mattn/emmet-vim'                " Emmet for html tag shortcuts
 
 "Plugin 'neoclide/coc.nvim'              " For autocomplete and language server support
 Plugin 'quramy/tsuquyomi'               " Typescript lanaguage server
@@ -176,7 +177,7 @@ noremap <leader>r :!!<cr>
 nnoremap <leader>ev :e $MYVIMRC<cr>
 " Open snippets
 nnoremap <leader>es :vsplit $HOME/.vim/UltiSnips<cr>
-" Format code
+" Open file
 nnoremap <leader>f :find 
 " Save and close file
 nnoremap <leader>z :call CloseFile()<cr>
@@ -194,6 +195,10 @@ nnoremap <leader>c :cd %:p:h<cr>
 nnoremap <leader>t :TagbarToggle<cr>
 " source vimrc (to fix mouse bug on tmux)
 nnoremap <leader>m :source $MYVIMRC<cr>
+" yank current line to system clipboard
+nnoremap <leader>y "+yy
+" paste current line from system clipboard
+nnoremap <leader>p "+pj
 
 " No need for shift to type commands
 nnoremap ; :
