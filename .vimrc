@@ -21,7 +21,7 @@ Plugin 'jiangmiao/auto-pairs'           " Auto pair quotes, braces, etc.
 Plugin 'tpope/vim-surround'             " For changin surroundings (with 's')
 Plugin 'alvan/vim-closetag'             " Automatically close html tags
 
-Plugin 'neoclide/coc.nvim'              " For autocomplete and language server support
+"Plugin 'neoclide/coc.nvim'              " For autocomplete and language server support
 Plugin 'quramy/tsuquyomi'               " Typescript lanaguage server
 
 Plugin 'sirver/ultisnips'               " Snippet support
@@ -118,7 +118,7 @@ let g:tagbar_show_linenumbers=2
 
 " Settings {{{
 set autoindent
-set background=dark
+set background=light
 set backspace=indent,eol,start
 set backupcopy=yes
 set clipboard=unnamed
@@ -306,7 +306,7 @@ augroup END
 
 " Grep operator {{{
 nnoremap <leader>g :set operatorfunc=<SID>GrepOperator<cr>g@
-vnoremap <leader>g :<c-u>call GrepOperator(visualmode())<cr>
+vnoremap <leader>g :<c-u>call <SID>GrepOperator(visualmode())<cr>
 
 function! s:GrepOperator(type)
   let saved_unnamed_register = @@
@@ -319,9 +319,10 @@ function! s:GrepOperator(type)
     return
   endif
 
-  silent execute "grep! -R " . shellescape(@@) . " ."
-  copen
-  redraw!
+  try
+    execute 'vimgrep /'. escape(@@, '/\.*$^~[') . '/g **'
+    copen
+  endtry
 
   let @@ = saved_unnamed_register
 endfunction
