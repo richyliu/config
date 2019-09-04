@@ -143,12 +143,13 @@ set showcmd
 set smartcase
 set softtabstop=2
 set splitright
+set nostartofline
 set tabstop=4
 set tags+=.tags
 set textwidth=0
 set timeoutlen=500
 set title
-set ttimeoutlen=0
+set ttimeoutlen=10
 set wildignore+=**/node_modules/**
 set wildignorecase
 set wildmenu
@@ -198,7 +199,9 @@ nnoremap <leader>m :source $MYVIMRC<cr>
 " yank current line to system clipboard
 nnoremap <leader>y "+yy
 " paste current line from system clipboard
-nnoremap <leader>p "+pj
+nnoremap <leader>a "+pj
+" invoke prettier to format document
+nnoremap <leader>p :Prettier<cr>
 
 " No need for shift to type commands
 nnoremap ; :
