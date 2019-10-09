@@ -41,6 +41,11 @@ Plugin 'richyliu/elm-vim'               " Elm support
 Plugin 'Shougo/vimproc.vim'             " Required for vebugger
 Plugin 'idanarye/vim-vebugger'          " C/C++ debugger
 
+Plugin 'neovimhaskell/haskell-vim'      " Haskell syntax
+
+Plugin 'lervag/vimtex'                  " Basic Latex syntax
+Plugin 'xuhdev/vim-latex-live-preview'  " Latex preview
+
 " All of your Plugins must be added before the following line
 call vundle#end()            " required
 filetype plugin indent on    " required
@@ -119,7 +124,7 @@ let g:tagbar_show_linenumbers=2
 
 " Settings {{{
 set autoindent
-set background=light
+set background=dark
 set backspace=indent,eol,start
 set backupcopy=yes
 set clipboard=unnamed
@@ -305,6 +310,15 @@ augroup END
 augroup filetype_snippets
   autocmd!
   autocmd Filetype snippets setlocal expandtab
+augroup END
+
+
+augroup filetype_haskell
+  autocmd!
+  autocmd Filetype haskell setlocal softtabstop=4
+  autocmd Filetype haskell setlocal shiftwidth=4
+  " autocmd Filetype haskell setlocal equalprg=stylish-haskell
+  autocmd BufWrite *.hs :%!stylish-haskell
 augroup END
 
 " }}}
