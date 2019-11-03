@@ -174,7 +174,7 @@ call timer_start(500, { tid -> execute('set ttymouse=xterm') })
 let mapleader = " "
 let maplocalleader = "L"
 " Save all file
-noremap <leader>s :wall<cr>
+noremap <leader>s :w<cr>
 " Source current file
 noremap <leader>o :source %<cr>
 " Run the previous command
