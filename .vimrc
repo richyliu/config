@@ -240,13 +240,11 @@ cnoremap ˙ <del>
 " Go to beginning of line with ctrl-a
 cnoremap <c-a> <c-b>
 
-" Make ctrl-c work correctly in insert and visual mode
-inoremap <c-c> <esc>
-vnoremap <c-c> <esc>
-
 " change comma to semicolon (repeat previous t or f)
 nnoremap , ;
 vnoremap , ;
+
+inoremap <c-c> <space>__CTRL-C_IS_BAD__<space><esc>
 
 " Close and save: buffer, if >1 buffer, or file
 function CloseFile()
@@ -315,10 +313,8 @@ augroup END
 
 augroup filetype_haskell
   autocmd!
-  autocmd Filetype haskell setlocal softtabstop=4
-  autocmd Filetype haskell setlocal shiftwidth=4
-  " autocmd Filetype haskell setlocal equalprg=stylish-haskell
-  autocmd BufWrite *.hs :%!stylish-haskell
+  autocmd Filetype haskell setlocal formatprg=hindent
+  autocmd Filetype haskell nnoremap <buffer> <localleader>r :!stack ghci %<cr>
 augroup END
 
 " }}}

@@ -1,0 +1,19 @@
+snippet data "Create data type" bA
+data ${1:Type_name}
+  = ${2:Type}
+  deriving (${3:Show})
+$0
+endsnippet
+
+snippet type "Type alias" bA
+type ${1:Type_name} = ${0:Alias_name}
+endsnippet
+
+snippet : "Function" bA
+${1:Func_name} :: ${2:Type_in} -> ${3:Type_out}
+$1 ${4:input} = ${0:output}
+endsnippet
+
+snippet LANG "Language extension" bA
+{-# LANGUAGE ${1:OverloadedStrings} #-}$0
+endsnippet
