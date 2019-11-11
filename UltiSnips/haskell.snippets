@@ -10,10 +10,19 @@ type ${1:Type_name} = ${0:Alias_name}
 endsnippet
 
 snippet : "Function" bA
-${1:Func_name} :: ${2:Type_in} -> ${3:Type_out}
-$1 ${4:input} = ${0:output}
+${1:Func_name} :: ${2:Types}
+$1 ${3:input} = ${0:output}
 endsnippet
 
 snippet LANG "Language extension" bA
-{-# LANGUAGE ${1:OverloadedStrings} #-}$0
+{-# LANGUAGE ${1:OverloadedStrings} #-}
+$0
+endsnippet
+
+snippet imp "import" b
+import ${1:Data.Text} (${2:someFunc})$0
+endsnippet
+
+snippet impq "import qualified" b
+import qualified ${1:Data.Text} as ${0:T}
 endsnippet

@@ -33,7 +33,7 @@ Plugin 'mxw/vim-jsx'                    " JSX language support
 Plugin 'leafgarland/typescript-vim'     " General typescript support
 Plugin 'peitalin/vim-jsx-typescript'    " TSX support
 Plugin 'posva/vim-vue'                  " Vue language support
-Plugin 'plasticboy/vim-markdown'        " Markdown language support
+Plugin 'gabrielelana/vim-markdown'      " Markdown support
 Plugin 'hail2u/vim-css3-syntax'         " CSS3 language support
 Plugin 'ap/vim-css-color'               " Highlights CSS color variables with color
 Plugin 'richyliu/elm-vim'               " Elm support
@@ -45,6 +45,7 @@ Plugin 'neovimhaskell/haskell-vim'      " Haskell syntax
 
 Plugin 'lervag/vimtex'                  " Basic Latex syntax
 Plugin 'xuhdev/vim-latex-live-preview'  " Latex preview
+
 
 " All of your Plugins must be added before the following line
 call vundle#end()            " required
@@ -130,6 +131,7 @@ set backupcopy=yes
 set clipboard=unnamed
 set completefunc=ListSnippets
 set cursorline
+set dictionary+=/usr/share/dict/words
 set expandtab
 set hidden
 set hlsearch
@@ -229,6 +231,8 @@ inoremap <c-l> <del>
 inoremap <c-d> <c-o>dd
 " Go to next line on ctrl-enter (^J code)
 "inoremap <c-j> <esc>o
+" Un-indent with Ctrl-F (b/c Ctrl-D doesn't work)
+inoremap <c-f> <c-d>
 
 " Go to previous command with Ctrl-K
 cnoremap <c-k> <up>
@@ -310,11 +314,18 @@ augroup filetype_snippets
   autocmd Filetype snippets setlocal expandtab
 augroup END
 
-
 augroup filetype_haskell
   autocmd!
   autocmd Filetype haskell setlocal formatprg=hindent
   autocmd Filetype haskell nnoremap <buffer> <localleader>r :!stack ghci %<cr>
+augroup END
+
+augroup filetype_markdown
+  autocmd!
+  autocmd Filetype markdown inoremap <buffer> <c-b> ****<left><left>
+  " Need to allow recursive map to make surround work
+  autocmd Filetype markdown vmap <buffer> <c-b> S*gvS*
+  autocmd Filetype markdown setlocal complete=kspell
 augroup END
 
 " }}}
