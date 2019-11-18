@@ -323,6 +323,7 @@ augroup END
 augroup filetype_markdown
   autocmd!
   autocmd Filetype markdown inoremap <buffer> <c-b> ****<left><left>
+  autocmd Filetype markdown inoremap <buffer> --> →
   " Need to allow recursive map to make surround work
   autocmd Filetype markdown vmap <buffer> <c-b> S*gvS*
   autocmd Filetype markdown setlocal complete=kspell
