@@ -46,6 +46,8 @@ Plugin 'neovimhaskell/haskell-vim'      " Haskell syntax
 Plugin 'lervag/vimtex'                  " Basic Latex syntax
 Plugin 'xuhdev/vim-latex-live-preview'  " Latex preview
 
+Plugin 'thinca/vim-localrc'             " Allow for local vim configuration
+
 
 " All of your Plugins must be added before the following line
 call vundle#end()            " required
@@ -120,6 +122,12 @@ let g:tagbar_type_typescript = {
 set updatetime=750
 " Tagbar show relative line numbers
 let g:tagbar_show_linenumbers=2
+
+" Disable gitgutter mappings
+let g:gitgutter_map_keys = 0
+
+" Disable vim-markdown default mapping
+let g:markdown_enable_mappings = 0
 " }}}
 
 
@@ -162,6 +170,20 @@ set wildignorecase
 set wildmenu
 set wildmode=longest:full,full
 
+" Correct function keys (for urxvt on Ubuntu 16)
+set <f1>=[11~
+set <f2>=[12~
+set <f3>=[13~
+set <f4>=[14~
+set <f5>=[15~
+set <f6>=[17~
+set <f7>=[18~
+set <f8>=[19~
+set <f9>=[20~
+set <f10>=[21~
+set <f11>=[23~
+set <f12>=[24~
+
 syntax on
 filetype plugin on
 
@@ -174,7 +196,7 @@ call timer_start(500, { tid -> execute('set ttymouse=xterm') })
 
 " Keymaps and Abbrev {{{
 let mapleader = " "
-let maplocalleader = "L"
+let maplocalleader = "Q"
 " Save all file
 noremap <leader>s :w<cr>
 " Source current file
@@ -185,43 +207,59 @@ noremap <leader>r :!!<cr>
 nnoremap <leader>ev :e $MYVIMRC<cr>
 " Open snippets
 nnoremap <leader>es :vsplit $HOME/.vim/UltiSnips<cr>
+" Open file in current folder
+nnoremap <leader>e :e <c-d>
 " Open file
 nnoremap <leader>f :find 
 " Save and close file
 nnoremap <leader>z :call CloseFile()<cr>
-nnoremap <leader>za :xa<cr>
 " Split windows
 nnoremap <leader>ws :split<cr>
 nnoremap <leader>wv :vsplit<cr>
 " Stop highlighting search
 nnoremap <leader>n :nohlsearch<cr>
-" Toggle between dark and light background
-nnoremap <leader>b :let &background = ( &background == "dark" ? "light" : "dark" )<CR>
 " cd to current file directory
 nnoremap <leader>c :cd %:p:h<cr>
 " toggle tagbar
 nnoremap <leader>t :TagbarToggle<cr>
 " source vimrc (to fix mouse bug on tmux)
 nnoremap <leader>m :source $MYVIMRC<cr>
-" yank current line to system clipboard
-nnoremap <leader>y "+yy
-" paste current line from system clipboard
-nnoremap <leader>a "+pj
+" yank to system clipboard
+nnoremap <leader>y "+y
+" change to paste mode
+nnoremap <leader>a :set paste!<cr>
 " invoke prettier to format document
 nnoremap <leader>p :Prettier<cr>
+" open help search
+nnoremap <leader>h :help 
+" find and replace
+nnoremap <leader>% :%s/
+vnoremap <leader>% :s/
+" change settings
+nnoremap <leader>u :set 
+" run external shell command
+nnoremap ! :!
+" quit all files
+nnoremap <leader>q :qa<cr>
+" Make ex mode harder to enter on accident
+nnoremap Q :echo "To enter Ex mode, type  gQ  or start vim with 'vim -e'"<cr>
+" switch buffers
+nnoremap <leader>b :ls<cr>:b 
 
-" No need for shift to type commands
-nnoremap ; :
-vnoremap ; :
+" Git shortcuts
+nnoremap <leader>ga :!git add -A; git status; printf "\nGIT ADDED ALL\n"<cr>
+nnoremap <leader>gs :!git status<cr>
+nnoremap <leader>gd :!git diff<cr>
+nnoremap <leader>g- :!git diff --cached<cr>
+nnoremap <leader>gp :!git pull<cr>
+nnoremap <leader>gc :!git commit -S -m ""<left>
+
 " Move line forward or backward
 nnoremap _ ddkP
 nnoremap + ddp
 " Cycle through buffers
 nnoremap <tab> :bnext<cr>
 nnoremap <s-tab> :bprevious<cr>
-" Go down a page
-" nnoremap f <c-d>
-" vnoremap f <c-d>
 " Yank until end of line
 nnoremap Y y$
 
@@ -229,8 +267,6 @@ nnoremap Y y$
 inoremap <c-l> <del>
 " Delete line in insert mode
 inoremap <c-d> <c-o>dd
-" Go to next line on ctrl-enter (^J code)
-"inoremap <c-j> <esc>o
 " Un-indent with Ctrl-F (b/c Ctrl-D doesn't work)
 inoremap <c-f> <c-d>
 
@@ -244,11 +280,6 @@ cnoremap ˙ <del>
 " Go to beginning of line with ctrl-a
 cnoremap <c-a> <c-b>
 
-" change comma to semicolon (repeat previous t or f)
-nnoremap , ;
-vnoremap , ;
-
-inoremap <c-c> <space>__CTRL-C_IS_BAD__<space><esc>
 
 " Close and save: buffer, if >1 buffer, or file
 function CloseFile()
@@ -295,7 +326,6 @@ onoremap an" :<c-u>normal! f"va"<cr>
 " Abbreviations/keymaps {{{
 augroup filetype_vim
   autocmd!
-  autocmd Filetype vim nnoremap <buffer> <localleader>c I"<esc>
   autocmd Filetype vim iabbrev <buffer> iab iabbrev <buffer>
   autocmd Filetype vim setlocal foldmethod=marker
 augroup END
@@ -327,6 +357,7 @@ augroup filetype_markdown
   " Need to allow recursive map to make surround work
   autocmd Filetype markdown vmap <buffer> <c-b> S*gvS*
   autocmd Filetype markdown setlocal complete=kspell
+  autocmd Filetype markdown inoremap <buffer> <F3> #<space><c-r>=strftime("%Y-%m-%d %a")<cr><cr>
 augroup END
 
 " }}}
@@ -335,8 +366,8 @@ augroup END
 " Custom Plugins {{{
 
 " Grep operator {{{
-nnoremap <leader>g :set operatorfunc=<SID>GrepOperator<cr>g@
-vnoremap <leader>g :<c-u>call <SID>GrepOperator(visualmode())<cr>
+" nnoremap <leader>g :set operatorfunc=<SID>GrepOperator<cr>g@
+" vnoremap <leader>g :<c-u>call <SID>GrepOperator(visualmode())<cr>
 
 function! s:GrepOperator(type)
   let saved_unnamed_register = @@
@@ -385,7 +416,7 @@ endfunction
 " }}}
 
 " Quick fix {{{
-nnoremap <leader>q :call <SID>QuickfixToggle()<cr>
+" nnoremap <leader>q :call <SID>QuickfixToggle()<cr>
 
 let g:quickfix_is_open = 0
 
@@ -401,6 +432,17 @@ function! s:QuickfixToggle()
   endif
 endfunction
 " }}}
+
+" Toggle background between light and dark
+
+nnoremap <f4> :call <SID>ToggleBackground()<cr>
+function! s:ToggleBackground()
+  if &background == "dark"
+    let &background = "light"
+  else
+    let &background = "dark"
+  endif
+endfunction
 
 " }}}
 
