@@ -270,11 +270,8 @@ inoremap <c-d> <c-o>dd
 " Un-indent with Ctrl-F (b/c Ctrl-D doesn't work)
 inoremap <c-f> <c-d>
 
-" Go to previous command with Ctrl-K
-cnoremap <c-k> <up>
-nnoremap <c-k> :<up>
-" Or next command with Ctrl-J
-cnoremap <c-j> <down>
+" Go to previous command with Ctrl-P
+nnoremap <c-p> :<c-p>
 " Delete with alt-h
 cnoremap ˙ <del>
 " Go to beginning of line with ctrl-a
