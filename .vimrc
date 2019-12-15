@@ -33,10 +33,12 @@ Plugin 'mxw/vim-jsx'                    " JSX language support
 Plugin 'leafgarland/typescript-vim'     " General typescript support
 Plugin 'peitalin/vim-jsx-typescript'    " TSX support
 Plugin 'posva/vim-vue'                  " Vue language support
-Plugin 'gabrielelana/vim-markdown'      " Markdown support
 Plugin 'hail2u/vim-css3-syntax'         " CSS3 language support
 Plugin 'ap/vim-css-color'               " Highlights CSS color variables with color
 Plugin 'richyliu/elm-vim'               " Elm support
+
+Plugin 'gabrielelana/vim-markdown'      " Markdown support
+Plugin 'tpope/vim-liquid'               " Liquid templating language
 
 Plugin 'Shougo/vimproc.vim'             " Required for vebugger
 Plugin 'idanarye/vim-vebugger'          " C/C++ debugger
@@ -203,14 +205,15 @@ noremap <leader>s :w<cr>
 noremap <leader>o :source %<cr>
 " Run the previous command
 noremap <leader>r :!!<cr>
-" Open vimrc file on a adjacent window
+" Open vimrc file
 nnoremap <leader>ev :e $MYVIMRC<cr>
 " Open snippets
-nnoremap <leader>es :vsplit $HOME/.vim/UltiSnips<cr>
+nnoremap <leader>es :execute ':vsplit $HOME/.vim/UltiSnips/' . &filetype . '.snippets'<cr>
 " Open file in current folder
 nnoremap <leader>e :e <c-d>
+nnoremap <leader>ee :e <c-d>
 " Open file
-nnoremap <leader>f :find 
+nnoremap <leader>f :find<space>
 " Save and close file
 nnoremap <leader>z :call CloseFile()<cr>
 " Split windows
@@ -226,17 +229,18 @@ nnoremap <leader>t :TagbarToggle<cr>
 nnoremap <leader>m :source $MYVIMRC<cr>
 " yank to system clipboard
 nnoremap <leader>y "+y
+vnoremap <leader>y "+y
 " change to paste mode
 nnoremap <leader>a :set paste!<cr>
 " invoke prettier to format document
 nnoremap <leader>p :Prettier<cr>
 " open help search
-nnoremap <leader>h :help 
+nnoremap <leader>h :help<space>
 " find and replace
 nnoremap <leader>% :%s/
 vnoremap <leader>% :s/
 " change settings
-nnoremap <leader>u :set 
+nnoremap <leader>u :set<space>
 " run external shell command
 nnoremap ! :!
 " quit all files
@@ -244,10 +248,10 @@ nnoremap <leader>q :qa<cr>
 " Make ex mode harder to enter on accident
 nnoremap Q :echo "To enter Ex mode, type  gQ  or start vim with 'vim -e'"<cr>
 " switch buffers
-nnoremap <leader>b :ls<cr>:b 
+nnoremap <leader>b :ls<cr>:b<space>
 
 " Git shortcuts
-nnoremap <leader>ga :!git add -A; git status; printf "\nGIT ADDED ALL\n"<cr>
+nnoremap <leader>ga :!git add -A; git status; printf "\nGIT ADD ALL\n"<cr>
 nnoremap <leader>gs :!git status<cr>
 nnoremap <leader>gd :!git diff<cr>
 nnoremap <leader>g- :!git diff --cached<cr>
@@ -272,6 +276,7 @@ inoremap <c-f> <c-d>
 
 " Go to previous command with Ctrl-P
 nnoremap <c-p> :<c-p>
+vnoremap <c-p> :<c-p>
 " Delete with alt-h
 cnoremap ˙ <del>
 " Go to beginning of line with ctrl-a
@@ -284,7 +289,7 @@ function CloseFile()
   if len(getbufinfo({'buflisted':1})) - 1
     bdelete
   else
-    execute "normal! ZZ"
+    quit
   endif
 endfunction
 
@@ -350,7 +355,7 @@ augroup END
 augroup filetype_markdown
   autocmd!
   autocmd Filetype markdown inoremap <buffer> <c-b> ****<left><left>
-  autocmd Filetype markdown inoremap <buffer> --> →
+  autocmd Filetype markdown iabbrev <buffer> --> →
   " Need to allow recursive map to make surround work
   autocmd Filetype markdown vmap <buffer> <c-b> S*gvS*
   autocmd Filetype markdown setlocal complete=kspell
