@@ -130,6 +130,8 @@ let g:gitgutter_map_keys = 0
 
 " Disable vim-markdown default mapping
 let g:markdown_enable_mappings = 0
+" Disable spell check to make editing faster
+let g:markdown_enable_spell_checking = 0
 " }}}
 
 
@@ -243,8 +245,6 @@ vnoremap <leader>% :s/
 nnoremap <leader>u :set<space>
 " run external shell command
 nnoremap ! :!
-" quit all files
-nnoremap <leader>q :qa<cr>
 " Make ex mode harder to enter on accident
 nnoremap Q :echo "To enter Ex mode, type  gQ  or start vim with 'vim -e'"<cr>
 " switch buffers
@@ -359,7 +359,13 @@ augroup filetype_markdown
   " Need to allow recursive map to make surround work
   autocmd Filetype markdown vmap <buffer> <c-b> S*gvS*
   autocmd Filetype markdown setlocal complete=kspell
-  autocmd Filetype markdown inoremap <buffer> <F3> #<space><c-r>=strftime("%Y-%m-%d %a")<cr><cr>
+  autocmd Filetype markdown setlocal textwidth=80
+  autocmd Filetype markdown inoremap <buffer> <F3> ##<space><c-r>=strftime("%Y-%m-%d %a")<cr><cr>
+augroup END
+
+augroup filetype_sh
+  autocmd!
+  autocmd Filetype sh nnoremap <buffer> <localleader>c "+ci'
 augroup END
 
 " }}}
