@@ -174,11 +174,11 @@ set wildignorecase
 set wildmenu
 set wildmode=longest:full,full
 
-" Correct function keys (for urxvt on Ubuntu 16)
-set <f1>=[11~
-set <f2>=[12~
-set <f3>=[13~
-set <f4>=[14~
+" Correct function keys (for Konsole on Arch 18)
+set <f1>=OP
+set <f2>=OQ
+set <f3>=OR
+set <f4>=OS
 set <f5>=[15~
 set <f6>=[17~
 set <f7>=[18~
@@ -201,8 +201,8 @@ call timer_start(500, { tid -> execute('set ttymouse=xterm') })
 " Keymaps and Abbrev {{{
 let mapleader = " "
 let maplocalleader = "Q"
-" Save all file
-noremap <leader>s :w<cr>
+" Save file
+noremap <leader>w :w<cr>
 " Source current file
 noremap <leader>o :source %<cr>
 " Run the previous command
@@ -360,7 +360,7 @@ augroup filetype_markdown
   autocmd Filetype markdown vmap <buffer> <c-b> S*gvS*
   autocmd Filetype markdown setlocal complete=kspell
   autocmd Filetype markdown setlocal textwidth=80
-  autocmd Filetype markdown inoremap <buffer> <F3> ##<space><c-r>=strftime("%Y-%m-%d %a")<cr><cr>
+  autocmd Filetype markdown inoremap <buffer> <F5> ##<space><c-r>=strftime("%Y-%m-%d %a")<cr><cr>
 augroup END
 
 augroup filetype_sh
