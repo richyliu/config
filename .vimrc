@@ -13,6 +13,7 @@ Plugin 'kshenoy/vim-signature'          " To display marks in the sidebar
 Plugin 'airblade/vim-gitgutter'         " To display git changes in the sidebar
 Plugin 'NLKNguyen/papercolor-theme'     " Theme
 Plugin 'majutsushi/tagbar'              " Display tags in an outline format
+Plugin 'romainl/vim-cool'               " automatically disable search highlighting
 
 Plugin 'tpope/vim-commentary'           " Allow for easy commenting via 'gcc'
 Plugin 'matchit.zip'                    " Extend '%' matching ability
@@ -218,9 +219,6 @@ nnoremap <leader>ee :e <c-d>
 nnoremap <leader>f :find<space>
 " Save and close file
 nnoremap <leader>z :call CloseFile()<cr>
-" Split windows
-nnoremap <leader>ws :split<cr>
-nnoremap <leader>wv :vsplit<cr>
 " Stop highlighting search
 nnoremap <leader>n :nohlsearch<cr>
 " cd to current file directory
@@ -361,6 +359,7 @@ augroup filetype_markdown
   autocmd Filetype markdown setlocal complete=kspell
   autocmd Filetype markdown setlocal textwidth=80
   autocmd Filetype markdown inoremap <buffer> <F5> ##<space><c-r>=strftime("%Y-%m-%d %a")<cr><cr>
+  autocmd Filetype markdown nnoremap <buffer> <localleader>s :set invspell<cr>
 augroup END
 
 augroup filetype_sh
