@@ -230,10 +230,10 @@ nnoremap <leader>m :source $MYVIMRC<cr>
 " yank to system clipboard
 nnoremap <leader>y "+y
 vnoremap <leader>y "+y
+" paste from system clipboard
+nnoremap <leader>p "+p
 " change to paste mode
 nnoremap <leader>a :set paste!<cr>
-" invoke prettier to format document
-nnoremap <leader>p :Prettier<cr>
 " open help search
 nnoremap <leader>h :help<space>
 " find and replace
@@ -359,12 +359,20 @@ augroup filetype_markdown
   autocmd Filetype markdown setlocal complete=kspell
   autocmd Filetype markdown setlocal textwidth=80
   autocmd Filetype markdown inoremap <buffer> <F5> ##<space><c-r>=strftime("%Y-%m-%d %a")<cr><cr>
-  autocmd Filetype markdown nnoremap <buffer> <localleader>s :set invspell<cr>
+  autocmd Filetype markdown nnoremap <buffer> <localleader>s :set spell!<cr>
 augroup END
 
 augroup filetype_sh
   autocmd!
   autocmd Filetype sh nnoremap <buffer> <localleader>c "+ci'
+  autocmd Filetype sh nnoremap <buffer> <localleader>p :put +<cr>
+augroup END
+
+" Javascript, Typescript, and TSX
+augroup filetype_js
+  autocmd!
+  " invoke prettier to format document
+  autocmd Filetype javascript,typescript,jsx,tsx nnoremap <buffer> <localleader>p :Prettier<cr>
 augroup END
 
 " }}}
