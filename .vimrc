@@ -140,7 +140,9 @@ let g:markdown_enable_spell_checking = 0
 set autoindent
 set background=dark
 set backspace=indent,eol,start
+set backup
 set backupcopy=yes
+set backupdir=~/.cache/vim/backup/
 set clipboard=unnamed
 set completefunc=ListSnippets
 set cursorline
@@ -220,7 +222,7 @@ nnoremap <leader>f :find<space>
 " Save and close file
 nnoremap <leader>z :call CloseFile()<cr>
 " Stop highlighting search
-nnoremap <leader>n :nohlsearch<cr>
+" nnoremap <leader>n :nohlsearch<cr>
 " cd to current file directory
 nnoremap <leader>c :cd %:p:h<cr>
 " toggle tagbar
@@ -280,6 +282,8 @@ cnoremap ˙ <del>
 " Go to beginning of line with ctrl-a
 cnoremap <c-a> <c-b>
 
+" Exit tmux and kill host
+nnoremap <c-q> :!tmux detach-client -P<cr>
 
 " Close and save: buffer, if >1 buffer, or file
 function CloseFile()
