@@ -1,0 +1,17 @@
+#!/bin/bash
+
+if [[ $# -eq 0 || $1 = "--help" ]]; then
+  echo "Usage:"
+  echo "  qrfileio FILE"
+  echo ""
+  echo "  Uploads the file to file.io and generates a qr code of the url"
+  exit 1
+fi
+
+file=$1
+# upload the file to file.io and get result json
+result=$(curl -F "file=@$file" https://file.io)
+# extract the link from the json
+link=$(echo $result | jq ".link")
+# show a qr code and display it in the terminal with viu
+qrencode "$link" -o - | viu

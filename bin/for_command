@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# allows a command to be run in each folder
+echo "Running '$1' in the folders: ${@:2}"
+read -p "Press ENTER to continue: "
+
+for i in "${@:2}"; do
+  if [ -d "$i" ]; then
+    cd "$i";
+    eval "$1";
+    cd ..;
+  else
+    echo "Error: $i does not exist"
+  fi
+done

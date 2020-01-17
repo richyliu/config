@@ -258,9 +258,9 @@ nnoremap <leader>g- :!git diff --cached<cr>
 nnoremap <leader>gp :!git pull<cr>
 nnoremap <leader>gc :!git commit -S -m ""<left>
 
-" Move line forward or backward
-nnoremap _ ddkP
-nnoremap + ddp
+" Move line up or down
+nnoremap _ :.m.-2<cr>
+nnoremap + :.m+<cr>
 " Cycle through buffers
 nnoremap <tab> :bnext<cr>
 nnoremap <s-tab> :bprevious<cr>

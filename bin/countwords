@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# count number of words in an HTML file (removes HTML tags)
+if [[ $# -eq 0 || $1 = "--help" ]]; then
+  echo "Usage: countwords HTML_FILE [FIRST_LINES]"
+  echo "    Counts words by stripping html tags from the file."
+  echo "    The first FIRST_LINES lines of the file will be displayed. Default is 5"
+  exit 1
+fi
+
+filename=$1
+first_lines=5
+if [ $# -eq 2 ]; then
+  first_lines=$2
+fi
+
+# remove contents of head and html tags
+cleaned=$(sed 's/<[^>]\+>/ /g' "$filename")
+# unquoted variable automatically gets rid of newlines
+echo $cleaned | wc -w
+# fold text to 80 characters wide
+folded=$(echo $cleaned | fold -s)
+# print first severl lines
+echo "$folded" | head -n $first_lines

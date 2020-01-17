@@ -137,37 +137,30 @@ export YAOURT_COLORS="nb=1:pkg=1:ver=1;32:lver=1;45:installed=1;42:grp=1;34:od=1
 
 
 alias ll="ls -lh --color=always"
-alias utorrent="utserver -settingspath /opt/utorrent-server-alpha-v3_3/"
 alias pyserver="python3 -m http.server"
 alias phpserver="php -S 127.0.0.1:8000 -t ."
 alias compress="mogrify -resize 1200x1200 -strip -quality 80% *.jpg"
 alias compressmedium="mogrify -resize 1680x1680 -strip -quality 80% *.jpg"
 alias compressmin="mogrify -resize 2016x2016 -strip -quality 80% *.jpg"
 alias compressfast='for i in *; do epeg -m 2016 -q 85 $i _$i; mv _$i $i; echo $i; done; compress'
-alias nvi="~/nvim.appimage"
 alias ..="cd .."
 alias ...="cd ../.."
 alias ....="cd ../../.."
 alias .....="cd ../../../.."
 alias .+='cd ../$(printf "%02d" $((${PWD##*/} + 1)))'
-alias cds='cd ~/Downloads/stuff/'
-alias pi="ssh pi@10.0.1.11"
 alias lltr="ll -tr"
-alias beep="play -q /home/richard/media/beep.ogg"
 alias gp="git pull"
 alias gac="git add -A && git commit -S -m"
 alias gs="git status"
 alias gd="git diff"
 alias ga="git add -A ."
 alias llsr="ll -Sr"
-alias xopen="xdg-open"
 alias duhd="du -hd1 | sort -h"
 alias ta="tmux attach-session"
 alias td="tmux detach-client -P"
 alias pbcopy='xclip -selection clipboard'
 alias pbpaste='xclip -selection clipboard -o'
 alias epeg='/home/richard/richard/epeg-0.9.2/src/bin/epeg'
-alias renumber='perl-rename '"'"'s/(.+)/_$1/'"'"' *; let i=0; for f in *; do mv "$f" $(printf "%03d.jpg" $i); let i++; done'
 
 VWH="/var/www/html"
 VWHM="/var/www/html/images/metart"
@@ -185,44 +178,37 @@ alias cp='cp -i'  # Prompt if overwriting
 alias mv='mv -i'  # Prompt if overwriting
 alias rm='rm -I'  # Prompt if removing 3+ files or recusively
 
-# Compress video length and width by scale factor and crf (constant rate factor)
-function ffmpeg_compress() {
-  if [ $# -eq 0 ]; then
-    echo "Usage: ffmpeg_compress SRC_VIDEO SCALE_FACTOR CRF OUTPUT_VIDEO"
-    echo "    Recommended SCALE_FACTOR is 3 and CRF is 28"
-    return 1
-  fi
-
-  echo "Compressing video '$1' by a scale factor of $2 and a crf of $3 to '$4'"
-  echo "Recommended scale factor is 3 and crf is 28"
-  read -p "Would you like output to be silenced? [y/N]: " silence
-  case $silence in
-    y|Y) ffmpeg -i "$1" -strict -2 -vf "scale=iw/$2:ih/$2" -vcodec libx265 \
-      -crf $3 -loglevel 24 "$4" ;;
-    *) ffmpeg -i "$1" -strict -2 -vf "scale=iw/$2:ih/$2" -vcodec libx265 \
-      -crf $3 "$4" ;;
-  esac
-}
+bold=$(tput bold)
+normal=$(tput sgr0)
 
 # Creates a fullscreen slideshow
 function fullscreen() {
   slideshow $@ -F
 }
 
-# allows a command to be run in each folder
-function for_command() {
-  echo "Running '$1' in the folders: ${@:2}"
-  read -p "Press ENTER to continue: "
+function swap() {
+  local TMPFILE=tmp.$$
+  mv "$1" $TMPFILE
+  mv "$2" "$1"
+  mv $TMPFILE "$2"
+}
 
-  for i in "${@:2}"; do
-    if [ -d "$i" ]; then
-      cd "$i";
-      eval "$1";
-      cd ..;
-    else
-      echo "Error: $i does not exist"
-    fi
-  done
+# Allows for cd without args to go to ~/Downloads/
+function cd () {
+  if [ $# = 0 ]; then
+    builtin cd ~/Downloads/
+  else
+    builtin cd "$@"
+  fi
+}
+
+# Grep displays line numbers when not in a pipeline
+function grep() { 
+  if [[ -t 1 ]]; then 
+    command grep -n "$@"
+  else 
+    command grep "$@"
+  fi
 }
 
 export CDPATH=.:~/richard/
@@ -233,41 +219,6 @@ export EDITOR=vim
 export PATH="$PATH:/home/richard/.gem/ruby/2.6.0/bin"
 
 export PATH="$PATH:/home/richard/bin"
-
-function swap() {
-  local TMPFILE=tmp.$$
-  mv "$1" $TMPFILE
-  mv "$2" "$1"
-  mv $TMPFILE "$2"
-}
-# Allows for cd without args to go to ~/Downloads/
-cd () {
-  if [ $# = 0 ]; then
-    builtin cd ~/Downloads/
-  else
-    builtin cd "$@"
-  fi
-}
-
-# count number of words in an HTML file (removes HTML tags)
-function countwords() {
-  if [ $# -eq 0 ]; then
-    echo "Usage: countwords HTML_FILE [FIRST_LINES]"
-    echo "    Counts words by stripping html tags from the file."
-    echo "    The first FIRST_LINES lines of the file will be displayed. Default is 15"
-    return 1
-  fi
-
-  filename=$1
-  first_lines=15
-  sed 's/<[^>]\+>/ /g' $filename | wc -w
-  if [ $# -eq 2 ]; then
-    first_lines=$2
-  fi
-  if [[ $# > 0 ]]; then
-    sed 's/<[^>]\+>/ /g' $filename | fold -w 80 -s | head -n $first_lines
-  fi
-}
 
 # allow GPG to work correctly
 GPG_TTY=$(tty)

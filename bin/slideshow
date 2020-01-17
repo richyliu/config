@@ -1,0 +1,56 @@
+#!/bin/bash
+
+# Creates a slideshow starting at image
+if [[ $# -eq 0 || $1 = "--help" ]]; then
+  echo "Usage:"
+  echo "  slideshow [-s START_IMAGE] IMAGES... [-F]"
+  echo "  slideshow START_IMAGE [-F]"
+  echo ""
+  echo "      If no images are provided, * is used instead"
+  echo "      -F    Fullscreen (must be the very end)"
+  exit 1
+fi
+
+start_image=""
+all_images=""
+# get start image option, if it exists
+while getopts ":s:" opt; do
+  case $opt in
+    s)
+      start_image=$OPTARG
+      ;;
+    \?)
+      echo "Error: Invalid option: -$OPTARG"
+      exit 1
+      ;;
+    :)
+      echo "Error: Option -$OPTARG requires an argument."
+      exit 1
+      ;;
+  esac
+done
+shift $((OPTIND -1))
+
+# just one image, start at that image --- or one image and fullscreen flag
+if [[ $# == 1 || $2 == "-F" ]]; then
+  start_image="$1"
+  all_images="*"
+  # re-add fullscreen flag if necessary
+  if [[ $2 == "-F" ]]; then
+    all_images="* -F"
+  fi
+# start image provided, but no other images
+elif [ $# -eq 0 ]; then
+  echo "Error: Start image provided, but no IMAGES provided"
+  exit 1
+# otherwise treat the rest of the args as images
+else
+  all_images="$@"
+fi
+
+# show the images
+if [ "$start_image" = "" ]; then
+  feh --scale-down --auto-zoom $all_images
+else
+  feh --scale-down --auto-zoom --start-at "$start_image" $all_images
+fi

@@ -1,0 +1,31 @@
+#!/bin/bash
+
+if [[ $1 = "--help" ]]; then
+  echo "Usage:"
+  echo "  renumber [FORMAT] [START]"
+  echo "  Numbers the file from START using the FORMAT for printf"
+  echo "      FORMAT is '%03d.jpg' by default"
+  exit 1
+fi
+
+format=$1
+if [ $# -eq 0 ]; then
+  format="%03d.jpg"
+fi
+
+start=$2
+if (( $# < 2 )); then
+  start=0
+fi
+
+echo "Renaming all files in folder from $start using the format '$format'"
+read -p "Press ENTER to continue: "
+
+# add leading underscore to prevent overwriting files
+perl-rename 's/(.+)/_$1/' *
+
+let i=$start
+for f in *; do
+  mv "$f" $(printf "$format" $i)
+  let i++
+done
