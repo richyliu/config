@@ -1,5 +1,13 @@
 #!/bin/bash
 
+if [[ $1 = "--help" ]]; then
+  echo "Usage:"
+  echo "  for_command COMMAND FOLDER..."
+  echo "  Runs COMMAND in FOLDERs, relative to each FOLDER"
+  echo "  Confirms before starting"
+  exit 1
+fi
+
 # allows a command to be run in each folder
 echo "Running '$1' in the folders: ${@:2}"
 read -p "Press ENTER to continue: "

@@ -4,6 +4,7 @@ if [[ $1 = "--help" ]]; then
   echo "Usage:"
   echo "  renumber [FORMAT] [START]"
   echo "  Numbers the file from START using the FORMAT for printf"
+  echo "  Confirms before starting"
   echo "      FORMAT is '%03d.jpg' by default"
   exit 1
 fi

@@ -219,8 +219,6 @@ nnoremap <leader>e :e <c-d>
 nnoremap <leader>ee :e <c-d>
 " Open file
 nnoremap <leader>f :find<space>
-" Save and close file
-nnoremap <leader>z :call CloseFile()<cr>
 " Stop highlighting search
 " nnoremap <leader>n :nohlsearch<cr>
 " cd to current file directory
@@ -248,7 +246,7 @@ nnoremap ! :!
 " Make ex mode harder to enter on accident
 nnoremap Q :echo "To enter Ex mode, type  gQ  or start vim with 'vim -e'"<cr>
 " switch buffers
-nnoremap <leader>b :ls<cr>:b<space>
+nnoremap <leader>b :ls<cr>:b
 
 " Git shortcuts
 nnoremap <leader>ga :!git add -A; git status; printf "\nGIT ADD ALL\n"<cr>
@@ -284,16 +282,6 @@ cnoremap <c-a> <c-b>
 
 " Exit tmux and kill host
 nnoremap <c-q> :!tmux detach-client -P<cr>
-
-" Close and save: buffer, if >1 buffer, or file
-function CloseFile()
-  update
-  if len(getbufinfo({'buflisted':1})) - 1
-    bdelete
-  else
-    quit
-  endif
-endfunction
 
 " source: https://vim.fandom.com/wiki/Search_for_visually_selected_text
 " Search for selected text, forwards or backwards.
