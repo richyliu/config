@@ -38,7 +38,7 @@ Plugin 'hail2u/vim-css3-syntax'         " CSS3 language support
 Plugin 'ap/vim-css-color'               " Highlights CSS color variables with color
 Plugin 'richyliu/elm-vim'               " Elm support
 
-Plugin 'gabrielelana/vim-markdown'      " Markdown support
+" Plugin 'gabrielelana/vim-markdown'      " Markdown support
 Plugin 'tpope/vim-liquid'               " Liquid templating language
 
 Plugin 'Shougo/vimproc.vim'             " Required for vebugger
@@ -237,8 +237,10 @@ nnoremap <leader>a :set paste!<cr>
 " open help search
 nnoremap <leader>h :help<space>
 " find and replace
-nnoremap <leader>% :%s/
-vnoremap <leader>% :s/
+nnoremap <leader>% :%s/\v
+vnoremap <leader>% :s/\v
+nnoremap / /\v
+nnoremap ? ?\v
 " change settings
 nnoremap <leader>u :set<space>
 " run external shell command
@@ -281,7 +283,7 @@ cnoremap ˙ <del>
 cnoremap <c-a> <c-b>
 
 " Exit tmux and kill host
-nnoremap <c-q> :!tmux detach-client -P<cr>
+nnoremap <c-q> :silent !tmux detach-client -P<cr>
 
 " source: https://vim.fandom.com/wiki/Search_for_visually_selected_text
 " Search for selected text, forwards or backwards.
@@ -344,14 +346,24 @@ augroup END
 
 augroup filetype_markdown
   autocmd!
+  " start bold text
   autocmd Filetype markdown inoremap <buffer> <c-b> ****<left><left>
   autocmd Filetype markdown iabbrev <buffer> --> →
-  " Need to allow recursive map to make surround work
+  " need to allow recursive map to make surround work
   autocmd Filetype markdown vmap <buffer> <c-b> S*gvS*
   autocmd Filetype markdown setlocal complete=kspell
-  autocmd Filetype markdown setlocal textwidth=80
+  " wrap text at 120 column
+  autocmd Filetype markdown setlocal textwidth=120
+  autocmd Filetype markdown setlocal colorcolumn=120
+  " easier continuation of list items
+  autocmd Filetype markdown setlocal formatoptions+=ro
+  autocmd Filetype markdown setlocal comments=b:*,b:-,b:+,n:>
+  " press F5 to insert header of current date
   autocmd Filetype markdown inoremap <buffer> <F5> ##<space><c-r>=strftime("%Y-%m-%d %a")<cr><cr>
+  " toggle spell
   autocmd Filetype markdown nnoremap <buffer> <localleader>s :set spell!<cr>
+  " make a link around the word and insert into the link title
+  autocmd Filetype markdown nnoremap <buffer> <localleader>l :execute "normal! i(\eEa)\eBi[]\e"<cr>:startinsert<cr>
 augroup END
 
 augroup filetype_sh

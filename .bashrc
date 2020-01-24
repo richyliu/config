@@ -230,6 +230,12 @@ stty -ixon
 # Expand directories in a variable
 shopt -s direxpand
 
+# Enable ** which match subdirectories
+shopt -s globstar
+
+# Enable better globs
+shopt -s extglob
+
 # powerline fonts
 . /usr/share/bash/powerline.sh
 

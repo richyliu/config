@@ -2,23 +2,39 @@
 
 # count number of words in an HTML file (removes HTML tags)
 if [[ $# -eq 0 || $1 = "--help" ]]; then
-  echo "Usage: countwords HTML_FILE [FIRST_LINES]"
-  echo "    Counts words by stripping html tags from the file."
-  echo "    The first FIRST_LINES lines of the file will be displayed. Default is 5"
+  echo "Usage: countbookwords EPUB"
+  echo "    Counts words of an EPUB file"
   exit 1
 fi
 
-filename=$1
-first_lines=5
-if [ $# -eq 2 ]; then
-  first_lines=$2
-fi
+shopt -s extglob
+shopt -s globstar
 
-# remove contents of head and html tags
-cleaned=$(sed 's/<[^>]\+>/ /g' "$filename")
-# unquoted variable automatically gets rid of newlines
-echo $cleaned | wc -w
-# fold text to 80 characters wide
-folded=$(echo $cleaned | fold -s)
-# print first severl lines
-echo "$folded" | head -n $first_lines
+ebook=$1
+extract_folder=$(mktemp -d)
+
+# copy the ebook to a temporary folder
+cp "$ebook" "$extract_folder"
+
+# extract the book (epub is actually just a zip)
+cd "$extract_folder"
+unzip -q "$ebook"
+
+# heading for the table
+echo -e "Words\tChapter file"
+
+# keep track of total words
+let total_words=0
+# all files that end in html or xhtml
+for chapter in **/*.@(html|xhtml|htm); do
+  # count number of words by removing html tags
+  words=$(echo $(sed 's/<[^>]\+>/ /g' "$chapter") | wc -w)
+  # print word and chapter file name
+  echo -n $words
+  echo -e "\t$chapter"
+  let total_words+=$words
+done
+
+echo -e "\nTotal words: $total_words"
+
+rm -r "$extract_folder"
