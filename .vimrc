@@ -133,6 +133,21 @@ let g:gitgutter_map_keys = 0
 let g:markdown_enable_mappings = 0
 " Disable spell check to make editing faster
 let g:markdown_enable_spell_checking = 0
+
+let g:PaperColor_Theme_Options = {
+      \   'theme': {
+      \     'default.dark': {
+      \       'allow_bold': 1,
+      \       'allow_italic': 1,
+      \       'transparent_background': 1
+      \     },
+      \     'default.light': {
+      \       'allow_bold': 1,
+      \       'allow_italic': 1,
+      \       'transparent_background': 0
+      \     }
+      \  }
+      \}
 " }}}
 
 
@@ -219,14 +234,8 @@ nnoremap <leader>e :e <c-d>
 nnoremap <leader>ee :e <c-d>
 " Open file
 nnoremap <leader>f :find<space>
-" Stop highlighting search
-" nnoremap <leader>n :nohlsearch<cr>
 " cd to current file directory
 nnoremap <leader>c :cd %:p:h<cr>
-" toggle tagbar
-nnoremap <leader>t :TagbarToggle<cr>
-" source vimrc (to fix mouse bug on tmux)
-nnoremap <leader>m :source $MYVIMRC<cr>
 " yank to system clipboard
 nnoremap <leader>y "+y
 vnoremap <leader>y "+y
@@ -234,6 +243,8 @@ vnoremap <leader>y "+y
 nnoremap <leader>p "+p
 " change to paste mode
 nnoremap <leader>a :set paste!<cr>
+" toggle relative number
+nnoremap <leader>l :setlocal relativenumber!<cr>
 " open help search
 nnoremap <leader>h :help<space>
 " find and replace
@@ -277,8 +288,6 @@ inoremap <c-f> <c-d>
 " Go to previous command with Ctrl-P
 nnoremap <c-p> :<c-p>
 vnoremap <c-p> :<c-p>
-" Delete with alt-h
-cnoremap ˙ <del>
 " Go to beginning of line with ctrl-a
 cnoremap <c-a> <c-b>
 
@@ -410,30 +419,6 @@ endfunction
 
 " Options togglers {{{
 
-" Fold column {{{
-" nnoremap <leader>f :call <SID>FoldColumnToggle()<cr>
-
-" function! s:FoldColumnToggle()
-"   if &foldcolumn
-"     setlocal foldcolumn=0
-"   else
-"     setlocal foldcolumn=4
-"   endif
-" endfunction
-" }}}
-
-" Relative line number {{{
-nnoremap <leader>l :call <SID>RelativeNumberToggle()<cr>
-
-function! s:RelativeNumberToggle()
-  if &relativenumber
-    setlocal norelativenumber
-  else
-    setlocal relativenumber
-  endif
-endfunction
-" }}}
-
 " Quick fix {{{
 " nnoremap <leader>q :call <SID>QuickfixToggle()<cr>
 
@@ -451,17 +436,6 @@ function! s:QuickfixToggle()
   endif
 endfunction
 " }}}
-
-" Toggle background between light and dark
-
-nnoremap <f4> :call <SID>ToggleBackground()<cr>
-function! s:ToggleBackground()
-  if &background == "dark"
-    let &background = "light"
-  else
-    let &background = "dark"
-  endif
-endfunction
 
 " }}}
 

@@ -39,38 +39,46 @@ syntax on
 filetype plugin on
 
 let mapleader = " "
-let maplocalleader = "L"
-" Save all file
-noremap <leader>s :w<cr>
+let maplocalleader = "Q"
+" Save file
+noremap <leader>w :w<cr>
 " Source current file
 noremap <leader>o :source %<cr>
 " Run the previous command
 noremap <leader>r :!!<cr>
+" Open file in current folder
+nnoremap <leader>e :e <c-d>
+nnoremap <leader>ee :e <c-d>
 " Open file
-nnoremap <leader>f :find 
-" Save and close file
-nnoremap <leader>z :call CloseFile()<cr>
-nnoremap <leader>za :xa<cr>
-" Split windows
-nnoremap <leader>ws :split<cr>
-nnoremap <leader>wv :vsplit<cr>
-" Stop highlighting search
-nnoremap <leader>n :nohlsearch<cr>
-" Toggle between dark and light background
-nnoremap <leader>b :let &background = ( &background == "dark" ? "light" : "dark" )<CR>
+nnoremap <leader>f :find<space>
 " cd to current file directory
 nnoremap <leader>c :cd %:p:h<cr>
-" yank current line to system clipboard
-nnoremap <leader>y "+yy
-" paste current line from system clipboard
-nnoremap <leader>a "+pj
+" yank to system clipboard
+nnoremap <leader>y "+y
+vnoremap <leader>y "+y
+" paste from system clipboard
+nnoremap <leader>p "+p
+" change to paste mode
+nnoremap <leader>a :set paste!<cr>
+" open help search
+nnoremap <leader>h :help<space>
+" find and replace
+nnoremap <leader>% :%s/\v
+vnoremap <leader>% :s/\v
+nnoremap / /\v
+nnoremap ? ?\v
+" change settings
+nnoremap <leader>u :set<space>
+" run external shell command
+nnoremap ! :!
+" Make ex mode harder to enter on accident
+nnoremap Q :echo "To enter Ex mode, type  gQ  or start vim with 'vim -e'"<cr>
+" switch buffers
+nnoremap <leader>b :ls<cr>:b
 
-" No need for shift to type commands
-nnoremap ; :
-vnoremap ; :
-" Move line forward or backward
-nnoremap _ ddkP
-nnoremap + ddp
+" Move line up or down
+nnoremap _ :.m.-2<cr>
+nnoremap + :.m+<cr>
 " Cycle through buffers
 nnoremap <tab> :bnext<cr>
 nnoremap <s-tab> :bprevious<cr>
@@ -84,29 +92,11 @@ inoremap <c-d> <c-o>dd
 " Un-indent with Ctrl-F (b/c Ctrl-D doesn't work)
 inoremap <c-f> <c-d>
 
-" Go to previous command with Ctrl-K
-cnoremap <c-k> <up>
-nnoremap <c-k> :<up>
-" Or next command with Ctrl-J
-cnoremap <c-j> <down>
-" Delete with alt-h
-cnoremap ˙ <del>
+" Go to previous command with Ctrl-P
+nnoremap <c-p> :<c-p>
+vnoremap <c-p> :<c-p>
 " Go to beginning of line with ctrl-a
 cnoremap <c-a> <c-b>
-
-" change comma to semicolon (repeat previous t or f)
-nnoremap , ;
-vnoremap , ;
-
-" Close and save: buffer, if >1 buffer, or file
-function CloseFile()
-  update
-  if len(getbufinfo({'buflisted':1})) - 1
-    bdelete
-  else
-    execute "normal! ZZ"
-  endif
-endfunction
 
 " source: https://vim.fandom.com/wiki/Search_for_visually_selected_text
 " Search for selected text, forwards or backwards.
