@@ -179,6 +179,7 @@ set shiftwidth=2
 set showcmd
 set smartcase
 set softtabstop=2
+set spellfile=~/.vim/spell/.utf-8.add
 set splitright
 set nostartofline
 set tabstop=4
