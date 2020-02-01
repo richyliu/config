@@ -37,4 +37,4 @@ done
 
 echo -e "\nTotal words: $total_words"
 
-rm -r "$extract_folder"
+rm -rf "$extract_folder"

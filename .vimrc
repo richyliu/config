@@ -247,11 +247,8 @@ nnoremap <leader>a :set paste!<cr>
 nnoremap <leader>l :setlocal relativenumber!<cr>
 " open help search
 nnoremap <leader>h :help<space>
-" find and replace
-nnoremap <leader>% :%s/\v
-vnoremap <leader>% :s/\v
-nnoremap / /\v
-nnoremap ? ?\v
+" enable verymagic for regex
+cnoremap <c-o> <c-f>^f/a\v<c-c><c-e>
 " change settings
 nnoremap <leader>u :set<space>
 " run external shell command
@@ -260,6 +257,9 @@ nnoremap ! :!
 nnoremap Q :echo "To enter Ex mode, type  gQ  or start vim with 'vim -e'"<cr>
 " switch buffers
 nnoremap <leader>b :ls<cr>:b
+" search
+nnoremap <leader>% :%s/
+vnoremap <leader>% :s/
 
 " Git shortcuts
 nnoremap <leader>ga :!git add -A; git status; printf "\nGIT ADD ALL\n"<cr>
@@ -371,8 +371,19 @@ augroup filetype_markdown
   autocmd Filetype markdown inoremap <buffer> <F5> ##<space><c-r>=strftime("%Y-%m-%d %a")<cr><cr>
   " toggle spell
   autocmd Filetype markdown nnoremap <buffer> <localleader>s :set spell!<cr>
+  " enable spell by default
+  autocmd Filetype markdown setlocal spell
   " make a link around the word and insert into the link title
   autocmd Filetype markdown nnoremap <buffer> <localleader>l :execute "normal! i(\eEa)\eBi[]\e"<cr>:startinsert<cr>
+augroup END
+
+augroup filetype_tex
+  " wrap text at 80 column
+  autocmd Filetype tex setlocal textwidth=80
+  " toggle spell
+  autocmd Filetype tex nnoremap <buffer> <localleader>s :set spell!<cr>
+  " enable spell by default
+  autocmd Filetype tex setlocal spell
 augroup END
 
 augroup filetype_sh

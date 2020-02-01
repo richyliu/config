@@ -142,7 +142,7 @@ alias phpserver="php -S 127.0.0.1:8000 -t ."
 alias compress="mogrify -resize 1200x1200 -strip -quality 80% *.jpg"
 alias compressmedium="mogrify -resize 1680x1680 -strip -quality 80% *.jpg"
 alias compressmin="mogrify -resize 2016x2016 -strip -quality 80% *.jpg"
-alias compressfast='for i in *; do epeg -m 2016 -q 85 $i _$i; mv _$i $i; echo $i; done; compress'
+alias compressfast='for i in *; do epeg -m 2016 -q 85 $i _$i; mv -f _$i $i; echo $i; done; compress'
 alias ..="cd .."
 alias ...="cd ../.."
 alias ....="cd ../../.."
@@ -209,6 +209,11 @@ function grep() {
   else 
     command grep "$@"
   fi
+}
+
+# Crawls a cover image
+function cover() {
+  curl "$1" -o 000.jpg
 }
 
 export CDPATH=.:~/richard/

@@ -4,23 +4,28 @@ if [[ $1 = "--help" ]]; then
   echo "Usage:"
   echo "  renumber [FORMAT] [START]"
   echo "  Numbers the file from START using the FORMAT for printf"
-  echo "  Confirms before starting"
+  echo "  Confirms before starting only if options are used"
   echo "      FORMAT is '%03d.jpg' by default"
   exit 1
 fi
 
+# get the format, otherwise use default format
 format=$1
 if [ $# -eq 0 ]; then
   format="%03d.jpg"
 fi
 
+# get the start number, otherwise use default start at 0
 start=$2
 if (( $# < 2 )); then
   start=0
 fi
 
-echo "Renaming all files in folder from $start using the format '$format'"
-read -p "Press ENTER to continue: "
+# only prompt to confirm when options are used
+if (( $# > 0 )); then
+  echo "Renaming all files in folder from $start using the format '$format'"
+  read -p "Press ENTER to continue: "
+fi
 
 # add leading underscore to prevent overwriting files
 perl-rename 's/(.+)/_$1/' *
