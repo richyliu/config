@@ -126,9 +126,6 @@ set updatetime=750
 " Tagbar show relative line numbers
 let g:tagbar_show_linenumbers=2
 
-" Disable gitgutter mappings
-let g:gitgutter_map_keys = 0
-
 " Disable vim-markdown default mapping
 let g:markdown_enable_mappings = 0
 " Disable spell check to make editing faster
@@ -295,6 +292,19 @@ cnoremap <c-a> <c-b>
 " Exit tmux and kill host
 nnoremap <c-q> :silent !tmux detach-client -P<cr>
 
+" Use custom gitgutter mappings
+let g:gitgutter_map_keys = 0
+nmap <leader>ghp <Plug>(GitGutterPreviewHunk)
+nmap <leader>ghs <Plug>(GitGutterStageHunk)
+nmap <leader>ghu <Plug>(GitGutterUndoHunk)
+" Default gitgutter mappings
+nmap [c <Plug>(GitGutterPrevHunk)
+nmap ]c <Plug>(GitGutterNextHunk)
+omap ic <Plug>(GitGutterTextObjectInnerPending)
+omap ac <Plug>(GitGutterTextObjectOuterPending)
+xmap ic <Plug>(GitGutterTextObjectInnerVisual)
+xmap ac <Plug>(GitGutterTextObjectOuterVisual)
+
 " source: https://vim.fandom.com/wiki/Search_for_visually_selected_text
 " Search for selected text, forwards or backwards.
 vnoremap <silent> * :<C-U>
@@ -362,9 +372,9 @@ augroup filetype_markdown
   " need to allow recursive map to make surround work
   autocmd Filetype markdown vmap <buffer> <c-b> S*gvS*
   autocmd Filetype markdown setlocal complete=kspell
-  " wrap text at 120 column
-  autocmd Filetype markdown setlocal textwidth=120
-  autocmd Filetype markdown setlocal colorcolumn=120
+  " wrap text at 80 column
+  autocmd Filetype markdown setlocal textwidth=80
+  autocmd Filetype markdown setlocal colorcolumn=80
   " easier continuation of list items
   autocmd Filetype markdown setlocal formatoptions+=ro
   autocmd Filetype markdown setlocal comments=b:*,b:-,b:+,n:>
