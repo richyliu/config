@@ -26,8 +26,8 @@ Plugin 'mattn/emmet-vim'                " Emmet for html tag shortcuts
 "Plugin 'neoclide/coc.nvim'              " For autocomplete and language server support
 Plugin 'quramy/tsuquyomi'               " Typescript lanaguage server
 
-Plugin 'sirver/ultisnips'               " Snippet support
-Plugin 'honza/vim-snippets'             " Provides the snippets
+" Plugin 'sirver/ultisnips'               " Snippet support
+" Plugin 'honza/vim-snippets'             " Provides the snippets
 
 Plugin 'prettier/vim-prettier'          " Prettier support for JS/TS
 Plugin 'mxw/vim-jsx'                    " JSX language support
@@ -150,7 +150,7 @@ let g:PaperColor_Theme_Options = {
 
 " Settings {{{
 set autoindent
-set background=dark
+set background=light
 set backspace=indent,eol,start
 set backup
 set backupcopy=yes
@@ -408,6 +408,7 @@ augroup filetype_js
   autocmd!
   " invoke prettier to format document
   autocmd Filetype javascript,typescript,jsx,tsx nnoremap <buffer> <localleader>p :Prettier<cr>
+  autocmd Filetype javascript,typescript,jsx,tsx setlocal tabstop=2
 augroup END
 
 " }}}
@@ -493,3 +494,6 @@ endfunction
 " }}}
 
 " }}}
+
+set t_ZH=[3m
+set t_ZR=[23m
