@@ -126,10 +126,8 @@ set updatetime=750
 " Tagbar show relative line numbers
 let g:tagbar_show_linenumbers=2
 
-" Disable vim-markdown default mapping
-let g:markdown_enable_mappings = 0
-" Disable spell check to make editing faster
-let g:markdown_enable_spell_checking = 0
+" Enable folding in default markdown
+let g:markdown_folding = 1
 
 let g:PaperColor_Theme_Options = {
       \   'theme': {
@@ -150,7 +148,7 @@ let g:PaperColor_Theme_Options = {
 
 " Settings {{{
 set autoindent
-set background=dark
+set background=light
 set backspace=indent,eol,start
 set backup
 set backupcopy=yes
@@ -160,6 +158,7 @@ set completefunc=ListSnippets
 set cursorline
 set dictionary+=/usr/share/dict/words
 set expandtab
+set foldlevelstart=20
 set hidden
 set hlsearch
 set ignorecase
@@ -173,6 +172,7 @@ set relativenumber
 set ruler
 set scrolloff=5
 set shiftwidth=2
+set shellcmdflag=-c
 set showcmd
 set smartcase
 set softtabstop=2
@@ -378,12 +378,13 @@ augroup filetype_markdown
   " easier continuation of list items
   autocmd Filetype markdown setlocal formatoptions+=ro
   autocmd Filetype markdown setlocal comments=b:*,b:-,b:+,n:>
+  " makes bullet list formatting easier with gq
+  autocmd Filetype markdown setlocal formatoptions-=c
+  autocmd Filetype markdown setlocal formatoptions-=q
   " press F5 to insert header of current date
   autocmd Filetype markdown inoremap <buffer> <F5> ##<space><c-r>=strftime("%Y-%m-%d %a")<cr><cr>
   " toggle spell
   autocmd Filetype markdown nnoremap <buffer> <localleader>s :set spell!<cr>
-  " enable spell by default
-  autocmd Filetype markdown setlocal spell
   " make a link around the word and insert into the link title
   autocmd Filetype markdown nnoremap <buffer> <localleader>l :execute "normal! i(\eEa)\eBi[]\e"<cr>:startinsert<cr>
 augroup END
@@ -391,6 +392,7 @@ augroup END
 augroup filetype_tex
   " wrap text at 80 column
   autocmd Filetype tex setlocal textwidth=80
+  autocmd Filetype tex setlocal colorcolumn=80
   " toggle spell
   autocmd Filetype tex nnoremap <buffer> <localleader>s :set spell!<cr>
   " enable spell by default

@@ -153,6 +153,7 @@ alias gp="git pull"
 alias gac="git add -A && git commit -S -m"
 alias gs="git status"
 alias gd="git diff"
+alias g-="git diff --cached"
 alias ga="git add -A ."
 alias llsr="ll -Sr"
 alias duhd="du -hd1 | sort -h"
@@ -161,6 +162,7 @@ alias td="tmux detach-client -P"
 alias pbcopy='xclip -selection clipboard'
 alias pbpaste='xclip -selection clipboard -o'
 alias epeg='/home/richard/richard/epeg-0.9.2/src/bin/epeg'
+alias tb="(exec 3<>/dev/tcp/termbin.com/9999; cat >&3; cat <&3; exec 3<&-)"
 
 VWH="/var/www/html"
 VWHM="/var/www/html/images/metart"
@@ -203,10 +205,10 @@ function cd () {
 }
 
 # Grep displays line numbers when not in a pipeline
-function grep() { 
-  if [[ -t 1 ]]; then 
+function grep() {
+  if [[ -t 1 ]]; then
     command grep -n "$@"
-  else 
+  else
     command grep "$@"
   fi
 }

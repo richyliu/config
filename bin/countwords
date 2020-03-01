@@ -31,7 +31,7 @@ for chapter in **/*.@(html|xhtml|htm); do
   words=$(echo $(sed 's/<[^>]\+>/ /g' "$chapter") | wc -w)
   # print word and chapter file name
   echo -n $words
-  echo -e "\t$chapter"
+  echo -e "\t" $(sed 's/<[^>]\+>/ /g' "$chapter" | grep "\S" | fold -sw 80 | head -3 | tail -1)
   let total_words+=$words
 done
 
