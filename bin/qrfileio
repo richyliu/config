@@ -13,5 +13,6 @@ file=$1
 result=$(curl -F "file=@$file" https://file.io)
 # extract the link from the json
 link=$(echo $result | jq ".link")
+echo $link
 # show a qr code and display it in the terminal with viu
 qrencode "$link" -o - | viu
