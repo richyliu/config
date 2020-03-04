@@ -104,6 +104,7 @@ setopt no_share_history
 unsetopt share_history
 
 
+alias l="ls -G"
 alias ll="ls -lh"
 alias pyserver="python3 -m http.server"
 alias phpserver="php -S 127.0.0.1:8000 -t ."
@@ -122,6 +123,7 @@ alias duhd="du -hd1 | sort -h"
 alias ta="tmux attach-session"
 alias td="tmux detach-client -P"
 alias renumber='for i in *; do mv $i _$i; done; let a=0; for i in *; do mv $i $(printf "%03d.jpg" $a); let a++; done'
+alias gcs='git commit -S -m'
 
 alias moshremote="mosh --ssh='ssh -p 5731' richard@73.252.205.89"
 

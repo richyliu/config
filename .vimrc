@@ -38,7 +38,7 @@ Plugin 'hail2u/vim-css3-syntax'         " CSS3 language support
 Plugin 'ap/vim-css-color'               " Highlights CSS color variables with color
 Plugin 'richyliu/elm-vim'               " Elm support
 
-" Plugin 'gabrielelana/vim-markdown'      " Markdown support
+Plugin 'richyliu/vim-markdown'          " Markdown support
 Plugin 'tpope/vim-liquid'               " Liquid templating language
 
 Plugin 'Shougo/vimproc.vim'             " Required for vebugger
