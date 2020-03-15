@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env zsh
 
 # count number of words in an HTML file (removes HTML tags)
 if [[ $# -eq 0 || $1 = "--help" ]]; then
@@ -7,8 +7,8 @@ if [[ $# -eq 0 || $1 = "--help" ]]; then
   exit 1
 fi
 
-shopt -s extglob
-shopt -s globstar
+# shopt -s extglob
+# shopt -s globstar
 
 ebook=$1
 extract_folder=$(mktemp -d)
@@ -21,17 +21,19 @@ cd "$extract_folder"
 unzip -q "$ebook"
 
 # heading for the table
-echo -e "Words\tChapter file"
+echo -e "Words\tChapter file\tFirst words"
 
 # keep track of total words
 let total_words=0
 # all files that end in html or xhtml
-for chapter in **/*.@(html|xhtml|htm); do
+for chapter in **/*.(html|xhtml|htm|xml); do
   # count number of words by removing html tags
   words=$(echo $(sed 's/<[^>]\+>/ /g' "$chapter") | wc -w)
   # print word and chapter file name
-  echo -n $words
-  echo -e "\t" $(sed 's/<[^>]\+>/ /g' "$chapter" | grep "\S" | fold -sw 80 | head -3 | tail -1)
+  echo -n "$words\t"
+  echo -n "$chapter\t"
+  # remove head, remove all html tags, get the first 80 characters of the file
+  echo $(perl -0777 -pe 's/<head>.*<\/head>/ /s' "$chapter" | sed -e 's/<[^>]*>/ /g' | grep "\S" | tr -d '\r\n' | head -c 80)
   let total_words+=$words
 done
 

@@ -12,7 +12,7 @@ Plugin 'vim-airline/vim-airline-themes' " To customize status line for PaperColo
 Plugin 'kshenoy/vim-signature'          " To display marks in the sidebar
 Plugin 'airblade/vim-gitgutter'         " To display git changes in the sidebar
 Plugin 'NLKNguyen/papercolor-theme'     " Theme
-Plugin 'majutsushi/tagbar'              " Display tags in an outline format
+" Plugin 'majutsushi/tagbar'              " Display tags in an outline format
 Plugin 'romainl/vim-cool'               " automatically disable search highlighting
 
 Plugin 'tpope/vim-commentary'           " Allow for easy commenting via 'gcc'
@@ -38,7 +38,10 @@ Plugin 'hail2u/vim-css3-syntax'         " CSS3 language support
 Plugin 'ap/vim-css-color'               " Highlights CSS color variables with color
 Plugin 'richyliu/elm-vim'               " Elm support
 
-Plugin 'richyliu/vim-markdown'          " Markdown support
+Plugin 'git@github.com:richyliu/vim-markdown'       " Markdown support
+Plugin 'git@github.com:richyliu/markdown-plus.git'  " Markdown Plus
+
+Plugin 'dkarter/bullets.vim'            " Better bullet lists
 Plugin 'tpope/vim-liquid'               " Liquid templating language
 
 Plugin 'Shougo/vimproc.vim'             " Required for vebugger
@@ -143,6 +146,9 @@ let g:PaperColor_Theme_Options = {
       \     }
       \  }
       \}
+
+" Open pdf in default viewer
+let g:livepreview_previewer = 'open'
 " }}}
 
 
@@ -153,7 +159,7 @@ set backspace=indent,eol,start
 set backup
 set backupcopy=yes
 set backupdir=~/.cache/vim/backup/
-set clipboard=unnamed
+set clipboard=
 set completefunc=ListSnippets
 set cursorline
 set dictionary+=/usr/share/dict/words
@@ -234,11 +240,8 @@ nnoremap <leader>ee :e <c-d>
 nnoremap <leader>f :find<space>
 " cd to current file directory
 nnoremap <leader>c :cd %:p:h<cr>
-" yank to system clipboard
-nnoremap <leader>y "+y
-vnoremap <leader>y "+y
 " paste from system clipboard
-nnoremap <leader>p "+p
+" nnoremap <leader>p "+p
 " change to paste mode
 nnoremap <leader>a :set paste!<cr>
 " toggle relative number
@@ -258,6 +261,12 @@ nnoremap <leader>b :ls<cr>:b
 " search
 nnoremap <leader>% :%s/
 vnoremap <leader>% :s/
+" search repeats
+nnoremap <leader>g :%g/
+vnoremap <leader>g :g/
+" yank to system clipboard
+nnoremap <leader>y "+y
+vnoremap <leader>y "+y
 
 " Git shortcuts
 nnoremap <leader>ga :!git add -A; git status; printf "\nGIT ADD ALL\n"<cr>
@@ -292,6 +301,12 @@ cnoremap <c-a> <c-b>
 " Exit tmux and kill host
 nnoremap <c-q> :silent !tmux detach-client -P<cr>
 
+" Make ctrl-u start a separate history entry
+inoremap <c-u> <c-g>u<c-u>
+
+" Open link in google chrome
+nnoremap <leader>m yi(:<c-u>silent execute '!open -a "google chrome" "' . escape(@@, '%#') . '"'<cr><c-l>
+
 " Use custom gitgutter mappings
 let g:gitgutter_map_keys = 0
 nmap <leader>ghp <Plug>(GitGutterPreviewHunk)
@@ -309,13 +324,11 @@ xmap ac <Plug>(GitGutterTextObjectOuterVisual)
 " Search for selected text, forwards or backwards.
 vnoremap <silent> * :<C-U>
   \let old_reg=getreg('"')<Bar>let old_regtype=getregtype('"')<CR>
-  \gvy/<C-R><C-R>=substitute(
-  \escape(@", '/\.*$^~['), '\_s\+', '\\_s\\+', 'g')<CR><CR>
+  \gvy/<C-R><C-R>=escape(@", '/\.*$^~[')<CR><CR>
   \gV:call setreg('"', old_reg, old_regtype)<CR>
 vnoremap <silent> # :<C-U>
   \let old_reg=getreg('"')<Bar>let old_regtype=getregtype('"')<CR>
-  \gvy?<C-R><C-R>=substitute(
-  \escape(@", '?\.*$^~['), '\_s\+', '\\_s\\+', 'g')<CR><CR>
+  \gvy?<C-R><C-R>=escape(@", '?\.*$^~[')<CR><CR>
   \gV:call setreg('"', old_reg, old_regtype)<CR>
 
 
@@ -375,12 +388,8 @@ augroup filetype_markdown
   " wrap text at 80 column
   autocmd Filetype markdown setlocal textwidth=80
   autocmd Filetype markdown setlocal colorcolumn=80
-  " easier continuation of list items
-  autocmd Filetype markdown setlocal formatoptions+=ro
-  autocmd Filetype markdown setlocal comments=b:*,b:-,b:+,n:>
-  " makes bullet list formatting easier with gq
-  autocmd Filetype markdown setlocal formatoptions-=c
-  autocmd Filetype markdown setlocal formatoptions-=q
+  " enable spell by default
+  autocmd Filetype markdown setlocal spell
   " press F5 to insert header of current date
   autocmd Filetype markdown inoremap <buffer> <F5> ##<space><c-r>=strftime("%Y-%m-%d %a")<cr><cr>
   " toggle spell
@@ -417,30 +426,6 @@ augroup END
 
 
 " Custom Plugins {{{
-
-" Grep operator {{{
-" nnoremap <leader>g :set operatorfunc=<SID>GrepOperator<cr>g@
-" vnoremap <leader>g :<c-u>call <SID>GrepOperator(visualmode())<cr>
-
-function! s:GrepOperator(type)
-  let saved_unnamed_register = @@
-
-  if a:type ==# 'v'
-    normal! `<v`>y
-  elseif a:type ==# 'char'
-    normal! `[y`]
-  else
-    return
-  endif
-
-  try
-    execute 'vimgrep /'. escape(@@, '/\.*$^~[') . '/g **'
-    copen
-  endtry
-
-  let @@ = saved_unnamed_register
-endfunction
-" }}}
 
 " Options togglers {{{
 

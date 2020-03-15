@@ -28,7 +28,7 @@ if (( $# > 0 )); then
 fi
 
 # add leading underscore to prevent overwriting files
-perl-rename 's/(.+)/_$1/' *
+rename 's/(.+)/_$1/' *
 
 let i=$start
 for f in *; do
