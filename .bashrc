@@ -218,7 +218,6 @@ function cover() {
   curl "$1" -o 000.jpg
 }
 
-export CDPATH=.:~/richard/
 export TCELL_TRUECOLOR=disable
 export TERM="xterm-256color"
 export EDITOR=vim
