@@ -10,6 +10,7 @@ alias compress="mogrify -resize 1200x1200 -strip -quality 80% *.jpg"
 alias compressmedium="mogrify -resize 1680x1680 -strip -quality 80% *.jpg"
 alias compressmin="mogrify -resize 2016x2016 -strip -quality 80% *.jpg"
 alias compressfast='for i in *; do epeg -m 2016 -q 85 $i _$i; mv -f _$i $i; echo $i; done; compress'
+alias compressquality="mogrify -strip -quality 80% *.jpg"
 alias ..="cd .."
 alias ...="cd ../.."
 alias ....="cd ../../.."

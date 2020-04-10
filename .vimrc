@@ -158,11 +158,12 @@ set background=light
 set backspace=indent,eol,start
 set backup
 set backupcopy=yes
-set backupdir=~/.cache/vim/backup/
+set backupdir=~/.cache/vim/backup//
 set clipboard=
 set completefunc=ListSnippets
 set cursorline
 set dictionary+=/usr/share/dict/words
+set directory^=$HOME/.cache/vim/swap//
 set expandtab
 set foldlevelstart=20
 set hidden
@@ -191,6 +192,8 @@ set textwidth=0
 set timeoutlen=500
 set title
 set ttimeoutlen=10
+set undodir=~/.cache/vim/undo/
+set undofile
 set wildignore+=**/node_modules/**
 set wildignorecase
 set wildmenu

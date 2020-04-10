@@ -104,6 +104,7 @@ setopt no_share_history
 unsetopt share_history
 
 # aliases are in .zshenv
+source .zshenv
 
 # make it harder to accidentally overwrite stuff
 setopt noclobber  # No overwrite file with > instead use >!
