@@ -181,9 +181,11 @@ set ruler
 set scrolloff=5
 set shiftwidth=2
 set shellcmdflag=-c
+set noshelltemp
 set showcmd
 set smartcase
 set softtabstop=2
+set spellcapcheck=
 set spellfile=~/.vim/spell/.utf-8.add
 set splitright
 set nostartofline
@@ -195,6 +197,7 @@ set title
 set ttimeoutlen=10
 set undodir=~/.cache/vim/undo/
 set undofile
+set vb t_vb= " Disables bell sound
 set wildignore+=**/node_modules/**
 set wildignorecase
 set wildmenu
@@ -428,6 +431,8 @@ augroup END
 
 " " Transparent editing of gpg encrypted files.
 " By Wouter Hanegraaff
+" Source: https://vim.fandom.com/wiki/Encryption
+" Modified slightly
 augroup encrypted
   au!
 
@@ -448,12 +453,15 @@ augroup encrypted
   autocmd BufReadPost,FileReadPost *.gpg let &ch = ch_save|unlet ch_save
   autocmd BufReadPost,FileReadPost *.gpg execute ":doautocmd BufReadPost " . expand("%:r")
 
+  " Use a mark to remember where we are
+  autocmd BufWritePre,FileWritePre *.gpg execute "normal! mz"
   " Convert all text to encrypted text before writing
-  " (If you use tcsh, you may need to alter this line.)
   autocmd BufWritePre,FileWritePre *.gpg '[,']!gpg --default-recipient-self -ae 2>/dev/null
-  " Undo the encryption so we are back in the normal text, directly
-  " after the file has been written.
-  autocmd BufWritePost,FileWritePost *.gpg u
+  " Undo the encryption so we are back in the normal text after the file has been written.
+  autocmd BufWritePost,FileWritePost *.gpg undo
+  " Go back to the mark and delete it
+  autocmd BufWritePost,FileWritePost *.gpg execute "normal! `z"
+  autocmd BufWritePost,FileWritePost *.gpg delmark z
 
   " Disable gitgutter for gpg encrypted files
   autocmd BufReadPost,FileReadPost *.gpg let g:gitgutter_enabled = 0
