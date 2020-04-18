@@ -314,3 +314,6 @@ bind-key C-s send-prefix
 set -s escape-time 0
 
 set -g default-terminal "xterm-256color"
+
+# Tmux Resurrect
+run-shell ~/tmux-resurrect/resurrect.tmux
