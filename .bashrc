@@ -142,6 +142,7 @@ alias phpserver="php -S 127.0.0.1:8000 -t ."
 alias compress="mogrify -resize 1200x1200 -strip -quality 80% *.jpg"
 alias compressmedium="mogrify -resize 1680x1680 -strip -quality 80% *.jpg"
 alias compressmin="mogrify -resize 2016x2016 -strip -quality 80% *.jpg"
+alias compressquality="mogrify -strip -quality 80% *.jpg"
 alias compressfast='for i in *; do epeg -m 2016 -q 85 $i _$i; mv -f _$i $i; echo $i; done; compress'
 alias ..="cd .."
 alias ...="cd ../.."
@@ -163,6 +164,7 @@ alias pbcopy='xclip -selection clipboard'
 alias pbpaste='xclip -selection clipboard -o'
 alias epeg='/home/richard/richard/epeg-0.9.2/src/bin/epeg'
 alias tb="(exec 3<>/dev/tcp/termbin.com/9999; cat >&3; cat <&3; exec 3<&-)"
+alias renumber="echo renumber not working at the moment"
 
 VWH="/var/www/html"
 VWHM="/var/www/html/images/metart"
@@ -180,6 +182,10 @@ alias cp='cp -i'  # Prompt if overwriting
 alias mv='mv -i'  # Prompt if overwriting
 alias rm='rm -I'  # Prompt if removing 3+ files or recusively
 
+# allow command to be edited with vim
+export VISUAL=vim
+bind -m vi-insert '"\C-x\C-e": edit-and-execute-command'
+
 bold=$(tput bold)
 normal=$(tput sgr0)
 
@@ -193,15 +199,6 @@ function swap() {
   mv "$1" $TMPFILE
   mv "$2" "$1"
   mv $TMPFILE "$2"
-}
-
-# Allows for cd without args to go to ~/Downloads/
-function cd () {
-  if [ $# = 0 ]; then
-    builtin cd ~/Downloads/
-  else
-    builtin cd "$@"
-  fi
 }
 
 # Grep displays line numbers when not in a pipeline
