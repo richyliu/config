@@ -22,5 +22,11 @@ alias llsr="ll -Sr"
 alias duhd="du -hd1 | sort -h"
 alias ta="tmux attach-session"
 alias td="tmux detach-client -P"
-alias gcs='git commit -S -m'
+alias gcsm='git commit -S -m'
+alias gdt='git difftool'
 alias moshremote="mosh --ssh='ssh -p 5731' richard@73.252.205.89"
+alias vim='nvim'
+alias vimnormal='\vim'
+
+# display tabs with width of 4
+LESS="-Rx4";export LESS

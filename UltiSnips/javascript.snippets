@@ -1,3 +1,29 @@
 snippet log "console.log"
 console.log($0);
 endsnippet
+
+snippet c "className"
+className="$0"
+endsnippet
+
+snippet us "useState"
+const [${1:var}, set${1/./\u$0/}] = useState(${2:''});$0
+endsnippet
+
+snippet ue "useEffect"
+useEffect(() => {
+  $0
+
+  return () => {};
+}, ${1:[]});
+endsnippet
+
+snippet func "function" bA
+function ${1:name}(${2:args}) {
+  $0
+}
+endsnippet
+
+snippet import "import" bA
+import ${1:React, { useState, useEffect }} from '${2:react}';$0
+endsnippet

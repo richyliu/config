@@ -26,7 +26,7 @@ Plugin 'mattn/emmet-vim'                " Emmet for html tag shortcuts
 "Plugin 'neoclide/coc.nvim'              " For autocomplete and language server support
 Plugin 'quramy/tsuquyomi'               " Typescript lanaguage server
 
-" Plugin 'sirver/ultisnips'               " Snippet support
+Plugin 'sirver/ultisnips'               " Snippet support
 " Plugin 'honza/vim-snippets'             " Provides the snippets
 
 Plugin 'prettier/vim-prettier'          " Prettier support for JS/TS
@@ -54,6 +54,8 @@ Plugin 'xuhdev/vim-latex-live-preview'  " Latex preview
 
 Plugin 'thinca/vim-localrc'             " Allow for local vim configuration
 
+Plugin 'autozimu/LanguageClient-neovim' " Language server
+
 
 " All of your Plugins must be added before the following line
 call vundle#end()            " required
@@ -65,13 +67,13 @@ let g:airline_powerline_fonts = 1
 let g:airline#extensions#tabline#enabled = 1
 
 let g:prettier#autoformat = 0
-let g:prettier#config#parser = 'typescript'
+let g:prettier#config#parser = 'babylon'
+let g:prettier#exec_cmd_path= "~/.nvm/versions/node/v12.16.1/bin/prettier"
 " autocmd BufWritePre *.ts,*.tsx PrettierAsync
 
-" Expand snips on ctrl-space (sends ^J)
-let g:UltiSnipsExpandTrigger="<c-j>"
-let g:UltiSnipsJumpForwardTrigger="<c-t>"
-let g:UltiSnipsJumpBackwardTrigger="<c-b>"
+let g:UltiSnipsExpandTrigger="<tab>"
+let g:UltiSnipsJumpForwardTrigger="<tab>"
+let g:UltiSnipsJumpBackwardTrigger="<s-tab>"
 
 let g:ctrlp_user_command = ['.git/', 'git --git-dir=%s/.git ls-files -oc --exclude-standard']
 let g:ctrlp_by_filename = 1
@@ -223,7 +225,7 @@ filetype plugin on
 colorscheme PaperColor
 
 " Prevent weird mouse bugs on urxvt
-call timer_start(500, { tid -> execute('set ttymouse=xterm') })
+"call timer_start(500, { tid -> execute('set ttymouse=xterm') })
 " }}}
 
 
@@ -238,8 +240,9 @@ noremap <leader>o :source %<cr>
 noremap <leader>r :!!<cr>
 " Open vimrc file
 nnoremap <leader>ev :e $MYVIMRC<cr>
+nnoremap <leader>en :e ~/.vimrc<cr>
 " Open snippets
-nnoremap <leader>es :execute ':vsplit $HOME/.vim/UltiSnips/' . &filetype . '.snippets'<cr>
+nnoremap <leader>es :call <SID>OpenSnippetFile()<cr>
 " Open file in current folder
 nnoremap <leader>e :e <c-d>
 nnoremap <leader>ee :e <c-d>
@@ -247,8 +250,8 @@ nnoremap <leader>ee :e <c-d>
 nnoremap <leader>f :find<space>
 " cd to current file directory
 nnoremap <leader>c :cd %:p:h<cr>
-" paste from system clipboard
-" nnoremap <leader>p "+p
+" Prettier
+nnoremap <silent> <leader>p :call <SID>CustomPrettier()<cr>
 " change to paste mode
 nnoremap <leader>a :set paste!<cr>
 " toggle relative number
@@ -274,6 +277,8 @@ vnoremap <leader>g :g/
 " yank to system clipboard
 nnoremap <leader>y "+y
 vnoremap <leader>y "+y
+" close all vim buffers
+nnoremap ZA :qa!<cr>
 
 " Git shortcuts
 nnoremap <leader>ga :!git add -A; git status; printf "\nGIT ADD ALL\n"<cr>
@@ -346,8 +351,12 @@ command! MakeTags !ctags -f .tags -R .
 " Operator pending mappings
 onoremap in( :<c-u>normal! f(vi(<cr>
 onoremap an( :<c-u>normal! f(va(<cr>
+onoremap in) :<c-u>normal! f)vi)<cr>
+onoremap an) :<c-u>normal! f)va)<cr>
 onoremap in{ :<c-u>normal! f{vi{<cr>
 onoremap an{ :<c-u>normal! f{va{<cr>
+onoremap in} :<c-u>normal! f}vi}<cr>
+onoremap an} :<c-u>normal! f}va}<cr>
 onoremap in' :<c-u>normal! f'vi'<cr>
 onoremap an' :<c-u>normal! f'va'<cr>
 onoremap in" :<c-u>normal! f"vi"<cr>
@@ -419,6 +428,13 @@ augroup filetype_sh
   autocmd!
   autocmd Filetype sh nnoremap <buffer> <localleader>c "+ci'
   autocmd Filetype sh nnoremap <buffer> <localleader>p :put +<cr>
+  " Format shell command
+  autocmd Filetype sh nnoremap <buffer> <F3> :call <SID>FormatCommand()<cr>
+augroup END
+
+augroup filetype_zsh
+  " Format shell command
+  autocmd Filetype zsh nnoremap <buffer> <F3> :call <SID>FormatCommand()<cr>
 augroup END
 
 " Javascript, Typescript, and TSX
@@ -427,6 +443,8 @@ augroup filetype_js
   " invoke prettier to format document
   autocmd Filetype javascript,typescript,jsx,tsx nnoremap <buffer> <localleader>p :Prettier<cr>
   autocmd Filetype javascript,typescript,jsx,tsx setlocal tabstop=2
+  " replace class with className (for React)
+  autocmd Filetype javascript,typescript,jsx,tsx nnoremap <buffer> <localleader>c :%s/class=/className=/ge<cr>:%s/fill-rule/fillRule/ge<cr>:%s/clip-rule/clipRule/ge<cr>
 augroup END
 
 " " Transparent editing of gpg encrypted files.
@@ -491,6 +509,12 @@ function! s:QuickfixToggle()
     let g:quickfix_is_open = 1
   endif
 endfunction
+
+" Formats shell commands by intersting a backslack and a newline before
+" arugments (dashes) and pipes (vertical bars)
+function! s:FormatCommand()
+  %substitute/\v +(--|-\@=[a-zA-Z]|\|)/ \\\r    \1/ge
+endfunction
 " }}}
 
 " }}}
@@ -525,6 +549,35 @@ function! ListSnippets(findstart, base) abort
   endif
 endfunction
 " }}}
+
+" Opens the snippet file for the current filetype in a new split
+" If there are multiple file types, the first one is used
+function! s:OpenSnippetFile()
+  let ft = substitute(&filetype, '^\([^.]\+\)\..\+$', '\1', '')
+  execute ':vsplit $HOME/.vim/UltiSnips/' . ft . '.snippets'
+endfunction
+
+" Custom wrapper around the Prettier function so that marks are preserved
+function! s:CustomPrettier()
+  " let command line height be really tall to avoid hit-enter prompt
+  let old_height=&cmdheight
+  set cmdheight=2
+
+  " call Prettier to format the file
+  Prettier
+  " undo to get the marks back
+  undo
+
+  " save the current posistion
+  let save_pos = getpos('.')
+  " redo, while preserving the marks
+  lockmarks redo
+  " restore the cursor position
+  call setpos('.', save_pos)
+
+  " restore command line height
+  let &cmdheight=old_height
+endfunction
 
 " }}}
 
