@@ -27,9 +27,9 @@ Plug 'chrisbra/Colorizer'
 
 " Language server
 Plug 'autozimu/LanguageClient-neovim', {
-        \ 'branch': 'next',
-        \ 'do': 'bash install.sh',
-        \ }
+      \ 'branch': 'next',
+      \ 'do': 'bash install.sh',
+      \ }
 " Completion for language server
 Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
 
@@ -99,8 +99,8 @@ let g:prettier#autoformat = 0
 let g:prettier#config#parser = 'babylon'
 let g:prettier#exec_cmd_path= "~/.nvm/versions/node/v12.16.1/bin/prettier"
 augroup prettier_ft
-    au!
-    autocmd BufNewFile,BufRead .prettierrc set filetype=json
+  au!
+  autocmd BufNewFile,BufRead .prettierrc set filetype=json
 augroup END
 
 " UltiSnips config
@@ -149,6 +149,7 @@ set backspace=indent,eol,start
 set backup
 set backupcopy=yes
 set backupdir=~/.cache/nvim/backup//
+set breakindent
 set clipboard=
 set completefunc=ListSnippets
 set completeopt-=preview
@@ -158,10 +159,12 @@ set directory^=$HOME/.cache/nvim/swap//
 set expandtab
 set foldlevelstart=20
 set hidden
+set history=500
 set hlsearch
 set ignorecase
 set inccommand=nosplit
 set incsearch
+set nojoinspaces
 set lazyredraw
 set linebreak
 set nomodeline
@@ -190,7 +193,9 @@ set title
 set ttimeoutlen=10
 set undodir=~/.cache/nvim/undo/
 set undofile
+set undolevels=500
 set vb t_vb= " Disables bell sound
+set virtualedit=block,onemore
 set wildignore+=**/node_modules/**,node_modules/
 set wildignorecase
 set wildmenu
@@ -309,13 +314,13 @@ nnoremap <silent> go :call LanguageClient#textDocument_documentSymbol()<cr>
 " source: https://vim.fandom.com/wiki/Search_for_visually_selected_text
 " Search for selected text, forwards or backwards.
 vnoremap <silent> * :<C-U>
-    \let old_reg=getreg('"')<Bar>let old_regtype=getregtype('"')<CR>
-    \gvy/<C-R><C-R>=escape(@", '/\.*$^~[')<CR><CR>
-    \gV:call setreg('"', old_reg, old_regtype)<CR>
+      \let old_reg=getreg('"')<Bar>let old_regtype=getregtype('"')<CR>
+      \gvy/<C-R><C-R>=escape(@", '/\.*$^~[')<CR><CR>
+      \gV:call setreg('"', old_reg, old_regtype)<CR>
 vnoremap <silent> # :<C-U>
-    \let old_reg=getreg('"')<Bar>let old_regtype=getregtype('"')<CR>
-    \gvy?<C-R><C-R>=escape(@", '?\.*$^~[')<CR><CR>
-    \gV:call setreg('"', old_reg, old_regtype)<CR>
+      \let old_reg=getreg('"')<Bar>let old_regtype=getregtype('"')<CR>
+      \gvy?<C-R><C-R>=escape(@", '?\.*$^~[')<CR><CR>
+      \gV:call setreg('"', old_reg, old_regtype)<CR>
 
 
 " Make the `tags` file
@@ -338,98 +343,104 @@ onoremap an" :<c-u>normal! f"va"<cr>
 
 
 augroup filetype_vim
-    autocmd!
-    autocmd Filetype vim iabbrev <buffer> iab iabbrev <buffer>
-    autocmd Filetype vim setlocal foldmethod=marker
+  autocmd!
+  autocmd Filetype vim setlocal foldmethod=marker
 augroup END
 
 augroup filetype_elm
-    autocmd!
-    autocmd Filetype elm setlocal tabstop=4
-    autocmd Filetype elm setlocal softtabstop=4
-    autocmd Filetype elm setlocal shiftwidth=4
-    autocmd Filetype elm setlocal expandtab
+  autocmd!
+  autocmd Filetype elm setlocal tabstop=4
+  autocmd Filetype elm setlocal softtabstop=4
+  autocmd Filetype elm setlocal shiftwidth=4
+  autocmd Filetype elm setlocal expandtab
 augroup END
 
 augroup filetype_snippets
-    autocmd!
-    autocmd Filetype snippets setlocal expandtab
+  autocmd!
+  autocmd Filetype snippets setlocal expandtab
 augroup END
 
 augroup filetype_haskell
-    autocmd!
-    autocmd Filetype haskell setlocal formatprg=hindent
-    autocmd Filetype haskell nnoremap <buffer> <localleader>r :!stack ghci %<cr>
+  autocmd!
+  autocmd Filetype haskell setlocal formatprg=hindent
+  autocmd Filetype haskell nnoremap <buffer> <localleader>r :!stack ghci %<cr>
 augroup END
 
 augroup filetype_markdown
-    autocmd!
-    " start bold text
-    autocmd Filetype markdown inoremap <buffer> <c-b> ****<left><left>
-    autocmd Filetype markdown iabbrev <buffer> --> →
-    " need to allow recursive map to make surround work
-    autocmd Filetype markdown vmap <buffer> <c-b> S*gvS*
-    autocmd Filetype markdown setlocal complete=kspell
-    " wrap text at 80 column
-    autocmd Filetype markdown setlocal textwidth=80
-    autocmd Filetype markdown setlocal colorcolumn=80
-    " enable spell by default
-    autocmd Filetype markdown setlocal spell
-    " press F5 to insert header of current date
-    autocmd Filetype markdown inoremap <buffer> <F5> ##<space><c-r>=strftime("%Y-%m-%d %a")<cr><cr>
-    " toggle spell
-    autocmd Filetype markdown nnoremap <buffer> <localleader>s :set spell!<cr>
-    " make a link around the word and insert into the link title
-    autocmd Filetype markdown nnoremap <buffer> <localleader>l :execute "normal! i(\eEa)\eBi[]\e"<cr>:startinsert<cr>
-    " disable autocomplete
-    autocmd Filetype markdown call deoplete#custom#buffer_option('auto_complete', v:false)
-    " disable the indentation mappings that come with bullet.vim
-    autocmd BufReadPost *.md vunmap <buffer> >
-    autocmd BufReadPost *.md vunmap <buffer> <
-    autocmd BufReadPost *.md nunmap <buffer> >>
-    autocmd BufReadPost *.md nunmap <buffer> <<
+  autocmd!
+  " start bold text
+  autocmd Filetype markdown inoremap <buffer> <c-b> ****<left><left>
+  " need to allow recursive map to make surround work
+  autocmd Filetype markdown vmap <buffer> <c-b> S*gvS*
+  autocmd Filetype markdown setlocal complete=kspell
+  " wrap text at 80 column
+  autocmd Filetype markdown setlocal textwidth=80
+  autocmd Filetype markdown setlocal colorcolumn=80
+  " enable spell by default
+  autocmd Filetype markdown setlocal spell
+  " press F5 to insert header of current date
+  autocmd Filetype markdown inoremap <buffer> <F5> ##<space><c-r>=strftime("%Y-%m-%d %a")<cr><cr>
+  " toggle spell
+  autocmd Filetype markdown nnoremap <buffer> <localleader>s :set spell!<cr>
+  " make a link around the word and insert into the link title
+  autocmd Filetype markdown nnoremap <buffer> <localleader>l :execute "normal! i(\eEa)\eBi[]\e"<cr>:startinsert<cr>
+  " disable autocomplete
+  autocmd Filetype markdown call deoplete#custom#buffer_option('auto_complete', v:false)
+  " disable the indentation mappings that come with bullet.vim
+  autocmd BufReadPost *.md vunmap <buffer> >
+  autocmd BufReadPost *.md vunmap <buffer> <
+  autocmd BufReadPost *.md nunmap <buffer> >>
+  autocmd BufReadPost *.md nunmap <buffer> <<
 augroup END
 
 augroup filetype_tex
-    " wrap text at 80 column
-    autocmd Filetype tex setlocal textwidth=80
-    autocmd Filetype tex setlocal colorcolumn=80
-    " toggle spell
-    autocmd Filetype tex nnoremap <buffer> <localleader>s :set spell!<cr>
-    " enable spell by default
-    autocmd Filetype tex setlocal spell
-    " disable autocomplete
-    autocmd Filetype tex call deoplete#custom#buffer_option('auto_complete', v:false)
+  " wrap text at 80 column
+  autocmd Filetype tex setlocal textwidth=80
+  autocmd Filetype tex setlocal colorcolumn=80
+  " toggle spell
+  autocmd Filetype tex nnoremap <buffer> <localleader>s :set spell!<cr>
+  " enable spell by default
+  autocmd Filetype tex setlocal spell
+  " disable autocomplete
+  autocmd Filetype tex call deoplete#custom#buffer_option('auto_complete', v:false)
+augroup END
+
+
+augroup filetype_markdown_text
+  " helpful text abbreviations
+  autocmd Filetype markdown,tex iabbrev <buffer> --> →
+  autocmd Filetype markdown,tex iabbrev <buffer> bc because
+  autocmd Filetype markdown,tex iabbrev <buffer> i I
 augroup END
 
 augroup filetype_sh
-    autocmd!
-    autocmd Filetype sh nnoremap <buffer> <localleader>c "+ci'
-    autocmd Filetype sh nnoremap <buffer> <localleader>p :put +<cr>
-    " Format shell command
-    autocmd Filetype sh nnoremap <buffer> <F3> :call <SID>FormatCommand()<cr>
+  autocmd!
+  autocmd Filetype sh nnoremap <buffer> <localleader>c "+ci'
+  autocmd Filetype sh nnoremap <buffer> <localleader>p :put +<cr>
+  " Format shell command
+  autocmd Filetype sh nnoremap <buffer> <F3> :call <SID>FormatCommand()<cr>
 augroup END
 
 augroup filetype_zsh
-    " Format shell command
-    autocmd Filetype zsh nnoremap <buffer> <F3> :call <SID>FormatCommand()<cr>
+  " Format shell command
+  autocmd Filetype zsh nnoremap <buffer> <F3> :call <SID>FormatCommand()<cr>
 augroup END
 
 " Javascript, Typescript, and TSX
 augroup filetype_js
-    autocmd!
-    " invoke prettier to format document
-    autocmd Filetype javascript,typescript,jsx,tsx nnoremap <buffer> <leader>p :call <SID>CustomPrettier()<cr>
-    autocmd Filetype javascript,typescript,jsx,tsx setlocal tabstop=2
-    " replace class with className (for React)
-    autocmd Filetype javascript,typescript,jsx,tsx nnoremap <buffer> <localleader>c :%s/class=/className=/ge<cr>:%s/fill-rule/fillRule/ge<cr>:%s/clip-rule/clipRule/ge<cr>
+  autocmd!
+  " invoke prettier to format document
+  autocmd Filetype javascript,typescript,jsx,tsx nnoremap <buffer> <leader>p :call <SID>CustomPrettier()<cr>
+  autocmd Filetype javascript,typescript,jsx,tsx setlocal tabstop=2
+  " replace class with className (for React)
+  autocmd Filetype javascript,typescript,jsx,tsx nnoremap <buffer> <localleader>c :%s/class=/className=/ge<cr>:%s/fill-rule/fillRule/ge<cr>:%s/clip-rule/clipRule/ge<cr>
 augroup END
 
 " ReasonML
 augroup filetype_re
-    autocmd!
-    " ignore compiled js files
-    autocmd Filetype reason set wildignore+=*.bs.js
+  autocmd!
+  " ignore compiled js files
+  autocmd Filetype reason set wildignore+=*.bs.js
 augroup END
 
 " " Transparent editing of gpg encrypted files.
@@ -437,44 +448,44 @@ augroup END
 " Source: https://vim.fandom.com/wiki/Encryption
 " Modified slightly
 augroup encrypted
-    au!
+  au!
 
-    " First make sure nothing is written to ~/.viminfo while editing
-    " an encrypted file.
-    autocmd BufReadPre,FileReadPre *.gpg set viminfo=
-    " We don't want a various options which write unencrypted data to disk
-    autocmd BufReadPre,FileReadPre *.gpg set noswapfile noundofile nobackup nowritebackup
+  " First make sure nothing is written to ~/.viminfo while editing
+  " an encrypted file.
+  autocmd BufReadPre,FileReadPre *.gpg set viminfo=
+  " We don't want a various options which write unencrypted data to disk
+  autocmd BufReadPre,FileReadPre *.gpg set noswapfile noundofile nobackup nowritebackup
 
-    " Switch to binary mode to read the encrypted file
-    autocmd BufReadPre,FileReadPre *.gpg set bin
-    autocmd BufReadPre,FileReadPre *.gpg let ch_save = &ch|set ch=2
-    " (If you use tcsh, you may need to alter this line.)
-    autocmd BufReadPost,FileReadPost *.gpg '[,']!gpg --decrypt 2> /dev/null
+  " Switch to binary mode to read the encrypted file
+  autocmd BufReadPre,FileReadPre *.gpg set bin
+  autocmd BufReadPre,FileReadPre *.gpg let ch_save = &ch|set ch=2
+  " (If you use tcsh, you may need to alter this line.)
+  autocmd BufReadPost,FileReadPost *.gpg '[,']!gpg --decrypt 2> /dev/null
 
-    " Switch to normal mode for editing
-    autocmd BufReadPost,FileReadPost *.gpg set nobin
-    autocmd BufReadPost,FileReadPost *.gpg let &ch = ch_save|unlet ch_save
-    autocmd BufReadPost,FileReadPost *.gpg execute ":doautocmd BufReadPost " . expand("%:r")
+  " Switch to normal mode for editing
+  autocmd BufReadPost,FileReadPost *.gpg set nobin
+  autocmd BufReadPost,FileReadPost *.gpg let &ch = ch_save|unlet ch_save
+  autocmd BufReadPost,FileReadPost *.gpg execute ":doautocmd BufReadPost " . expand("%:r")
 
-    " Use a mark to remember where we are
-    autocmd BufWritePre,FileWritePre *.gpg execute "normal! mz"
-    " Convert all text to encrypted text before writing
-    autocmd BufWritePre,FileWritePre *.gpg '[,']!gpg --default-recipient-self -ae 2>/dev/null
-    " Undo the encryption so we are back in the normal text after the file has been written.
-    autocmd BufWritePost,FileWritePost *.gpg undo
-    " Go back to the mark and delete it
-    autocmd BufWritePost,FileWritePost *.gpg execute "normal! `z"
-    autocmd BufWritePost,FileWritePost *.gpg delmark z
+  " Use a mark to remember where we are
+  autocmd BufWritePre,FileWritePre *.gpg execute "normal! mz"
+  " Convert all text to encrypted text before writing
+  autocmd BufWritePre,FileWritePre *.gpg '[,']!gpg --default-recipient-self -ae 2>/dev/null
+  " Undo the encryption so we are back in the normal text after the file has been written.
+  autocmd BufWritePost,FileWritePost *.gpg undo
+  " Go back to the mark and delete it
+  autocmd BufWritePost,FileWritePost *.gpg execute "normal! `z"
+  autocmd BufWritePost,FileWritePost *.gpg delmark z
 
-    " Disable gitgutter for gpg encrypted files
-    autocmd BufReadPost,FileReadPost *.gpg let g:gitgutter_enabled = 0
+  " Disable gitgutter for gpg encrypted files
+  autocmd BufReadPost,FileReadPost *.gpg let g:gitgutter_enabled = 0
 augroup END
 
 
 " Formats shell commands by intersting a backslack and a newline before
 " arugments (dashes) and pipes (vertical bars)
 function! s:FormatCommand()
-    %substitute/\v +(--|-\@=[a-zA-Z]|\|)/ \\\r      \1/ge
+  %substitute/\v +(--|-\@=[a-zA-Z]|\|)/ \\\r      \1/ge
 endfunction
 " }}}
 
@@ -482,59 +493,59 @@ endfunction
 
 " UltiSnips completion with <C-x C-u>
 function! ListSnippets(findstart, base) abort
-    if empty(UltiSnips#SnippetsInCurrentScope(1))
-        return ''
-    endif
+  if empty(UltiSnips#SnippetsInCurrentScope(1))
+    return ''
+  endif
 
-    if a:findstart
-        " locate the start of the word
-        let line = getline('.')
-        let start = col('.') - 1
-        while start > 0 && (line[start - 1] =~ '\a')
-            let start -= 1
-        endwhile
-        return start
-    else
-        " find classes matching "a:base"
-        let res = []
-        for m in keys(g:current_ulti_dict_info)
-            if m =~ a:base
-                let n = {
-                            \ 'word': m,
-                            \ 'menu': '[snip] '. g:current_ulti_dict_info[m]['description']
-                            \ }
-                call add(res, n)
-            endif
-        endfor
-        return res
-    endif
+  if a:findstart
+    " locate the start of the word
+    let line = getline('.')
+    let start = col('.') - 1
+    while start > 0 && (line[start - 1] =~ '\a')
+      let start -= 1
+    endwhile
+    return start
+  else
+    " find classes matching "a:base"
+    let res = []
+    for m in keys(g:current_ulti_dict_info)
+      if m =~ a:base
+        let n = {
+              \ 'word': m,
+              \ 'menu': '[snip] '. g:current_ulti_dict_info[m]['description']
+              \ }
+        call add(res, n)
+      endif
+    endfor
+    return res
+  endif
 endfunction
 
 " Opens the snippet file for the current filetype in a new split
 " If there are multiple file types, the first one is used
 function! s:OpenSnippetFile()
-    let ft = substitute(&filetype, '^\([^.]\+\)\..\+$', '\1', '')
-    execute ':vsplit ' . stdpath('config') . '/UltiSnips/'. ft . '.snippets'
+  let ft = substitute(&filetype, '^\([^.]\+\)\..\+$', '\1', '')
+  execute ':vsplit ' . stdpath('config') . '/UltiSnips/'. ft . '.snippets'
 endfunction
 
 " Custom wrapper around the Prettier function so that marks are preserved
 function! s:CustomPrettier()
-    " let command line height be really tall to avoid hit-enter prompt
-    let old_height=&cmdheight
-    set cmdheight=2
+  " let command line height be really tall to avoid hit-enter prompt
+  let old_height=&cmdheight
+  set cmdheight=2
 
-    " call Prettier to format the file
-    Prettier
-    " undo to get the marks back
-    undo
+  " call Prettier to format the file
+  Prettier
+  " undo to get the marks back
+  undo
 
-    " save the current posistion
-    let save_pos = getpos('.')
-    " redo, while preserving the marks
-    lockmarks redo
-    " restore the cursor position
-    call setpos('.', save_pos)
+  " save the current posistion
+  let save_pos = getpos('.')
+  " redo, while preserving the marks
+  lockmarks redo
+  " restore the cursor position
+  call setpos('.', save_pos)
 
-    " restore command line height
-    let &cmdheight=old_height
+  " restore command line height
+  let &cmdheight=old_height
 endfunction
