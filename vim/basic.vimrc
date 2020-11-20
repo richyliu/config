@@ -38,6 +38,8 @@ set wildignorecase
 set wildmenu
 set wildmode=longest:full,full
 
+colorscheme morning
+
 " Keymaps and Abbrev
 let mapleader = " "
 let maplocalleader = "Q"

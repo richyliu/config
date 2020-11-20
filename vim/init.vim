@@ -18,11 +18,16 @@ Plug 'romainl/vim-cool'               " Automatically disable search highlightin
 
 Plug 'prettier/vim-prettier'          " Prettier support for JS/TS
 Plug 'alvan/vim-closetag'             " Automatically close html tags
+Plug 'rust-lang/rust.vim'             " Rust language support
+Plug 'racer-rust/vim-racer'           " Racer rust autocomplete
 
 call plug#end()
 
 " Show modified files in buffer tabline
 let g:buftabline_indicators=1
+
+" Autoformat rust files on save
+let g:rustfmt_autosave=1
 
 " PaperColor theme
 set t_Co=256
@@ -96,8 +101,6 @@ nnoremap <leader>ee :e <c-d>
 nnoremap <leader>f :find<space>
 " cd to current file directory
 nnoremap <leader>c :cd %:p:h<cr>
-" Prettier
-nnoremap <silent> <leader>p :call <SID>CustomPrettier()<cr>
 " change to paste mode
 nnoremap <leader>a :set paste!<cr>
 " toggle relative number
@@ -266,6 +269,21 @@ augroup filetype_js
   autocmd Filetype javascript,typescript,jsx,tsx setlocal tabstop=2
   " replace class with className (for React)
   autocmd Filetype javascript,typescript,jsx,tsx nnoremap <buffer> <localleader>c :%s/class=/className=/ge<cr>:%s/fill-rule/fillRule/ge<cr>:%s/clip-rule/clipRule/ge<cr>
+augroup END
+
+augroup filetype_rs
+  autocmd!
+  autocmd Filetype rust nnoremap <buffer> <localleader>p :RustFmt<cr>
+augroup END
+
+augroup Racer
+    autocmd!
+    autocmd FileType rust nmap <buffer> gd         <Plug>(rust-def)
+    autocmd FileType rust nmap <buffer> gs         <Plug>(rust-def-split)
+    autocmd FileType rust nmap <buffer> gx         <Plug>(rust-def-vertical)
+    autocmd FileType rust nmap <buffer> gt         <Plug>(rust-def-tab)
+    autocmd FileType rust nmap <buffer> <localleader>gd <Plug>(rust-doc)
+    autocmd FileType rust nmap <buffer> <localleader>gD <Plug>(rust-doc-tab)
 augroup END
 
 " Transparent editing of gpg encrypted files.
