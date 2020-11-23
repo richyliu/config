@@ -15,3 +15,6 @@ nnoremap <space>% :%s/
 vnoremap <space>% :s/
 nnoremap _ :.m.-2<cr>
 nnoremap + :.m+<cr>
+
+nnoremap D d$
+nnoremap Y y$

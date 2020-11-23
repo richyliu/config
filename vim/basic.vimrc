@@ -26,6 +26,7 @@ set noshelltemp
 set showcmd
 set smartcase
 set softtabstop=2
+set spellcapcheck=
 set splitright
 set nostartofline
 set tabstop=4
@@ -106,8 +107,12 @@ cnoremap <c-a> <c-b>
 " Make ctrl-u start a separate history entry
 inoremap <c-u> <c-g>u<c-u>
 
-" source: https://vim.fandom.com/wiki/Search_for_visually_selected_text
-" Search for selected text, forwards or backwards.
+" Make { and } always work linewise
+onoremap { V{
+onoremap } V}
+
+" Search for selected text and automatically escape characters
+" Source: https://vim.fandom.com/wiki/Search_for_visually_selected_text
 vnoremap <silent> * :<C-U>
   \let old_reg=getreg('"')<Bar>let old_regtype=getregtype('"')<CR>
   \gvy/<C-R><C-R>=escape(@", '/\.*$^~[')<CR><CR>

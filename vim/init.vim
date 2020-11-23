@@ -11,10 +11,12 @@ Plug 'sirver/ultisnips'               " Snippet support
 Plug 'honza/vim-snippets'             " Provides the snippets
 
 Plug 'tpope/vim-surround'             " For changing surroundings characters
+Plug 'tpope/vim-repeat'               " Allow for repeating vim-surround
 Plug 'jiangmiao/auto-pairs'           " Auto pair quotes, braces, etc.
 Plug 'tpope/vim-abolish'              " Smart find and replace that preserves case
 Plug 'tpope/vim-commentary'           " Allow for easy commenting via 'gcc'
 Plug 'romainl/vim-cool'               " Automatically disable search highlighting
+Plug 'AndrewRadev/sideways.vim'       " Easily swap arguments
 
 Plug 'prettier/vim-prettier'          " Prettier support for JS/TS
 Plug 'alvan/vim-closetag'             " Automatically close html tags
@@ -46,7 +48,6 @@ set completefunc=ListSnippets
 set cursorline
 set directory^=$HOME/.cache/nvim/swap//
 set expandtab
-set foldlevelstart=20
 set hidden
 set hlsearch
 set ignorecase
@@ -152,6 +153,10 @@ cnoremap <c-a> <c-b>
 " Make ctrl-u start a separate history entry
 inoremap <c-u> <c-g>u<c-u>
 
+" Make { and } always work linewise
+onoremap { V{
+onoremap } V}
+
 " Use custom gitgutter mappings
 let g:gitgutter_map_keys = 0
 nmap <leader>ghp <Plug>(GitGutterPreviewHunk)
@@ -164,6 +169,10 @@ omap ic <Plug>(GitGutterTextObjectInnerPending)
 omap ac <Plug>(GitGutterTextObjectOuterPending)
 xmap ic <Plug>(GitGutterTextObjectInnerVisual)
 xmap ac <Plug>(GitGutterTextObjectOuterVisual)
+
+" Move argument left/right
+nnoremap <c-h> :<c-u>SidewaysLeft<cr>
+nnoremap <c-l> :<c-u>SidewaysRight<cr>
 
 " Search for selected text and automatically escape characters
 " Source: https://vim.fandom.com/wiki/Search_for_visually_selected_text
