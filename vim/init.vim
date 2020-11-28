@@ -53,6 +53,7 @@ set hlsearch
 set ignorecase
 set incsearch
 set lazyredraw
+set linebreak
 set nomodeline
 set mouse=a
 set nrformats-=octal

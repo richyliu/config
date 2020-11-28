@@ -3,6 +3,7 @@
 
 alias vim_real=/usr/bin/vim
 alias vim=nvim
+alias ag="ag --color-line-number 1\;35"
 
 alias ..="cd .."
 alias ...="cd ../.."
@@ -13,4 +14,6 @@ alias llsr="ll -Sr"
 
 alias duhd="du -hd1 | sort -h"
 
+# Oh-my-zsh git overrides
 alias gcsm='git commit -S -m'
+alias grs='git restore --staged'
