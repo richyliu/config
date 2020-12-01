@@ -7,6 +7,8 @@ module.exports = {
         "fuhsd.schoology.com*",
         // Oepn all google docs in Chrome by default
         "docs.google.com*",
+        // Oepn padlet docs in Chrome
+        "*padlet.org*",
         // Open college apps stuff in Chrome
         "apply.mitadmissions.org*",
         "myillini.illinois.edu*",

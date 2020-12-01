@@ -6,6 +6,7 @@ Plug 'vim-airline/vim-airline-themes' " To customize status line for PaperColor 
 Plug 'kshenoy/vim-signature'          " To display marks in the sidebar
 Plug 'airblade/vim-gitgutter'         " To display git changes in the sidebar
 Plug 'ap/vim-buftabline'              " Support for displaying buffers as tabs
+Plug 'rickhowe/diffchar.vim'          " Character wise diff
 
 Plug 'sirver/ultisnips'               " Snippet support
 Plug 'honza/vim-snippets'             " Provides the snippets
@@ -52,6 +53,7 @@ set hidden
 set hlsearch
 set ignorecase
 set incsearch
+set inccommand=nosplit
 set lazyredraw
 set linebreak
 set nomodeline

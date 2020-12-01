@@ -4,6 +4,7 @@
 alias vim_real=/usr/bin/vim
 alias vim=nvim
 alias ag="ag --color-line-number 1\;35"
+alias agl="ag --color-line-number 1\;35 --pager less"
 
 alias ..="cd .."
 alias ...="cd ../.."
