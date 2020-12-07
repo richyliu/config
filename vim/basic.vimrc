@@ -35,6 +35,7 @@ set textwidth=0
 set timeoutlen=500
 set title
 set ttimeoutlen=10
+set updatetime=500
 set wildignore+=**/node_modules/**
 set wildignorecase
 set wildmenu

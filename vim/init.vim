@@ -79,6 +79,7 @@ set title
 set ttimeoutlen=10
 set undodir=~/.cache/nvim/undo/
 set undofile
+set updatetime=500
 set vb t_vb= " Disables bell sound
 set wildignore+=**/node_modules/**
 set wildignorecase

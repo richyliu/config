@@ -1,5 +1,8 @@
 # Should be linked to ~/.zprofile
 
+# enable zmv
+autoload zmv
+
 # Add personal scripts to path
 export PATH="$PATH:$HOME/vimrc/bin"
 
