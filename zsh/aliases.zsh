@@ -2,7 +2,7 @@
 # Usually ~/.oh-my-zsh/custom/aliases.zsh
 
 alias vim_real=/usr/bin/vim
-alias vim=nvim
+alias vim="nvim -w ~/vimrc/vim_key_logs"
 alias ag="ag -f --color-line-number 1\;35"
 alias agl="ag -f --color-line-number 1\;35 --pager less"
 
@@ -18,3 +18,7 @@ alias duhd="du -hd1 | sort -h"
 # Oh-my-zsh git overrides
 alias gcsm='git commit -S -m'
 alias grs='git restore --staged'
+
+alias crc='cargo check'
+alias crct='cargo check --tests'
+alias crt='cargo test'
