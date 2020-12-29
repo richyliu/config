@@ -23,6 +23,7 @@ Plug 'prettier/vim-prettier'          " Prettier support for JS/TS
 Plug 'alvan/vim-closetag'             " Automatically close html tags
 Plug 'rust-lang/rust.vim'             " Rust language support
 Plug 'racer-rust/vim-racer'           " Racer rust autocomplete
+Plug 'cespare/vim-toml'               " TOML config file format support
 
 call plug#end()
 
@@ -56,6 +57,7 @@ set incsearch
 set inccommand=nosplit
 set lazyredraw
 set linebreak
+set list
 set nomodeline
 set mouse=a
 set nrformats-=octal
@@ -176,7 +178,7 @@ xmap ac <Plug>(GitGutterTextObjectOuterVisual)
 
 " Move argument left/right
 nnoremap <c-h> :<c-u>SidewaysLeft<cr>
-nnoremap <c-l> :<c-u>SidewaysRight<cr>
+nnoremap <c-k> :<c-u>SidewaysRight<cr>
 
 " Search for selected text and automatically escape characters
 " Source: https://vim.fandom.com/wiki/Search_for_visually_selected_text
@@ -379,4 +381,10 @@ endfunction
 function! s:OpenSnippetFile()
   let ft = substitute(&filetype, '^\([^.]\+\)\..\+$', '\1', '')
   execute ':vsplit ' . stdpath('data') . '/UltiSnips/' . ft . '.snippets'
+endfunction
+
+" Replace fancy quotes with normal quotes
+function! NormalQuotes()
+  %substitute/\v(“|”)/"/g
+  %substitute/\v(‘|’)/'/g
 endfunction
