@@ -184,11 +184,11 @@ nnoremap <c-k> :<c-u>SidewaysRight<cr>
 " Source: https://vim.fandom.com/wiki/Search_for_visually_selected_text
 vnoremap <silent> * :<C-U>
   \let old_reg=getreg('"')<Bar>let old_regtype=getregtype('"')<CR>
-  \gvy/<C-R><C-R>=escape(@", '/\.*$^~[')<CR><CR>
+  \gvy/<C-R><C-R>=substitute(escape(@", '/\.*$^~['),'\n','\\n','g')<CR><CR>
   \gV:call setreg('"', old_reg, old_regtype)<CR>
 vnoremap <silent> # :<C-U>
   \let old_reg=getreg('"')<Bar>let old_regtype=getregtype('"')<CR>
-  \gvy?<C-R><C-R>=escape(@", '?\.*$^~[')<CR><CR>
+  \gvy?<C-R><C-R>=substitute(escape(@", '/\.*$^~['),'\n','\\n','g')<CR><CR>
   \gV:call setreg('"', old_reg, old_regtype)<CR>
 
 " Operator pending mappings
@@ -301,6 +301,11 @@ augroup Racer
     autocmd FileType rust nmap <buffer> <localleader>gD <Plug>(rust-doc-tab)
 augroup END
 
+augroup shorthand_transcription
+  autocmd!
+  autocmd BufRead,BufNewFile ~/Documents/shorthand_practice/* set textwidth=72
+augroup END
+
 " Transparent editing of gpg encrypted files.
 " By Wouter Hanegraaff
 " Source: https://vim.fandom.com/wiki/Encryption
@@ -385,6 +390,6 @@ endfunction
 
 " Replace fancy quotes with normal quotes
 function! NormalQuotes()
-  %substitute/\v(“|”)/"/g
-  %substitute/\v(‘|’)/'/g
+  %substitute/\v(“|”)/"/ge
+  %substitute/\v(‘|’)/'/ge
 endfunction

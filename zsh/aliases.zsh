@@ -18,7 +18,10 @@ alias duhd="du -hd1 | sort -h"
 # Oh-my-zsh git overrides
 alias gcsm='git commit -S -m'
 alias grs='git restore --staged'
+alias gai="git add --interactive"
 
 alias crc='cargo check'
 alias crct='cargo check --tests'
 alias crt='cargo test'
+
+alias pjl="/Users/richard/plojo/target/release/lookup"
