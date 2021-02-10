@@ -1,8 +1,8 @@
 call plug#begin(stdpath('data') . '/plugged')
 
 Plug 'vim-airline/vim-airline'        " For status line
-Plug 'NLKNguyen/papercolor-theme'     " PaperColor Theme
-Plug 'vim-airline/vim-airline-themes' " To customize status line for PaperColor theme
+Plug 'chriskempson/base16-vim'        " Base16 color scheme
+Plug 'vim-airline/vim-airline-themes' " Customize status line theme
 Plug 'kshenoy/vim-signature'          " To display marks in the sidebar
 Plug 'airblade/vim-gitgutter'         " To display git changes in the sidebar
 Plug 'ap/vim-buftabline'              " Support for displaying buffers as tabs
@@ -22,8 +22,9 @@ Plug 'AndrewRadev/sideways.vim'       " Easily swap arguments
 Plug 'prettier/vim-prettier'          " Prettier support for JS/TS
 Plug 'alvan/vim-closetag'             " Automatically close html tags
 Plug 'rust-lang/rust.vim'             " Rust language support
-Plug 'racer-rust/vim-racer'           " Racer rust autocomplete
+Plug 'autozimu/LanguageClient-neovim' " Language server client
 Plug 'cespare/vim-toml'               " TOML config file format support
+Plug 'vlime/vlime', {'rtp': 'vim/'}   " Lisp support
 
 call plug#end()
 
@@ -33,20 +34,34 @@ let g:buftabline_indicators=1
 " Autoformat rust files on save
 let g:rustfmt_autosave=1
 
-" PaperColor theme
-set t_Co=256
-set background=light
-colorscheme PaperColor
+" Language client settings
+let g:LanguageClient_serverCommands = {
+\ 'rust': {
+\   'name': 'rust-analyzer',
+\   'command': ['rust-analyzer'],
+\   'initializationOptions': {
+\     'diagnostics': {
+\       'disabled': ['unresolved-proc-macro'],
+\     },
+\     'lens': {
+\       'enable': v:true,
+\     },
+\   },
+\ },
+\}
+let g:LanguageClient_preferredMarkupKind = ['markdown']
+
+" Markdown code highlighting
+let g:markdown_fenced_languages = ['rust']
 
 " Settings
 set autoindent
-set background=light
 set backspace=indent,eol,start
 set backup
 set backupcopy=yes
 set backupdir=~/.cache/nvim/backup//
 set clipboard=
-set completefunc=ListSnippets
+set completefunc=LanguageClient#complete
 set cursorline
 set directory^=$HOME/.cache/nvim/swap//
 set expandtab
@@ -72,9 +87,11 @@ set showcmd
 set smartcase
 set softtabstop=2
 set spellcapcheck=
+set splitbelow
 set splitright
 set nostartofline
 set tabstop=4
+set termguicolors
 set textwidth=0
 set timeoutlen=500
 set title
@@ -87,6 +104,9 @@ set wildignore+=**/node_modules/**
 set wildignorecase
 set wildmenu
 set wildmode=longest:full,full
+
+" Enable base16 color scheme
+colorscheme base16-one-light
 
 " Keymaps and Abbrev
 let mapleader = " "
@@ -137,8 +157,8 @@ vnoremap <leader>y "+y
 nnoremap ZA :qa!<cr>
 
 " Move line up or down
-nnoremap _ :.m.-2<cr>
-nnoremap + :.m+<cr>
+nnoremap _ :silent! .m.-2<cr>
+nnoremap + :silent! .m+<cr>
 " Cycle through buffers
 nnoremap <tab> :bnext<cr>
 nnoremap <s-tab> :bprevious<cr>
@@ -205,6 +225,9 @@ onoremap an' :<c-u>normal! f'va'<cr>
 onoremap in" :<c-u>normal! f"vi"<cr>
 onoremap an" :<c-u>normal! f"va"<cr>
 
+" Terminal-mode
+tnoremap <esc> <C-\><C-n>
+tnoremap <expr> <C-R> '<C-\><C-N>"'.nr2char(getchar()).'pi'
 
 augroup filetype_vim
   autocmd!
@@ -289,21 +312,26 @@ augroup END
 augroup filetype_rs
   autocmd!
   autocmd Filetype rust nnoremap <buffer> <localleader>p :RustFmt<cr>
-augroup END
-
-augroup Racer
-    autocmd!
-    autocmd FileType rust nmap <buffer> gd         <Plug>(rust-def)
-    autocmd FileType rust nmap <buffer> gs         <Plug>(rust-def-split)
-    autocmd FileType rust nmap <buffer> gx         <Plug>(rust-def-vertical)
-    autocmd FileType rust nmap <buffer> gt         <Plug>(rust-def-tab)
-    autocmd FileType rust nmap <buffer> <localleader>gd <Plug>(rust-doc)
-    autocmd FileType rust nmap <buffer> <localleader>gD <Plug>(rust-doc-tab)
+  autocmd FileType rust nmap <buffer> gd <Plug>(lcn-definition)
+  autocmd FileType rust nmap <buffer> K <Plug>(lcn-hover)
+  autocmd FileType rust nmap <buffer> <F1> <Plug>(lcn-menu)
+  autocmd FileType rust nmap <buffer> <F2> <Plug>(lcn-code-action)
+  autocmd FileType rust nmap <buffer> <F3> <Plug>(lcn-code-lens-action)
+  autocmd FileType rust nmap <buffer> <F4> <Plug>(lcn-highlight)
+  autocmd FileType rust nmap <buffer> <F5> <Plug>(lcn-definition)
+  autocmd FileType rust nmap <buffer> <F6> <Plug>(lcn-references)
+  autocmd FileType rust nnoremap <buffer> <F16> :<c-u>call LanguageClient_clearDocumentHighlight()<cr>
 augroup END
 
 augroup shorthand_transcription
   autocmd!
   autocmd BufRead,BufNewFile ~/Documents/shorthand_practice/* set textwidth=72
+augroup END
+
+augroup lisp
+  autocmd!
+  " Only auto pair parentheses in lisp
+  autocmd Filetype lisp let b:AutoPairs = {'(':')'}
 augroup END
 
 " Transparent editing of gpg encrypted files.

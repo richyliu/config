@@ -2,9 +2,11 @@
 # Usually ~/.oh-my-zsh/custom/aliases.zsh
 
 alias vim_real=/usr/bin/vim
-alias vim="nvim -w ~/vimrc/vim_key_logs"
+alias vim=nvim
 alias ag="ag -f --color-line-number 1\;35"
+alias agq="ag -fQ --color-line-number 1\;35"
 alias agl="ag -f --color-line-number 1\;35 --pager less"
+alias aglq="ag -fQ --color-line-number 1\;35 --pager less"
 
 alias ..="cd .."
 alias ...="cd ../.."
