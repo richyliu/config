@@ -208,7 +208,7 @@ vnoremap <silent> * :<C-U>
   \gV:call setreg('"', old_reg, old_regtype)<CR>
 vnoremap <silent> # :<C-U>
   \let old_reg=getreg('"')<Bar>let old_regtype=getregtype('"')<CR>
-  \gvy?<C-R><C-R>=substitute(escape(@", '/\.*$^~['),'\n','\\n','g')<CR><CR>
+  \gvy?<C-R><C-R>=substitute(escape(@", '?\.*$^~['),'\n','\\n','g')<CR><CR>
   \gV:call setreg('"', old_reg, old_regtype)<CR>
 
 " Operator pending mappings

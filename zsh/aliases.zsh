@@ -25,5 +25,6 @@ alias gai="git add --interactive"
 alias crc='cargo check'
 alias crct='cargo check --tests'
 alias crt='cargo test'
+alias crtq='cargo test --quiet'
 
 alias pjl="/Users/richard/plojo/target/release/lookup"
