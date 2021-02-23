@@ -28,3 +28,5 @@ alias crt='cargo test'
 alias crtq='cargo test --quiet'
 
 alias pjl="/Users/richard/plojo/target/release/lookup"
+
+alias wcl="wc -l"

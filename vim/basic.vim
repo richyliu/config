@@ -8,7 +8,7 @@
 
 set nocompatible
 
-colorscheme peachpuff
+colorscheme zellner
 
 " Settings {{{1
 set autoindent
@@ -17,6 +17,7 @@ set backspace=indent,eol,start
 set clipboard=
 set cursorline
 set expandtab
+set foldmethod=marker
 set hidden
 set hlsearch
 set ignorecase
@@ -31,6 +32,8 @@ set path=.,,**
 set relativenumber
 set ruler
 set scrolloff=5
+set sidescroll=5
+set sidescrolloff=10
 set shiftwidth=2
 set noshelltemp
 set showcmd
@@ -817,6 +820,7 @@ endif
 " }}}1
 
 
+
 " commentary.vim - Comment stuff out {{{1
 " Maintainer:   Tim Pope <http://tpo.pe/>
 " Version:      1.3
@@ -937,7 +941,7 @@ endif
 
 
 
-" Insert or delete brackets, parens, quotes in pairs. {{{1
+" auto-pairs - Insert or delete brackets, parens, quotes in pairs. {{{1
 " Maintainer:	JiangMiao <jiangfriend@gmail.com>
 " Contributor: camthompson
 " Last Change:  2019-02-02

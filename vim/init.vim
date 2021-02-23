@@ -25,6 +25,8 @@ Plug 'rust-lang/rust.vim'             " Rust language support
 Plug 'autozimu/LanguageClient-neovim' " Language server client
 Plug 'cespare/vim-toml'               " TOML config file format support
 Plug 'vlime/vlime', {'rtp': 'vim/'}   " Lisp support
+Plug 'glench/vim-jinja2-syntax'       " Jinja2 template (closest to Tera) support
+Plug 'purescript-contrib/purescript-vim' " Purescript language suppot
 
 call plug#end()
 
@@ -48,6 +50,10 @@ let g:LanguageClient_serverCommands = {
 \     },
 \   },
 \ },
+\ 'purescript': {
+\   'name': 'purescript language server',
+\   'command': ['purescript-language-server', '--stdio'],
+\ }
 \}
 let g:LanguageClient_preferredMarkupKind = ['markdown']
 
@@ -61,7 +67,6 @@ set backup
 set backupcopy=yes
 set backupdir=~/.cache/nvim/backup//
 set clipboard=
-set completefunc=LanguageClient#complete
 set cursorline
 set directory^=$HOME/.cache/nvim/swap//
 set expandtab
@@ -81,6 +86,8 @@ set path=.,,**
 set relativenumber
 set ruler
 set scrolloff=5
+set sidescroll=5
+set sidescrolloff=10
 set shiftwidth=2
 set noshelltemp
 set showcmd
@@ -229,6 +236,17 @@ onoremap an" :<c-u>normal! f"va"<cr>
 tnoremap <esc> <C-\><C-n>
 tnoremap <expr> <C-R> '<C-\><C-N>"'.nr2char(getchar()).'pi'
 
+" LanguageClient mappings
+nmap gd <Plug>(lcn-definition)
+nmap K <Plug>(lcn-hover)
+nmap <F1> <Plug>(lcn-menu)
+nmap <F2> <Plug>(lcn-code-action)
+nmap <F3> <Plug>(lcn-code-lens-action)
+nmap <F4> <Plug>(lcn-highlight)
+nmap <F5> <Plug>(lcn-definition)
+nmap <F6> <Plug>(lcn-references)
+nnoremap <F16> :<c-u>call LanguageClient_clearDocumentHighlight()<cr>
+
 augroup filetype_vim
   autocmd!
   autocmd Filetype vim iabbrev <buffer> iab iabbrev <buffer>
@@ -312,15 +330,6 @@ augroup END
 augroup filetype_rs
   autocmd!
   autocmd Filetype rust nnoremap <buffer> <localleader>p :RustFmt<cr>
-  autocmd FileType rust nmap <buffer> gd <Plug>(lcn-definition)
-  autocmd FileType rust nmap <buffer> K <Plug>(lcn-hover)
-  autocmd FileType rust nmap <buffer> <F1> <Plug>(lcn-menu)
-  autocmd FileType rust nmap <buffer> <F2> <Plug>(lcn-code-action)
-  autocmd FileType rust nmap <buffer> <F3> <Plug>(lcn-code-lens-action)
-  autocmd FileType rust nmap <buffer> <F4> <Plug>(lcn-highlight)
-  autocmd FileType rust nmap <buffer> <F5> <Plug>(lcn-definition)
-  autocmd FileType rust nmap <buffer> <F6> <Plug>(lcn-references)
-  autocmd FileType rust nnoremap <buffer> <F16> :<c-u>call LanguageClient_clearDocumentHighlight()<cr>
 augroup END
 
 augroup shorthand_transcription
@@ -330,8 +339,13 @@ augroup END
 
 augroup lisp
   autocmd!
-  " Only auto pair parentheses in lisp
-  autocmd Filetype lisp let b:AutoPairs = {'(':')'}
+  " Only auto pair parentheses and quotes in lisp
+  autocmd Filetype lisp let b:AutoPairs = {'(':')', '"':'"'}
+augroup END
+
+augroup purescript
+  autocmd!
+  autocmd Filetype purescript nmap <buffer> <localleader>p <Plug>(lcn-format)
 augroup END
 
 " Transparent editing of gpg encrypted files.
