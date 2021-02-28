@@ -1,8 +1,7 @@
 call plug#begin(stdpath('data') . '/plugged')
 
-Plug 'vim-airline/vim-airline'        " For status line
+Plug 'itchyny/lightline.vim'          " Lightline status line
 Plug 'chriskempson/base16-vim'        " Base16 color scheme
-Plug 'vim-airline/vim-airline-themes' " Customize status line theme
 Plug 'kshenoy/vim-signature'          " To display marks in the sidebar
 Plug 'airblade/vim-gitgutter'         " To display git changes in the sidebar
 Plug 'ap/vim-buftabline'              " Support for displaying buffers as tabs
@@ -19,7 +18,6 @@ Plug 'tpope/vim-commentary'           " Allow for easy commenting via 'gcc'
 Plug 'romainl/vim-cool'               " Automatically disable search highlighting
 Plug 'AndrewRadev/sideways.vim'       " Easily swap arguments
 
-Plug 'prettier/vim-prettier'          " Prettier support for JS/TS
 Plug 'alvan/vim-closetag'             " Automatically close html tags
 Plug 'rust-lang/rust.vim'             " Rust language support
 Plug 'autozimu/LanguageClient-neovim' " Language server client
@@ -30,8 +28,54 @@ Plug 'purescript-contrib/purescript-vim' " Purescript language suppot
 
 call plug#end()
 
-" Show modified files in buffer tabline
+" Lightline customize theme for one-light
+
+" Common colors
+let s:blue   = [ '#4078f2', 75 ]
+let s:orange = [ '#d75f00', 166 ]
+let s:red1   = [ '#e06c75', 168 ]
+let s:red2   = [ '#be5046', 168 ]
+let s:yellow = [ '#e5c07b', 180 ]
+
+let s:p = {'normal': {}, 'inactive': {}, 'insert': {}, 'replace': {}, 'visual': {}, 'tabline': {}}
+
+" Light variant
+let s:fg    = [ '#494b53', 238 ]
+let s:bg    = [ '#fafafa', 255 ]
+let s:gray1 = [ '#494b53', 238 ]
+let s:gray2 = [ '#f0f0f0', 255 ]
+let s:gray3 = [ '#d0d0d0', 250 ]
+let s:green = [ '#50a14f', 35 ]
+
+let s:p.inactive.left   = [ [ s:bg,  s:gray3 ], [ s:bg, s:gray3 ] ]
+let s:p.inactive.middle = [ [ s:gray3, s:gray2 ] ]
+let s:p.inactive.right  = [ [ s:bg, s:gray3 ] ]
+
+" Common
+let s:p.normal.left    = [ [ s:bg, s:blue, 'bold' ], [ s:fg, s:gray3 ] ]
+let s:p.normal.middle  = [ [ s:fg, s:gray2 ] ]
+let s:p.normal.right   = [ [ s:bg, s:blue, 'bold' ], [ s:fg, s:gray3 ] ]
+let s:p.normal.error   = [ [ s:red2, s:bg ] ]
+let s:p.normal.warning = [ [ s:yellow, s:bg ] ]
+let s:p.insert.right   = [ [ s:bg, s:green, 'bold' ], [ s:fg, s:gray3 ] ]
+let s:p.insert.left    = [ [ s:bg, s:green, 'bold' ], [ s:fg, s:gray3 ] ]
+let s:p.replace.right  = [ [ s:bg, s:red1, 'bold' ], [ s:fg, s:gray3 ] ]
+let s:p.replace.left   = [ [ s:bg, s:red1, 'bold' ], [ s:fg, s:gray3 ] ]
+let s:p.visual.right   = [ [ s:bg, s:orange, 'bold' ], [ s:fg, s:gray3 ] ]
+let s:p.visual.left    = [ [ s:bg, s:orange, 'bold' ], [ s:fg, s:gray3 ] ]
+let s:p.tabline.left   = [ [ s:fg, s:gray3 ] ]
+let s:p.tabline.tabsel = [ [ s:bg, s:orange, 'bold' ] ]
+let s:p.tabline.middle = [ [ s:gray3, s:gray2 ] ]
+let s:p.tabline.right  = copy(s:p.normal.right)
+
+let g:lightline#colorscheme#one#palette = lightline#colorscheme#flatten(s:p)
+
+let g:lightline = { 'colorscheme': 'one' }
+
+
+" Buffer tabline settings
 let g:buftabline_indicators=1
+let g:buftabline_numbers=2
 
 " Autoformat rust files on save
 let g:rustfmt_autosave=1
@@ -234,7 +278,23 @@ onoremap an" :<c-u>normal! f"va"<cr>
 
 " Terminal-mode
 tnoremap <esc> <C-\><C-n>
-tnoremap <expr> <C-R> '<C-\><C-N>"'.nr2char(getchar()).'pi'
+tnoremap <C-v><esc> <esc>
+
+" Highlighting overrides
+augroup terminal_cursor
+  autocmd!
+  " Cursor color in terminal mode
+  autocmd BufCreate * highlight! link TermCursor Cursor
+  autocmd BufCreate * highlight! TermCursorNC guibg=black guifg=white ctermbg=1 ctermfg=15
+  " Buffer shown in other window has same coloring
+  autocmd BufCreate * highlight! link BufTabLineActive TabLine
+augroup END
+
+" Hacky delay to get this to run after the colorscheme
+" Overrides the buffer tabline colors to be more visible
+call timer_start(100, { tid -> execute('highlight! TabLineSel guibg=#fafafa guifg=#50a14f ctermbg=10 ctermfg=02') })
+" Make select wild menu colors more readable
+call timer_start(100, { tid -> execute('highlight! WildMenu guibg=#383a42 guifg=#f0f0f1 ctermbg=07 ctermfg=10') })
 
 " LanguageClient mappings
 nmap gd <Plug>(lcn-definition)
@@ -246,6 +306,18 @@ nmap <F4> <Plug>(lcn-highlight)
 nmap <F5> <Plug>(lcn-definition)
 nmap <F6> <Plug>(lcn-references)
 nnoremap <F16> :<c-u>call LanguageClient_clearDocumentHighlight()<cr>
+
+" Switch to buffer number
+nmap <leader>1 <Plug>BufTabLine.Go(1)
+nmap <leader>2 <Plug>BufTabLine.Go(2)
+nmap <leader>3 <Plug>BufTabLine.Go(3)
+nmap <leader>4 <Plug>BufTabLine.Go(4)
+nmap <leader>5 <Plug>BufTabLine.Go(5)
+nmap <leader>6 <Plug>BufTabLine.Go(6)
+nmap <leader>7 <Plug>BufTabLine.Go(7)
+nmap <leader>8 <Plug>BufTabLine.Go(8)
+nmap <leader>9 <Plug>BufTabLine.Go(9)
+nmap <leader>0 <Plug>BufTabLine.Go(-1)
 
 augroup filetype_vim
   autocmd!
