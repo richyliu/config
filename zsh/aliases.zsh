@@ -1,12 +1,13 @@
 # Should be linked to $ZSH_CUSTOM/aliases.zsh
 # Usually ~/.oh-my-zsh/custom/aliases.zsh
 
-alias vim_real=/usr/bin/vim
 alias vim=nvim
+alias vimb="nvim -u ~/vimrc/vim/basic.vim"
 alias ag="ag -f --color-line-number 1\;35"
 alias agq="ag -fQ --color-line-number 1\;35"
 alias agl="ag -f --color-line-number 1\;35 --pager less"
 alias aglq="ag -fQ --color-line-number 1\;35 --pager less"
+alias tree="tree -I node_modules"
 
 alias ..="cd .."
 alias ...="cd ../.."
@@ -30,3 +31,49 @@ alias crtq='cargo test --quiet'
 alias pjl="/Users/richard/plojo/target/release/lookup"
 
 alias wcl="wc -l"
+
+alias .+='cd ../$(printf "%02d" $(( ${PWD##*/} + 1 )))'
+
+function swap() {
+  local TMPFILE=tmp.$$
+  mv "$1" $TMPFILE && mv "$2" "$1" && mv $TMPFILE "$2"
+}
+
+function pics_compress() {
+  COUNT=1
+  echo "Compressing all jpgs in this folder with 1 sec delay between each..."
+  for img in *.jpg; do
+    mogrify -resize 1200x1200 -quality 80% -strip "$img"
+
+    if (( $COUNT % 10 == 0 )); then
+      echo -n " $COUNT "
+    else
+      echo -n "."
+    fi
+    ((COUNT++))
+
+    sleep 1
+  done
+  echo "\nDone"
+
+}
+
+function compress() {
+  # Compress all jpgs if no folders are specified
+  if [[ $# -eq 0 ]]; then
+    pics_compress
+  else
+    echo "Compressing all jpgs in: $@"
+    for folder in "$@"; do
+      if [[ -d "$folder" ]]; then
+        cd "$folder"
+        echo "In folder: $folder"
+        pics_compress
+        cd ..
+      else
+        echo "WARNING: folder $folder does not exist"
+      fi
+    done
+  fi
+}
+

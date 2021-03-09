@@ -18,6 +18,7 @@ Plug 'tpope/vim-commentary'           " Allow for easy commenting via 'gcc'
 Plug 'romainl/vim-cool'               " Automatically disable search highlighting
 Plug 'AndrewRadev/sideways.vim'       " Easily swap arguments
 
+Plug 'pangloss/vim-javascript'        " JS syntax
 Plug 'alvan/vim-closetag'             " Automatically close html tags
 Plug 'rust-lang/rust.vim'             " Rust language support
 Plug 'autozimu/LanguageClient-neovim' " Language server client
@@ -70,8 +71,28 @@ let s:p.tabline.right  = copy(s:p.normal.right)
 
 let g:lightline#colorscheme#one#palette = lightline#colorscheme#flatten(s:p)
 
-let g:lightline = { 'colorscheme': 'one' }
+" Lightline statusbar options
+let g:lightline = {
+      \ 'colorscheme': 'one',
+      \ 'active': {
+      \   'left': [ [ 'mode', 'paste' ], [ 'readonly', 'filename', 'modified' ] ],
+      \   'right': [ [ 'lineinfo' ], [ 'percent', 'wordcount' ], [ 'spell', 'filetype' ] ]
+      \ },
+      \ 'inactive': {
+      \   'left': [ [ 'filename' ], [ 'modified' ] ],
+      \   'right': [ [ 'lineinfo' ], [ 'percent' ] ]
+      \ },
+      \ 'component_function': {
+      \   'wordcount': 'WordCount',
+      \ },
+      \ }
 
+function! WordCount()
+  if &filetype != 'markdown' && &filetype != 'text'
+    return ''
+  endif
+  return wordcount().words . ' words'
+endfunction
 
 " Buffer tabline settings
 let g:buftabline_indicators=1
@@ -104,6 +125,9 @@ let g:LanguageClient_preferredMarkupKind = ['markdown']
 " Markdown code highlighting
 let g:markdown_fenced_languages = ['rust']
 
+" Ultisnip open edit window in horizontal split
+let g:UltiSnipsEditSplit="horizontal"
+
 " Settings
 set autoindent
 set backspace=indent,eol,start
@@ -123,7 +147,7 @@ set lazyredraw
 set linebreak
 set list
 set nomodeline
-set mouse=a
+set mouse=nc
 set nrformats-=octal
 set number
 set path=.,,**
@@ -171,7 +195,7 @@ noremap <leader>r :!!<cr>
 " Open vimrc file
 nnoremap <leader>ev :e $MYVIMRC<cr>
 " Open snippets
-nnoremap <leader>es :call <SID>OpenSnippetFile()<cr>
+nnoremap <leader>es :UltiSnipsEdit<cr>
 " Open file in current folder
 nnoremap <leader>e :e <c-d>
 nnoremap <leader>ee :e <c-d>
@@ -183,6 +207,8 @@ nnoremap <leader>c :cd %:p:h<cr>
 nnoremap <leader>a :set paste!<cr>
 " toggle relative number
 nnoremap <leader>l :setlocal relativenumber!<cr>
+" toggle line wrapping
+nnoremap <leader>p :setlocal wrap!<cr>
 " open help search
 nnoremap <leader>h :help<space>
 " enable verymagic for regex
@@ -204,15 +230,19 @@ vnoremap <leader>g :g/
 " yank to system clipboard
 nnoremap <leader>y "+y
 vnoremap <leader>y "+y
+" yank file to system clipboard
+nnoremap <leader>yA :<c-u>%y+<cr>
+" open quickfix window
+nnoremap <leader>q :<c-u>copen<cr>
+" move to adjacent buffers
+nnoremap <leader>] :<c-u>bnext<cr>
+nnoremap <leader>[ :<c-u>bprev<cr>
+
 " close all vim buffers
 nnoremap ZA :qa!<cr>
-
 " Move line up or down
 nnoremap _ :silent! .m.-2<cr>
 nnoremap + :silent! .m+<cr>
-" Cycle through buffers
-nnoremap <tab> :bnext<cr>
-nnoremap <s-tab> :bprevious<cr>
 " Yank until end of line
 nnoremap Y y$
 
@@ -229,6 +259,8 @@ vnoremap <c-p> :<c-p>
 cnoremap <c-a> <c-b>
 " Make ctrl-u start a separate history entry
 inoremap <c-u> <c-g>u<c-u>
+" Make shift tab go back in jumplist
+nnoremap <s-tab> <c-o>
 
 " Make { and } always work linewise
 onoremap { V{
@@ -279,6 +311,10 @@ onoremap an" :<c-u>normal! f"va"<cr>
 " Terminal-mode
 tnoremap <esc> <C-\><C-n>
 tnoremap <C-v><esc> <esc>
+augroup terminal_mode
+  autocmd!
+  autocmd TermOpen * setlocal scrolloff=0
+augroup END
 
 " Highlighting overrides
 augroup terminal_cursor
@@ -295,17 +331,20 @@ augroup END
 call timer_start(100, { tid -> execute('highlight! TabLineSel guibg=#fafafa guifg=#50a14f ctermbg=10 ctermfg=02') })
 " Make select wild menu colors more readable
 call timer_start(100, { tid -> execute('highlight! WildMenu guibg=#383a42 guifg=#f0f0f1 ctermbg=07 ctermfg=10') })
+" Highlight non ascii
+call timer_start(100, { tid -> execute('syntax match nonascii "[^\x00-\x7F]"') })
+call timer_start(150, { tid -> execute('highlight! nonascii guibg=Red guifg=white ctermbg=5 ctermfg=15') })
+
 
 " LanguageClient mappings
-nmap gd <Plug>(lcn-definition)
-nmap K <Plug>(lcn-hover)
-nmap <F1> <Plug>(lcn-menu)
-nmap <F2> <Plug>(lcn-code-action)
-nmap <F3> <Plug>(lcn-code-lens-action)
-nmap <F4> <Plug>(lcn-highlight)
-nmap <F5> <Plug>(lcn-definition)
-nmap <F6> <Plug>(lcn-references)
-nnoremap <F16> :<c-u>call LanguageClient_clearDocumentHighlight()<cr>
+nmap <silent> gd <Plug>(lcn-definition)
+nmap <silent> K <Plug>(lcn-hover)
+nmap <silent> <F1> <Plug>(lcn-menu)
+nmap <silent> <F2> <Plug>(lcn-code-action)
+nmap <silent> <F3> <Plug>(lcn-code-lens-action)
+nmap <silent> <F4> <Plug>(lcn-highlight)
+nmap <silent> <F6> <Plug>(lcn-references)
+nnoremap <silent> <F16> :<c-u>call LanguageClient_clearDocumentHighlight()<cr>
 
 " Switch to buffer number
 nmap <leader>1 <Plug>BufTabLine.Go(1)
@@ -316,8 +355,7 @@ nmap <leader>5 <Plug>BufTabLine.Go(5)
 nmap <leader>6 <Plug>BufTabLine.Go(6)
 nmap <leader>7 <Plug>BufTabLine.Go(7)
 nmap <leader>8 <Plug>BufTabLine.Go(8)
-nmap <leader>9 <Plug>BufTabLine.Go(9)
-nmap <leader>0 <Plug>BufTabLine.Go(-1)
+nmap <leader>9 <Plug>BufTabLine.Go(-1)
 
 augroup filetype_vim
   autocmd!
@@ -493,13 +531,6 @@ function! ListSnippets(findstart, base) abort
     endfor
     return res
   endif
-endfunction
-
-" Opens the snippet file for the current filetype in a new split
-" If there are multiple file types, the first one is used
-function! s:OpenSnippetFile()
-  let ft = substitute(&filetype, '^\([^.]\+\)\..\+$', '\1', '')
-  execute ':vsplit ' . stdpath('data') . '/UltiSnips/' . ft . '.snippets'
 endfunction
 
 " Replace fancy quotes with normal quotes

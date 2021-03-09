@@ -57,6 +57,9 @@ set wildmode=longest:full,full
 filetype plugin on
 syntax on
 
+let g:buftabline_indicators=1
+let g:buftabline_numbers=2
+
 " }}}1
 
 " Keymaps {{{1
@@ -79,6 +82,8 @@ nnoremap <leader>c :cd %:p:h<cr>
 nnoremap <leader>a :set paste!<cr>
 " toggle relative number
 nnoremap <leader>l :setlocal relativenumber!<cr>
+" toggle line wrapping
+nnoremap <leader>p :setlocal wrap!<cr>
 " open help search
 nnoremap <leader>h :help<space>
 " enable verymagic for regex
@@ -106,9 +111,6 @@ nnoremap ZA :qa!<cr>
 " Move line up or down
 nnoremap _ :silent! .m.-2<cr>
 nnoremap + :silent! .m+<cr>
-" Cycle through buffers
-nnoremap <tab> :bnext<cr>
-nnoremap <s-tab> :bprevious<cr>
 " Yank until end of line
 nnoremap Y y$
 
@@ -154,6 +156,17 @@ onoremap in' :<c-u>normal! f'vi'<cr>
 onoremap an' :<c-u>normal! f'va'<cr>
 onoremap in" :<c-u>normal! f"vi"<cr>
 onoremap an" :<c-u>normal! f"va"<cr>
+
+" Buffer switching
+nmap <leader>1 :<c-u>BufTabLineGo1<cr>
+nmap <leader>2 :<c-u>BufTabLineGo2<cr>
+nmap <leader>3 :<c-u>BufTabLineGo3<cr>
+nmap <leader>4 :<c-u>BufTabLineGo4<cr>
+nmap <leader>5 :<c-u>BufTabLineGo5<cr>
+nmap <leader>6 :<c-u>BufTabLineGo6<cr>
+nmap <leader>7 :<c-u>BufTabLineGo7<cr>
+nmap <leader>8 :<c-u>BufTabLineGo8<cr>
+nmap <leader>9 :<c-u>BufTabLineGo20<cr>
 
 " }}}1
 
@@ -675,9 +688,9 @@ function! s:dosurround(...) " {{{2
   let s:lastdel = removed
   let &clipboard = cb_save
   if newchar == ""
-    silent! call repeat#set("\<Plug>Dsurround".char,scount)
+    silent! call __repeat_set("\<Plug>Dsurround".char,scount)
   else
-    silent! call repeat#set("\<Plug>C".(a:0 > 2 && a:3 ? "S" : "s")."urround".char.newchar.s:input,scount)
+    silent! call __repeat_set("\<Plug>C".(a:0 > 2 && a:3 ? "S" : "s")."urround".char.newchar.s:input,scount)
   endif
 endfunction " }}}2
 
@@ -754,9 +767,9 @@ function! s:opfunc(type, ...) abort " {{{2
   let &selection = sel_save
   let &clipboard = cb_save
   if a:type =~ '^\d\+$'
-    silent! call repeat#set("\<Plug>Y".(a:0 && a:1 ? "S" : "s")."surround".char.s:input,a:type)
+    silent! call __repeat_set("\<Plug>Y".(a:0 && a:1 ? "S" : "s")."surround".char.s:input,a:type)
   else
-    silent! call repeat#set("\<Plug>SurroundRepeat".char.s:input)
+    silent! call __repeat_set("\<Plug>SurroundRepeat".char.s:input)
   endif
 endfunction
 
@@ -1745,5 +1758,388 @@ endfunction
 call <SID>PlayItCool(0, &hlsearch)
 
 let &cpo = s:save_cpo
+
+" }}}1
+
+
+
+" vim-buftabline - Show buffer list in the tabline {{{1
+" Tweaked a bit to make it work in one file
+" Vim global plugin for rendering the buffer list in the tabline
+" Licence:     The MIT License (MIT)
+" Commit:      $Format:%H$
+" {{{ Copyright (c) 2015 Aristotle Pagaltzis <pagaltzis@gmx.de>
+" 
+" Permission is hereby granted, free of charge, to any person obtaining a copy
+" of this software and associated documentation files (the "Software"), to deal
+" in the Software without restriction, including without limitation the rights
+" to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+" copies of the Software, and to permit persons to whom the Software is
+" furnished to do so, subject to the following conditions:
+" 
+" The above copyright notice and this permission notice shall be included in
+" all copies or substantial portions of the Software.
+" 
+" THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+" IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+" FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+" AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+" LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+" OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+" THE SOFTWARE.
+" }}}
+
+if v:version < 700
+	echoerr printf('Vim 7 is required for buftabline (this is only %d.%d)',v:version/100,v:version%100)
+	finish
+endif
+
+scriptencoding utf-8
+
+hi default link BufTabLineCurrent TabLineSel
+hi default link BufTabLineActive  PmenuSel
+hi default link BufTabLineHidden  TabLine
+hi default link BufTabLineFill    TabLineFill
+
+let g:buftabline_numbers    = get(g:, 'buftabline_numbers',    0)
+let g:buftabline_indicators = get(g:, 'buftabline_indicators', 0)
+let g:buftabline_separators = get(g:, 'buftabline_separators', 0)
+let g:buftabline_show       = get(g:, 'buftabline_show',       2)
+let g:buftabline_plug_max   = get(g:, 'buftabline_plug_max',  10)
+
+function! s:buftabline_user_buffers() " help buffers are always unlisted, but quickfix buffers are not
+	return filter(range(1,bufnr('$')),'buflisted(v:val) && "quickfix" !=? getbufvar(v:val, "&buftype")')
+endfunction
+
+function! s:switch_buffer(bufnum, clicks, button, mod)
+	execute 'buffer' a:bufnum
+endfunction
+
+function s:SID()
+	return matchstr(expand('<sfile>'), '<SNR>\d\+_')
+endfunction
+
+let s:dirsep = fnamemodify(getcwd(),':p')[-1:]
+let s:centerbuf = winbufnr(0)
+let s:tablineat = has('tablineat')
+let s:sid = s:SID() | delfunction s:SID
+function! __buftabline_render()
+	let show_num = g:buftabline_numbers == 1
+	let show_ord = g:buftabline_numbers == 2
+	let show_mod = g:buftabline_indicators
+	let lpad     = g:buftabline_separators ? nr2char(0x23B8) : ' '
+
+	let bufnums = s:buftabline_user_buffers()
+	let centerbuf = s:centerbuf " prevent tabline jumping around when non-user buffer current (e.g. help)
+
+	" pick up data on all the buffers
+	let tabs = []
+	let path_tabs = []
+	let tabs_per_tail = {}
+	let currentbuf = winbufnr(0)
+	let screen_num = 0
+	for bufnum in bufnums
+		let screen_num = show_num ? bufnum : show_ord ? screen_num + 1 : ''
+		let tab = { 'num': bufnum }
+		let tab.hilite = currentbuf == bufnum ? 'Current' : bufwinnr(bufnum) > 0 ? 'Active' : 'Hidden'
+		if currentbuf == bufnum | let [centerbuf, s:centerbuf] = [bufnum, bufnum] | endif
+		let bufpath = bufname(bufnum)
+		if strlen(bufpath)
+			let tab.path = fnamemodify(bufpath, ':p:~:.')
+			let tab.sep = strridx(tab.path, s:dirsep, strlen(tab.path) - 2) " keep trailing dirsep
+			let tab.label = tab.path[tab.sep + 1:]
+			let pre = ( show_mod && getbufvar(bufnum, '&mod') ? '+' : '' ) . screen_num
+			let tab.pre = strlen(pre) ? pre . ' ' : ''
+			let tabs_per_tail[tab.label] = get(tabs_per_tail, tab.label, 0) + 1
+			let path_tabs += [tab]
+		elseif -1 < index(['nofile','acwrite'], getbufvar(bufnum, '&buftype')) " scratch buffer
+			let tab.label = ( show_mod ? '!' . screen_num : screen_num ? screen_num . ' !' : '!' )
+		else " unnamed file
+			let tab.label = ( show_mod && getbufvar(bufnum, '&mod') ? '+' : '' )
+			\             . ( screen_num ? screen_num : '*' )
+		endif
+		let tabs += [tab]
+	endfor
+
+	" disambiguate same-basename files by adding trailing path segments
+	while len(filter(tabs_per_tail, 'v:val > 1'))
+		let [ambiguous, tabs_per_tail] = [tabs_per_tail, {}]
+		for tab in path_tabs
+			if -1 < tab.sep && has_key(ambiguous, tab.label)
+				let tab.sep = strridx(tab.path, s:dirsep, tab.sep - 1)
+				let tab.label = tab.path[tab.sep + 1:]
+			endif
+			let tabs_per_tail[tab.label] = get(tabs_per_tail, tab.label, 0) + 1
+		endfor
+	endwhile
+
+	" now keep the current buffer center-screen as much as possible:
+
+	" 1. setup
+	let lft = { 'lasttab':  0, 'cut':  '.', 'indicator': '<', 'width': 0, 'half': &columns / 2 }
+	let rgt = { 'lasttab': -1, 'cut': '.$', 'indicator': '>', 'width': 0, 'half': &columns - lft.half }
+
+	" 2. sum the string lengths for the left and right halves
+	let currentside = lft
+	for tab in tabs
+		let tab.label = lpad . get(tab, 'pre', '') . tab.label . ' '
+		let tab.width = strwidth(strtrans(tab.label))
+		if centerbuf == tab.num
+			let halfwidth = tab.width / 2
+			let lft.width += halfwidth
+			let rgt.width += tab.width - halfwidth
+			let currentside = rgt
+			continue
+		endif
+		let currentside.width += tab.width
+	endfor
+	if currentside is lft " centered buffer not seen?
+		" then blame any overflow on the right side, to protect the left
+		let [lft.width, rgt.width] = [0, lft.width]
+	endif
+
+	" 3. toss away tabs and pieces until all fits:
+	if ( lft.width + rgt.width ) > &columns
+		let oversized
+		\ = lft.width < lft.half ? [ [ rgt, &columns - lft.width ] ]
+		\ : rgt.width < rgt.half ? [ [ lft, &columns - rgt.width ] ]
+		\ :                        [ [ lft, lft.half ], [ rgt, rgt.half ] ]
+		for [side, budget] in oversized
+			let delta = side.width - budget
+			" toss entire tabs to close the distance
+			while delta >= tabs[side.lasttab].width
+				let delta -= remove(tabs, side.lasttab).width
+			endwhile
+			" then snip at the last one to make it fit
+			let endtab = tabs[side.lasttab]
+			while delta > ( endtab.width - strwidth(strtrans(endtab.label)) )
+				let endtab.label = substitute(endtab.label, side.cut, '', '')
+			endwhile
+			let endtab.label = substitute(endtab.label, side.cut, side.indicator, '')
+		endfor
+	endif
+
+	if len(tabs) | let tabs[0].label = substitute(tabs[0].label, lpad, ' ', '') | endif
+
+	let swallowclicks = '%'.(1 + tabpagenr('$')).'X'
+	return s:tablineat
+		\ ? join(map(tabs,'"%#BufTabLine".v:val.hilite."#" . "%".v:val.num."@'.s:sid.'switch_buffer@" . strtrans(v:val.label)'),'') . '%#BufTabLineFill#' . swallowclicks
+		\ : swallowclicks . join(map(tabs,'"%#BufTabLine".v:val.hilite."#" . strtrans(v:val.label)'),'') . '%#BufTabLineFill#'
+endfunction
+
+function! s:buftabline_update(zombie)
+	set tabline=
+	if tabpagenr('$') > 1 | set guioptions+=e showtabline=2 | return | endif
+	set guioptions-=e
+	if 0 == g:buftabline_show
+		set showtabline=1
+		return
+	elseif 1 == g:buftabline_show
+		" account for BufDelete triggering before buffer is actually deleted
+		let bufnums = filter(s:buftabline_user_buffers(), 'v:val != a:zombie')
+		let &g:showtabline = 1 + ( len(bufnums) > 1 )
+	elseif 2 == g:buftabline_show
+		set showtabline=2
+	endif
+	set tabline=%!__buftabline_render()
+endfunction
+
+augroup BufTabLine
+autocmd!
+autocmd VimEnter  * call s:buftabline_update(0)
+autocmd TabEnter  * call s:buftabline_update(0)
+autocmd BufAdd    * call s:buftabline_update(0)
+autocmd FileType qf call s:buftabline_update(0)
+autocmd BufDelete * call s:buftabline_update(str2nr(expand('<abuf>')))
+augroup END
+
+for s:n in range(1, g:buftabline_plug_max) + ( g:buftabline_plug_max > 0 ? [-1] : [] )
+	let s:b = s:n == -1 ? -1 : s:n - 1
+    let s:n = s:n == -1 ? 20 : s:n
+	execute printf("command! BufTabLineGo%d :exe 'b'.get(s:buftabline_user_buffers(),%d,'')", s:n, s:b)
+endfor
+unlet! s:n s:b
+
+if v:version < 703
+	function s:transpile()
+		let [ savelist, &list ] = [ &list, 0 ]
+		redir => src
+			silent function __buftabline_render
+		redir END
+		let &list = savelist
+		let src = substitute(src, '\n\zs[0-9 ]*', '', 'g')
+		let src = substitute(src, 'strwidth(strtrans(\([^)]\+\)))', 'strlen(substitute(\1, ''\p\|\(.\)'', ''x\1'', ''g''))', 'g')
+		return src
+	endfunction
+	exe "delfunction __buftabline_render\n" . s:transpile()
+	delfunction s:transpile
+endif
+" }}}1
+
+
+
+" repeat.vim - Let the repeat command repeat plugin maps {{{1
+" Maintainer:   Tim Pope
+" Version:      1.2
+" GetLatestVimScripts: 2136 1 :AutoInstall: repeat.vim
+
+" Installation:
+" Place in either ~/.vim/plugin/repeat.vim (to load at start up) or
+" ~/.vim/autoload/repeat.vim (to load automatically as needed).
+"
+" License:
+" Copyright (c) Tim Pope.  Distributed under the same terms as Vim itself.
+" See :help license
+"
+" Developers:
+" Basic usage is as follows:
+"
+"   silent! call __repeat_set("\<Plug>MappingToRepeatCommand",3)
+"
+" The first argument is the mapping that will be invoked when the |.| key is
+" pressed.  Typically, it will be the same as the mapping the user invoked.
+" This sequence will be stuffed into the input queue literally.  Thus you must
+" encode special keys by prefixing them with a backslash inside double quotes.
+"
+" The second argument is the default count.  This is the number that will be
+" prefixed to the mapping if no explicit numeric argument was given.  The
+" value of the v:count variable is usually correct and it will be used if the
+" second parameter is omitted.  If your mapping doesn't accept a numeric
+" argument and you never want to receive one, pass a value of -1.
+"
+" Make sure to call the __repeat_set function _after_ making changes to the
+" file.
+"
+" For mappings that use a register and want the same register used on
+" repetition, use:
+"
+"   silent! call __repeat_setreg("\<Plug>MappingToRepeatCommand", v:register)
+"
+" This function can (and probably needs to be) called before making changes to
+" the file (as those typically clear v:register).  Therefore, the call sequence
+" in your mapping will look like this:
+"
+"   nnoremap <silent> <Plug>MyMap
+"   \   :<C-U>execute 'silent! call __repeat_setreg("\<lt>Plug>MyMap", v:register)'<Bar>
+"   \   call <SID>MyFunction(v:register, ...)<Bar>
+"   \   silent! call __repeat_set("\<lt>Plug>MyMap")<CR>
+
+if exists("g:loaded_repeat") || &cp || v:version < 700
+    finish
+endif
+let g:loaded_repeat = 1
+
+let g:repeat_tick = -1
+let g:repeat_reg = ['', '']
+
+" Special function to avoid spurious repeats in a related, naturally repeating
+" mapping when your repeatable mapping doesn't increase b:changedtick.
+function! __repeat_invalidate()
+    autocmd! repeat_custom_motion
+    let g:repeat_tick = -1
+endfunction
+
+function! __repeat_set(sequence,...)
+    let g:repeat_sequence = a:sequence
+    let g:repeat_count = a:0 ? a:1 : v:count
+    let g:repeat_tick = b:changedtick
+    augroup repeat_custom_motion
+        autocmd!
+        autocmd CursorMoved <buffer> let g:repeat_tick = b:changedtick | autocmd! repeat_custom_motion
+    augroup END
+endfunction
+
+function! __repeat_setreg(sequence,register)
+    let g:repeat_reg = [a:sequence, a:register]
+endfunction
+
+
+function! s:default_register()
+    let values = split(&clipboard, ',')
+    if index(values, 'unnamedplus') != -1
+        return '+'
+    elseif index(values, 'unnamed') != -1
+        return '*'
+    else
+        return '"'
+    endif
+endfunction
+
+function! __repeat_run(count)
+    try
+        if g:repeat_tick == b:changedtick
+            let r = ''
+            if g:repeat_reg[0] ==# g:repeat_sequence && !empty(g:repeat_reg[1])
+                " Take the original register, unless another (non-default, we
+                " unfortunately cannot detect no vs. a given default register)
+                " register has been supplied to the repeat command (as an
+                " explicit override).
+                let regname = v:register ==# s:default_register() ? g:repeat_reg[1] : v:register
+                if regname ==# '='
+                    " This causes a re-evaluation of the expression on repeat, which
+                    " is what we want.
+                    let r = '"=' . getreg('=', 1) . "\<CR>"
+                else
+                    let r = '"' . regname
+                endif
+            endif
+
+            let c = g:repeat_count
+            let s = g:repeat_sequence
+            let cnt = c == -1 ? "" : (a:count ? a:count : (c ? c : ''))
+            if ((v:version == 703 && has('patch100')) || (v:version == 704 && !has('patch601')))
+                exe 'norm ' . r . cnt . s
+            elseif v:version <= 703
+                call feedkeys(r . cnt, 'n')
+                call feedkeys(s, '')
+            else
+                call feedkeys(s, 'i')
+                call feedkeys(r . cnt, 'ni')
+            endif
+        else
+            if ((v:version == 703 && has('patch100')) || (v:version == 704 && !has('patch601')))
+                exe 'norm! '.(a:count ? a:count : '') . '.'
+            else
+                call feedkeys((a:count ? a:count : '') . '.', 'ni')
+            endif
+        endif
+    catch /^Vim(normal):/
+        return 'echoerr v:errmsg'
+    endtry
+    return ''
+endfunction
+
+function! __repeat_wrap(command,count)
+    let preserve = (g:repeat_tick == b:changedtick)
+    call feedkeys((a:count ? a:count : '').a:command, 'n')
+    exe (&foldopen =~# 'undo\|all' ? 'norm! zv' : '')
+    if preserve
+        let g:repeat_tick = b:changedtick
+    endif
+endfunction
+
+nnoremap <silent> <Plug>(RepeatDot)      :<C-U>exe __repeat_run(v:count)<CR>
+nnoremap <silent> <Plug>(RepeatUndo)     :<C-U>call __repeat_wrap('u',v:count)<CR>
+nnoremap <silent> <Plug>(RepeatUndoLine) :<C-U>call __repeat_wrap('U',v:count)<CR>
+nnoremap <silent> <Plug>(RepeatRedo)     :<C-U>call __repeat_wrap("\<Lt>C-R>",v:count)<CR>
+
+if !hasmapto('<Plug>(RepeatDot)', 'n')
+    nmap . <Plug>(RepeatDot)
+endif
+if !hasmapto('<Plug>(RepeatUndo)', 'n')
+    nmap u <Plug>(RepeatUndo)
+endif
+if maparg('U','n') ==# '' && !hasmapto('<Plug>(RepeatUndoLine)', 'n')
+    nmap U <Plug>(RepeatUndoLine)
+endif
+if !hasmapto('<Plug>(RepeatRedo)', 'n')
+    nmap <C-R> <Plug>(RepeatRedo)
+endif
+
+augroup repeatPlugin
+    autocmd!
+    autocmd BufLeave,BufWritePre,BufReadPre * let g:repeat_tick = (g:repeat_tick == b:changedtick || g:repeat_tick == 0) ? 0 : -1
+    autocmd BufEnter,BufWritePost * if g:repeat_tick == 0|let g:repeat_tick = b:changedtick|endif
+augroup END
 
 " }}}1
