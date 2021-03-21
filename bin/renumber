@@ -24,14 +24,14 @@ fi
 # only prompt to confirm when options are used
 if (( $# > 0 )); then
   echo "Renaming all files in folder from $start using the format '$format'"
-  read -p "Press ENTER to continue: "
+  read -rp "Press ENTER to continue: "
 fi
 
 # add leading underscore to prevent overwriting files
-rename 's/(.+)/_$1/' *
+rename 's/(.+)/_$1/' -- *
 
-let i=$start
+i=$start
 for f in *; do
-  mv "$f" $(printf "$format" $i)
-  let i++
+  mv "$f" "$(printf "$format" $i)"
+  (( i++ ))
 done

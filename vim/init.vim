@@ -19,6 +19,7 @@ Plug 'romainl/vim-cool'               " Automatically disable search highlightin
 Plug 'AndrewRadev/sideways.vim'       " Easily swap arguments
 
 Plug 'pangloss/vim-javascript'        " JS syntax
+Plug 'prettier/vim-prettier'          " Prettier (JS formatter)
 Plug 'alvan/vim-closetag'             " Automatically close html tags
 Plug 'rust-lang/rust.vim'             " Rust language support
 Plug 'autozimu/LanguageClient-neovim' " Language server client
@@ -100,6 +101,9 @@ let g:buftabline_numbers=2
 
 " Autoformat rust files on save
 let g:rustfmt_autosave=1
+
+" Configure purescript indent
+let g:purescript_disable_indent = 1
 
 " Language client settings
 let g:LanguageClient_serverCommands = {
