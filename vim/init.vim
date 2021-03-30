@@ -19,6 +19,7 @@ Plug 'romainl/vim-cool'               " Automatically disable search highlightin
 Plug 'AndrewRadev/sideways.vim'       " Easily swap arguments
 
 Plug 'pangloss/vim-javascript'        " JS syntax
+Plug 'MaxMEllon/vim-jsx-pretty'       " JSX syntax
 Plug 'prettier/vim-prettier'          " Prettier (JS formatter)
 Plug 'alvan/vim-closetag'             " Automatically close html tags
 Plug 'rust-lang/rust.vim'             " Rust language support

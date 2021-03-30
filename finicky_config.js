@@ -14,6 +14,8 @@ module.exports = {
         // Open college apps stuff in Chrome
         "apply.mitadmissions.org*",
         "myillini.illinois.edu*",
+        // Open zoom sign in links in Chrome
+        "*.zoom.us*",
       ],
       browser: "Google Chrome"
     },

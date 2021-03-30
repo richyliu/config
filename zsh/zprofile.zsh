@@ -19,3 +19,18 @@ export EDITOR=nvim
 # The original version is saved in .zprofile.pysave
 PATH="/Library/Frameworks/Python.framework/Versions/3.7/bin:${PATH}"
 export PATH
+
+# The next line updates PATH for the Google Cloud SDK.
+if [ -f '/Users/richard/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/richard/google-cloud-sdk/path.zsh.inc'; fi
+
+# The next line enables shell command completion for gcloud.
+if [ -f '/Users/richard/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/richard/google-cloud-sdk/completion.zsh.inc'; fi
+
+export GOOGLE_APPLICATION_CREDENTIALS=/Users/richard/gregg-shorthand-07d924baf9f4.json
+
+# JDK path
+export PATH="/Users/richard/code/jdk-11.0.10+9/Contents/Home/bin:$PATH"
+
+bindkey "^U" backward-kill-line
+
+export HOMEBREW_NO_AUTO_UPDATE=1
