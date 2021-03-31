@@ -170,6 +170,47 @@ nmap <leader>9 :<c-u>BufTabLineGo20<cr>
 
 " }}}1
 
+" Editing GPG files {{{1
+
+" Transparent editing of gpg encrypted files.
+" By Wouter Hanegraaff
+" Source: https://vim.fandom.com/wiki/Encryption
+" Modified slightly by me (Richard Liu)
+augroup encrypted
+  au!
+
+  " First make sure nothing is written to ~/.viminfo while editing
+  " an encrypted file.
+  autocmd BufReadPre,FileReadPre *.gpg set viminfo=
+  " We don't want a various options which write unencrypted data to disk
+  autocmd BufReadPre,FileReadPre *.gpg set noswapfile noundofile nobackup nowritebackup
+
+  " Switch to binary mode to read the encrypted file
+  autocmd BufReadPre,FileReadPre *.gpg set bin
+  autocmd BufReadPre,FileReadPre *.gpg let ch_save = &ch|set ch=2
+  " (If you use tcsh, you may need to alter this line.)
+  autocmd BufReadPost,FileReadPost *.gpg '[,']!gpg --decrypt 2> /dev/null
+
+  " Switch to normal mode for editing
+  autocmd BufReadPost,FileReadPost *.gpg set nobin
+  autocmd BufReadPost,FileReadPost *.gpg let &ch = ch_save|unlet ch_save
+  autocmd BufReadPost,FileReadPost *.gpg execute ":doautocmd BufReadPost " . expand("%:r")
+
+  " Use a mark to remember where we are
+  autocmd BufWritePre,FileWritePre *.gpg execute "normal! mz"
+  " Convert all text to encrypted text before writing
+  autocmd BufWritePre,FileWritePre *.gpg '[,']!gpg --default-recipient-self -ae 2>/dev/null
+  " Undo the encryption so we are back in the normal text after the file has been written.
+  autocmd BufWritePost,FileWritePost *.gpg undo
+  " Go back to the mark and delete it
+  autocmd BufWritePost,FileWritePost *.gpg execute "normal! `z"
+  autocmd BufWritePost,FileWritePost *.gpg delmark z
+
+  " Disable gitgutter for gpg encrypted files
+  autocmd BufReadPost,FileReadPost *.gpg let g:gitgutter_enabled = 0
+augroup END
+
+" }}}1
 
 " Statusline {{{1
 " https://github.com/Greduan/dotfiles/blob/76e16dd8a04501db29989824af512c453550591d/vim/after/plugin/statusline.vim

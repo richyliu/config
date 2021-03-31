@@ -1,5 +1,5 @@
 # Path to your oh-my-zsh installation.
-export ZSH="/Users/richard/.oh-my-zsh"
+export ZSH="/home/richyliu/.oh-my-zsh"
 
 # zsh theme
 ZSH_THEME="robbyrussell"
@@ -14,7 +14,7 @@ HYPHEN_INSENSITIVE="true"
 DISABLE_UNTRACKED_FILES_DIRTY="true"
 
 # Would you like to use another custom folder than $ZSH/custom?
-ZSH_CUSTOM=/Users/richard/vimrc/zsh/config
+ZSH_CUSTOM=/home/richyliu/vimrc/zsh/config
 
 # Which plugins would you like to load?
 # Standard plugins can be found in $ZSH/plugins/
@@ -26,3 +26,18 @@ plugins=(git)
 source $ZSH/oh-my-zsh.sh
 
 bindkey "^U" backward-kill-line
+
+# Start tmux if connecting via SSH
+if [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
+  if [ "$TMUX" = "" ]; then
+    tmux attach
+  fi
+fi
+
+# Load NVM (for NodeJS)
+export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
+
+# Linux specific aliases
+alias sldl="node /home/richyliu/stuff/ldl/new/server.js"
+alias spo="sudo poweroff"

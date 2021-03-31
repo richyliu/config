@@ -31,6 +31,4 @@ export GOOGLE_APPLICATION_CREDENTIALS=/Users/richard/gregg-shorthand-07d924baf9f
 # JDK path
 export PATH="/Users/richard/code/jdk-11.0.10+9/Contents/Home/bin:$PATH"
 
-bindkey "^U" backward-kill-line
-
 export HOMEBREW_NO_AUTO_UPDATE=1
