@@ -1,6 +1,3 @@
-# Should be linked to $ZSH_CUSTOM/functions.zsh
-# Usually ~/.oh-my-zsh/custom/functions.zsh
-
 function swap() {
   local TMPFILE=tmp.$$
   mv "$1" $TMPFILE && mv "$2" "$1" && mv $TMPFILE "$2"

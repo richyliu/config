@@ -25,7 +25,6 @@ Plug 'alvan/vim-closetag'             " Automatically close html tags
 Plug 'rust-lang/rust.vim'             " Rust language support
 Plug 'autozimu/LanguageClient-neovim' " Language server client
 Plug 'cespare/vim-toml'               " TOML config file format support
-Plug 'vlime/vlime', {'rtp': 'vim/'}   " Lisp support
 Plug 'glench/vim-jinja2-syntax'       " Jinja2 template (closest to Tera) support
 Plug 'purescript-contrib/purescript-vim' " Purescript language suppot
 

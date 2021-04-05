@@ -1,0 +1,15 @@
+{
+  "excludedUrls": "",
+  "linkHintCharacters": "aorwkshpt",
+  "detectByCursorStyle": false,
+  "scrollSize": 150,
+  "openTabUrl": "https://duckduckgo.com/",
+  "modifier": "command",
+  "smoothScroll": true,
+  "scrollDuration": 25,
+  "transparentBindings": true,
+  "bindings": {
+      "hintToggle": "alt+f",
+      "newTabHintToggle": "shift+f",
+  }
+}

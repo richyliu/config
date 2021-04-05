@@ -14,7 +14,7 @@ HYPHEN_INSENSITIVE="true"
 DISABLE_UNTRACKED_FILES_DIRTY="true"
 
 # Would you like to use another custom folder than $ZSH/custom?
-ZSH_CUSTOM=/Users/richard/vimrc/zsh/config
+ZSH_CUSTOM=/Users/richard/config/zsh/config
 
 # Which plugins would you like to load?
 # Standard plugins can be found in $ZSH/plugins/

@@ -1,6 +1,3 @@
-# Should be linked to $ZSH_CUSTOM/aliases.zsh
-# Usually ~/.oh-my-zsh/custom/aliases.zsh
-
 alias vim=nvim
 alias vimb="nvim -u ~/vimrc/vim/basic.vim"
 alias vimbs="nvim -u ~/vimrc/vim/basic.vim +syntax\ off"
