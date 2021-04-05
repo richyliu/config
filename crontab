@@ -1,0 +1,6 @@
+# Delete vim backup/undo files older than 3 days
+45 11 * * * find /Users/richard/.cache/nvim/backup/ -type f -mtime +3 -exec rm -f {} \;
+45 11 * * * find /Users/richard/.cache/nvim/undo/ -type f -mtime +3 -exec rm -f {} \;
+
+# Update homebrew
+20 11 * * 1 /usr/local/Homebrew/bin/brew update >/dev/null 2>&1 && /usr/local/Homebrew/bin/brew upgrade >/dev/null 2>&1 && /usr/local/Homebrew/bin/brew cleanup >/dev/null 2>&1
