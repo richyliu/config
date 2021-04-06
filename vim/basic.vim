@@ -186,7 +186,6 @@ augroup encrypted
   autocmd BufReadPre,FileReadPre *.gpg set noswapfile noundofile nobackup nowritebackup
 
   " Switch to binary mode to read the encrypted file
-  autocmd BufReadPre,FileReadPre *.gpg set bin
   autocmd BufReadPre,FileReadPre *.gpg let ch_save = &ch|set ch=2
   " (If you use tcsh, you may need to alter this line.)
   autocmd BufReadPost,FileReadPost *.gpg '[,']!gpg --decrypt 2> /dev/null
