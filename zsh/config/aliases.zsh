@@ -1,6 +1,6 @@
 alias vim=nvim
-alias vimb="nvim -u ~/vimrc/vim/basic.vim"
-alias vimbs="nvim -u ~/vimrc/vim/basic.vim +syntax\ off"
+alias vimb="nvim -u ~/config/vim/basic.vim"
+alias vimbs="nvim -u ~/config/vim/basic.vim +syntax\ off"
 alias ag="ag -f --color-line-number 1\;35"
 alias agq="ag -fQ --color-line-number 1\;35"
 alias agl="ag -f --color-line-number 1\;35 --pager less"
@@ -26,8 +26,4 @@ alias crct='cargo check --tests'
 alias crt='cargo test'
 alias crtq='cargo test --quiet'
 
-alias pjl="/Users/richard/plojo/target/release/lookup"
-
 alias wcl="wc -l"
-
-alias .+='cd ../$(printf "%02d" $(( ${PWD##*/} + 1 )))'

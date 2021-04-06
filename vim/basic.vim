@@ -8,7 +8,7 @@
 
 set nocompatible
 
-colorscheme zellner
+colorscheme default
 
 " Settings {{{1
 set autoindent
