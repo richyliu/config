@@ -14,9 +14,6 @@ module.exports = {
         "*padlet.org*",
         // Open quizlet links in Chrome
         "quizlet.com*",
-        // Open college apps stuff in Chrome
-        "apply.mitadmissions.org*",
-        "myillini.illinois.edu*",
         // Open zoom sign in links in Chrome
         "*.zoom.us*",
       ],

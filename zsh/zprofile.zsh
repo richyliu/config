@@ -11,6 +11,8 @@ export PATH="$HOME/.cargo/bin:$PATH"
 
 export PATH=/opt/homebrew/bin:$PATH
 
+export PATH="$HOME/.local/bin:$PATH"
+
 # GPG password popup config
 export GPG_TTY=`tty`
 
