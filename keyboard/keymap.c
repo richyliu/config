@@ -1,139 +1,86 @@
-/* Copyright 2015-2017 Jack Humbert
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
 #include QMK_KEYBOARD_H
 #include "muse.h"
 
-#define RETRO_TAPPING_PER_KEY
+#define U_NP KC_NO // key is not present
+#define U_NA KC_NO // present but not available for use
+#define U_NU KC_NO // available but not used
 
-enum planck_layers {
-  _COLEMAK,
-  _QWERTY,
-  _FUNC,
-  _LOWER,
-  _RAISE,
-  _PLOVER,
-  _ADJUST,
-  _NAV,
-};
+enum layers { BASE, MBO, MEDR, NAVR, MOUR, NSSL, NSL, FUNL, _PLOVER, CFG };
+
+#define U_RDO SCMD(KC_Z)
+#define U_PST LCMD(KC_V)
+#define U_CPY LCMD(KC_C)
+#define U_CUT LCMD(KC_X)
+#define U_UND LCMD(KC_Z)
 
 enum planck_keycodes {
-  QWERTY = SAFE_RANGE,
-  COLEMAK,
-  PLOVER,
+  PLOVER = SAFE_RANGE,
   EXT_PLV
 };
 
+#define LAYOUT_miryoku(\
+K00,   K01,   K02,   K03,   K04,                 K05,   K06,   K07,   K08,   K09,\
+K10,   K11,   K12,   K13,   K14,                 K15,   K16,   K17,   K18,   K19,\
+K20,   K21,   K22,   K23,   K24,                 K25,   K26,   K27,   K28,   K29,\
+N30,   N31,   K32,   K33,   K34,                 K35,   K36,   K37,   N38,   N39\
+)\
+LAYOUT_ortho_4x12(\
+K00,   K01,   K02,   K03,   K04,   KC_NO, KC_NO, K05,   K06,   K07,   K08,   K09,\
+K10,   K11,   K12,   K13,   K14,   KC_NO, KC_NO, K15,   K16,   K17,   K18,   K19,\
+K20,   K21,   K22,   K23,   K24,   KC_NO, KC_NO, K25,   K26,   K27,   K28,   K29,\
+KC_NO, KC_NO, K32,   K33,   K34,   KC_NO, KC_NO, K35,   K36,   K37,   KC_NO, KC_NO\
+)
+
+
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-
-/* Colemak
- * ,-----------------------------------------------------------------------------------.
- * | Tab  |   Q  |   W  |   F  |   P  |   B  |   J  |   L  |   U  |   Y  |   ;  | Bksp |
- * |------+------+------+------+------+------+------+------+------+------+------+------|
- * | Esc* |   A  |   R  |   S  |   T  |   G  |   H  |   N  |   E  |   I  |   O  |  '*  |
- * |------+------+------+------+------+------+------+------+------+------+------+------|
- * | Shift|   Z  |   X  |   C  |   D  |   V  |   K  |   M  |   ,  |   .  |   /  |Enter |
- * |------+------+------+------+------+------+------+------+------+------+------+------|
- * | Ctrl | Nav  |      | Alt  | Cmd  |Lower |Space |Raise |Shift | Func | Cfg  |      |
- * `-----------------------------------------------------------------------------------'
- *   *: Esc is ctrl when held
- *   *: Quote is Nav when held
- */
-[_COLEMAK] = LAYOUT_ortho_4x12(
-    KC_TAB,         KC_Q,    KC_W,    KC_F,    KC_P,    KC_B,       KC_J,    KC_L,         KC_U,    KC_Y,      KC_SCLN,     KC_BSPC,
-    LCTL_T(KC_ESC), KC_A,    KC_R,    KC_S,    KC_T,    KC_G,       KC_M,    KC_N,         KC_E,    KC_I,      KC_O,        LT(_NAV,KC_QUOT),
-    KC_LSFT,        KC_Z,    KC_X,    KC_C,    KC_D,    KC_V,       KC_K,    KC_H,         KC_COMM, KC_DOT,    KC_SLSH,     KC_ENT,
-    KC_LCTL,        MO(_NAV),_______, KC_LALT, KC_LGUI, MO(_LOWER), KC_SPC,  MO(_RAISE),   KC_RSFT, MO(_FUNC), MO(_ADJUST), _______
-),
-
-/* Qwerty
- * ,-----------------------------------------------------------------------------------.
- * | Tab  |   Q  |   W  |   E  |   R  |   T  |   Y  |   U  |   I  |   O  |   P  | Bksp |
- * |------+------+------+------+------+------+------+------+------+------+------+------|
- * | Esc* |   A  |   S  |   D  |   F  |   G  |   H  |   J  |   K  |   L  |   ;  |  '*  |
- * |------+------+------+------+------+------+------+------+------+------+------+------|
- * | Shift|   Z  |   X  |   C  |   V  |   B  |   N  |   M  |   ,  |   .  |   /  |Enter |
- * |------+------+------+------+------+------+------+------+------+------+------+------|
- * | Ctrl | Nav  |      | Alt  | Cmd  |Lower |Space |Raise |Shift | Func | Cfg  |      |
- * `-----------------------------------------------------------------------------------'
- *   *: Esc is ctrl when held
- *   *: Quote is Nav when held
- */
-[_QWERTY] = LAYOUT_ortho_4x12(
-    KC_TAB,         KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,       KC_Y,    KC_U,         KC_I,    KC_O,      KC_P,        KC_BSPC,
-    LCTL_T(KC_ESC), KC_A,    KC_S,    KC_D,    KC_F,    KC_G,       KC_H,    KC_J,         KC_K,    KC_L,      KC_SCLN,     LT(_NAV,KC_QUOT),
-    KC_LSFT,        KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,       KC_N,    KC_M,         KC_COMM, KC_DOT,    KC_SLSH,     KC_ENT,
-    KC_LCTL,        MO(_NAV),_______, KC_LALT, KC_LGUI, MO(_LOWER), KC_SPC,  MO(_RAISE),   KC_RSFT, MO(_FUNC), MO(_ADJUST), _______
-),
-
-/* Func
- * |------+------+------+------+------+------+------+------+------+------+------+------|
- * |      |  F1  |  F2  |  F3  |  F4  |  F5  |      |      |      |      |      | Del  |
- * |------+------+------+------+------+------+------+------+------+------+------+------|
- * |      |  F6  |  F7  |  F8  |  F9  |  F10 |      |      |      |      |      |      |
- * |------+------+------+------+------+------+------+------+------+------+------+------|
- * |      |  F11 |  F12 |      |      |      |      |      |      |      |      |      |
- * |------+------+------+------+------+------+------+------+------+------+------+------|
- * |      |      |      |      |      |      |      |      |      | Func |      |      |
- * `-----------------------------------------------------------------------------------'
- *   *: Esc is ctrl when held
- *   *: Quote is Nav when held
- */
-[_FUNC] = LAYOUT_ortho_4x12(
-    _______, KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,   _______, _______, _______, _______, _______, KC_DEL,
-    _______, KC_F6,   KC_F7,   KC_F8,   KC_F9,   KC_F10,  _______, _______, _______, _______, _______, _______,
-    _______, KC_F11,  KC_F12,  _______, _______, _______, _______, _______, _______, _______, _______, _______,
-    _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______
-),
-
-/* Lower
- * ,-----------------------------------------------------------------------------------.
- * |      |   !  |   @  |   {  |   }  |   `  |   /  | A-L  |  Up  | A-R  | Home |A-Bksp|
- * |------+------+------+------+------+------+------+------+------+------+------+------|
- * |      |   #  |   $  |   (  |   )  |   ~  |   |  | Left | Down | Right| End  |      |
- * |------+------+------+------+------+------+------+------+------+------+------+------|
- * |      |   %  |   &  |   [  |   ]  |   _  |   \  |Cmd-L |Cmd-R | PgUp | PgDn |      |
- * |------+------+------+------+------+------+------+------+------+------+------+------|
- * |      |      |      |      |      |Lower |      |      |      |      |      |      |
- * `-----------------------------------------------------------------------------------'
- */
-[_LOWER] = LAYOUT_ortho_4x12(
-    _______, KC_EXLM, KC_AT,   KC_LCBR, KC_RCBR, KC_GRV,  KC_SLSH, LALT(KC_LEFT), KC_UP,       LALT(KC_RGHT), KC_HOME, A(KC_BSPC),
-    _______, KC_HASH, KC_DLR,  KC_LPRN, KC_RPRN, KC_TILD, KC_PIPE, KC_LEFT,       KC_DOWN,     KC_RGHT,       KC_END, _______,
-    _______, KC_PERC, KC_AMPR, KC_LBRC, KC_RBRC, KC_UNDS, KC_BSLS, G(KC_LEFT),    G(KC_RIGHT), KC_PGUP,       KC_PGDN, _______,
-    _______, _______, _______, _______, _______, _______, _______, _______,       _______,     _______,       KC_TRNS, _______
-),
-
-/* Upper
- * ,-----------------------------------------------------------------------------------.
- * |      |   1  |   2  |   3  |   4  |   5  |   ^  |   _  |   +  |   *  |   /  |A-Bksp|
- * |------+------+------+------+------+------+------+------+------+------+------+------+
- * |      |   6  |   7  |   8  |   9  |   0  |   <  |   -  |   =  |   (  |   )  |      |
- * |------+------+------+------+------+------+------+------+------+------+------+------+
- * |      |      |      |      |Space |      |   >  |      |   ,  |   .  |Bri-Up|Bri-Dn|
- * |------+------+------+------+------+------+------+------+------+------+------+------+
- * |      |      |      |      |      |Space |      |Raise |      |      |      |      |
- * `-----------------------------------------------------------------------------------'
- */
-[_RAISE] = LAYOUT_ortho_4x12(
-    _______, KC_1,    KC_2,    KC_3,    KC_4,    KC_5,    KC_CIRC, KC_UNDS, KC_PLUS, KC_ASTR,  KC_SLSH,     A(KC_BSPC),
-    _______, KC_6,    KC_7,    KC_8,    KC_9,    KC_0,    KC_LT,   KC_MINS, KC_EQL,  KC_LPRN,  KC_RPRN,     _______,
-    _______, _______, _______, _______, KC_SPC,  _______, KC_GT,   _______, KC_COMM, KC_DOT,   KC_BRID,     KC_BRIU,
-    _______, _______, _______, _______, _______, KC_SPC,  _______, _______, _______, KC__MUTE, KC__VOLDOWN, KC__VOLUP
-    ),
+  [BASE] = LAYOUT_miryoku(
+    KC_Q,              KC_W,              KC_F,              KC_P,              KC_B,              KC_J,              KC_L,              KC_U,              KC_Y,              KC_QUOT,
+    LGUI_T(KC_A),      LALT_T(KC_R),      LCTL_T(KC_S),      LSFT_T(KC_T),      KC_G,              KC_M,              LSFT_T(KC_N),      LCTL_T(KC_E),      LALT_T(KC_I),      LGUI_T(KC_O),
+    KC_Z,              ALGR_T(KC_X),      KC_C,              KC_D,              KC_V,              KC_K,              KC_H,              KC_COMM,           ALGR_T(KC_DOT),    KC_SLSH,
+    U_NP,              U_NP,              LT(MEDR, KC_ESC),  LT(NAVR, KC_BSPC),  LT(MOUR, KC_TAB),  LT(NSSL, KC_ENT),  LT(NSL, KC_SPC),  LT(FUNL, KC_DEL),  U_NP,              U_NP
+  ),
+  [NAVR] = LAYOUT_miryoku(
+    U_UND,   U_CUT,   U_CPY,   U_PST,   U_RDO,   U_RDO,   U_PST,   U_CPY,   U_CUT,   U_UND,
+    KC_LGUI, KC_LALT, KC_LCTL, KC_LSFT, U_NA,    KC_CAPS, KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT,
+    U_NA,    KC_ALGR, U_NA,    U_NA,    U_NA,    KC_INS,  KC_HOME, KC_PGDN, KC_PGUP, KC_END,
+    U_NP,    U_NP,    U_NA,    U_NA,    U_NA,    KC_ENT,  KC_SPC, KC_DEL,  U_NP,    U_NP
+  ),
+  [MOUR] = LAYOUT_miryoku(
+    U_NA,    U_NA,    U_NA,    U_NA,    U_NA,    U_NU,    U_NU,    U_NU,    U_NU,    U_NU,
+    KC_LGUI, KC_LALT, KC_LCTL, KC_LSFT, U_NA,    U_NU,    KC_MS_L, KC_MS_D, KC_MS_U, KC_MS_R,
+    U_NA,    KC_ALGR, U_NA,    U_NA,    U_NA,    U_NU,    KC_WH_L, KC_WH_D, KC_WH_U, KC_WH_R,
+    U_NP,    U_NP,    U_NA,    U_NA,    U_NA,    KC_BTN1, KC_BTN3, KC_BTN2, U_NP,    U_NP
+  ),
+  [MEDR] = LAYOUT_miryoku(
+    U_NA,    U_NA,    U_NA,    U_NA,    U_NA,    RGB_TOG, RGB_MOD, RGB_HUI, RGB_SAI, RGB_VAI,
+    KC_LGUI, KC_LALT, KC_LCTL, KC_LSFT, U_NA,    U_NU,    KC_MPRV, KC_VOLD, KC_VOLU, KC_MNXT,
+    U_NA,    KC_ALGR, U_NA,    U_NA,    U_NA,    U_NU,    U_NU,    U_NU,    U_NU,    U_NU,
+    U_NP,    U_NP,    U_NA,    U_NA,    U_NA,    KC_MSTP, KC_MPLY, KC_MUTE, U_NP,    U_NP
+  ),
+  [MBO] = LAYOUT_miryoku(
+    KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS,
+    KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS,
+    KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS,
+    U_NP,    U_NP,    KC_TRNS, KC_TRNS, KC_TRNS, KC_BTN1, KC_BTN3, KC_BTN2, U_NP,    U_NP
+  ),
+  [FUNL] = LAYOUT_miryoku(
+    KC_F12,  KC_F7,   KC_F8,   KC_F9,   U_NU,    U_NA,    U_NA,    U_NA,    PLOVER,  RESET,
+    KC_F11,  KC_F4,   KC_F5,   KC_F6,   KC_BRMD, U_NA,    KC_LSFT, KC_LCTL, KC_LALT, KC_LGUI,
+    KC_F10,  KC_F1,   KC_F2,   KC_F3,   KC_BRMU, U_NA,    U_NA,    U_NA,    U_NA,    U_NA,
+    U_NP,    U_NP,    U_NU,    KC_BSPC, KC_TAB,  U_NA,    U_NA,    U_NA,    U_NP,    U_NP
+  ),
+  [NSL] = LAYOUT_miryoku(
+    KC_LBRC, KC_7,    KC_8,    KC_9,    KC_RBRC, U_NA,    U_NA,    U_NA,    U_NA,    U_NA,
+    KC_COLN, KC_4,    KC_5,    KC_6,    KC_EQL,  U_NA,    KC_LSFT, KC_LCTL, KC_LALT, KC_LGUI,
+    KC_GRV,  KC_1,    KC_2,    KC_3,    KC_BSLS, U_NA,    U_NA,    KC_TRNS, KC_TRNS, KC_TRNS,
+    U_NP,    U_NP,    KC_DOT,  KC_0,    KC_MINS, U_NA,    U_NA,    U_NA,    U_NP,    U_NP
+  ),
+  [NSSL] = LAYOUT_miryoku(
+    KC_LCBR, KC_AMPR, KC_ASTR, KC_LPRN, KC_RCBR, DM_REC2, DM_REC1, DM_RSTP, DM_PLY1, DM_PLY2,
+    KC_SCLN, KC_DLR,  KC_PERC, KC_CIRC, KC_PLUS, U_NA,    KC_LSFT, KC_LCTL, KC_LALT, KC_LGUI,
+    KC_TILD, KC_EXLM, KC_AT,   KC_HASH, KC_PIPE, U_NA,    U_NA,    KC_TRNS, KC_TRNS, KC_TRNS,
+    U_NP,    U_NP,    KC_LPRN, KC_RPRN, KC_UNDS, U_NA,    U_NA,    U_NA,    U_NP,    U_NP
+  ),
 
 /* Plover layer (http://opensteno.org)
  * ,-----------------------------------------------------------------------------------.
@@ -151,33 +98,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     XXXXXXX, KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, KC_QUOT,
     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
     EXT_PLV, XXXXXXX, XXXXXXX, KC_1,    KC_C,    KC_V,    KC_N,    KC_M,    KC_1,    XXXXXXX, XXXXXXX, XXXXXXX
-),
-
-/* Adjust (Lower + Raise)
- *                      v------------------------RGB CONTROL--------------------v
- * ,-----------------------------------------------------------------------------------.
- * |      | Reset|Debug | RGB  |RGBMOD| HUE+ | HUE- | SAT+ | SAT- |BRGTH+|BRGTH-|      |
- * |------+------+------+------+------+------+------+------+------+------+------+------|
- * |      |      |      |Aud on|Audoff|      |      |Colemk|Qwerty|      |Plover|      |
- * |------+------+------+------+------+------+------+------+------+------+------+------|
- * |      |      |      |      |      |      |      |      |      |      |      |      |
- * |------+------+------+------+------+------+------+------+------+------+------+------|
- * |      |      |      |      |      |      |      |      |      |      |      |      |
- * `-----------------------------------------------------------------------------------'
- */
-[_ADJUST] = LAYOUT_planck_grid(
-    _______, RESET,   DEBUG,   RGB_TOG, RGB_MOD, RGB_HUI, RGB_HUD, RGB_SAI, RGB_SAD,  RGB_VAI, RGB_VAD, _______,
-    _______, _______, _______, AU_ON,   AU_OFF,  _______, _______, COLEMAK, QWERTY,   _______, PLOVER,  _______,
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,  _______, _______, _______,
-    _______, _______, _______, _______, _______, _______, _______, _______, _______,  _______, _______, _______
-),
-
-[_NAV] = LAYOUT_ortho_4x12(
-    _______, G(A(KC_1)), G(A(KC_2)), G(A(KC_3)), G(A(KC_4)), G(A(KC_5)),    G(C(KC_UP)),   G(S(KC_LBRC)), C(KC_UP),   G(S(KC_RBRC)), _______, _______,
-    _______, G(A(KC_6)), G(A(KC_7)), G(A(KC_8)), G(A(KC_9)), G(A(KC_0)),    G(C(KC_DOWN)), G(S(KC_TAB)),  G(KC_TAB),  G(KC_GRAVE),   _______, _______,
-    _______, _______,    _______,    _______,    KC_CAPS,    G(A(S(KC_V))), G(S(KC_4)),    G(S(C(KC_4))), G(S(KC_3)), G(S(C(KC_3))), _______, _______,
-    _______, _______,    _______,    _______,    _______,    _______,       _______,       _______,       _______,    _______,       _______, _______
-),
+)
 
 };
 
@@ -186,58 +107,15 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   float plover_gb_song[][2]  = SONG(PLOVER_GOODBYE_SOUND);
 #endif
 
-layer_state_t layer_state_set_user(layer_state_t state) {
-  switch (get_highest_layer(state)) {
-    case _RAISE:
-        rgblight_setrgb (0x00,  0x00, 0xFF);
-        break;
-    case _LOWER:
-        rgblight_setrgb (0xFF,  0x00, 0x00);
-        break;
-    case _PLOVER:
-        rgblight_setrgb (0x00,  0xFF, 0x00);
-        break;
-    case _ADJUST:
-        rgblight_setrgb (0x7A,  0x00, 0xFF);
-        break;
-    case _NAV:
-        rgblight_setrgb (0x00,  0x7A, 0xFF);
-        break;
-    case _FUNC:
-        rgblight_setrgb (0x00,  0xFF, 0x7A);
-        break;
-    default: //  for any other layers, or the default layer
-        rgblight_setrgb (0x00,  0xFF, 0xFF);
-        break;
-    }
-  return state;
-}
-
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   switch (keycode) {
-    case QWERTY:
-      if (record->event.pressed) {
-        print("mode just switched to qwerty and this is a huge string\n");
-        set_single_persistent_default_layer(_QWERTY);
-      }
-      return false;
-      break;
-    case COLEMAK:
-      if (record->event.pressed) {
-        set_single_persistent_default_layer(_COLEMAK);
-      }
-      return false;
-      break;
     case PLOVER:
       if (record->event.pressed) {
         #ifdef AUDIO_ENABLE
           stop_all_notes();
           PLAY_SONG(plover_song);
         #endif
-        layer_off(_RAISE);
-        layer_off(_LOWER);
-        layer_off(_ADJUST);
-        layer_on(_PLOVER);
+        layer_move(_PLOVER);
         if (!eeconfig_is_enabled()) {
             eeconfig_init();
         }
@@ -252,7 +130,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         #ifdef AUDIO_ENABLE
           PLAY_SONG(plover_gb_song);
         #endif
-        layer_off(_PLOVER);
+        layer_move(BASE);
       }
       return false;
       break;
