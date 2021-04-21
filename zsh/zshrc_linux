@@ -10,7 +10,7 @@ ZSH_THEME="robbyrussell"
 DISABLE_UNTRACKED_FILES_DIRTY="true"
 
 # Would you like to use another custom folder than $ZSH/custom?
-ZSH_CUSTOM=/home/richyliu/vimrc/zsh/config
+ZSH_CUSTOM=/home/richyliu/config/zsh/config
 
 # Which plugins would you like to load?
 # Standard plugins can be found in $ZSH/plugins/
@@ -41,3 +41,6 @@ alias spo="sudo poweroff"
 # For GPG
 GPG_TTY=$(tty)
 export GPG_TTY
+
+# Use neovim as the default editor
+export EDITOR=nvim
