@@ -35,8 +35,8 @@ KC_NO, KC_NO, K32,   K33,   K34,   KC_NO, KC_NO, K35,   K36,   K37,   KC_NO, KC_
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   [BASE] = LAYOUT_miryoku(
     KC_Q,         KC_W,         KC_F,             KC_P,              KC_B,             KC_J,             KC_L,         KC_U,             KC_Y,           KC_QUOT,
-    LGUI_T(KC_A), LALT_T(KC_R), LCTL_T(KC_S),     LSFT_T(KC_T),      KC_G,             KC_M,             LSFT_T(KC_N), LCTL_T(KC_E),     LALT_T(KC_I),   LGUI_T(KC_O),
-    KC_Z,         ALGR_T(KC_X), KC_C,             KC_D,              KC_V,             KC_K,             KC_H,         KC_COMM,          ALGR_T(KC_DOT), KC_SLSH,
+    KC_A,         KC_R,         KC_S,             KC_T,              KC_G,             KC_M,             KC_N,         KC_E,             KC_I,           KC_O,
+    LGUI_T(KC_Z), LALT_T(KC_X), LCTL_T(KC_C),     LSFT_T(KC_D),      KC_V,             KC_K,             LSFT_T(KC_H), LCTL_T(KC_COMM),  LALT_T(KC_DOT), LGUI_T(KC_SLSH),
     U_NP,         U_NP,         LT(MOUR, KC_ESC), LT(NAVR, KC_BSPC), LT(NSL, KC_TAB),  LT(NSSL, KC_ENT), KC_SPC,       LT(FUNL, KC_DEL), U_NP,           U_NP
   ),
   [NOM] = LAYOUT_planck_grid(
@@ -47,32 +47,32 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   ),
   [NAVR] = LAYOUT_miryoku(
     U_UND,   U_CUT,   U_CPY,   U_PST,   U_RDO,   U_RDO,   U_PST,   U_CPY,   U_CUT,   U_UND,
-    KC_LGUI, KC_LALT, KC_LCTL, KC_LSFT, U_NA,    KC_CAPS, KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT,
-    U_NA,    KC_ALGR, U_NA,    U_NA,    U_NA,    KC_INS,  KC_HOME, KC_PGDN, KC_PGUP, KC_END,
+    U_NA,    U_NA,    U_NA,    U_NA,    U_NA,    KC_CAPS, KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT,
+    KC_LGUI, KC_LALT, KC_LCTL, KC_LSFT, U_NA,    KC_INS,  KC_HOME, KC_PGDN, KC_PGUP, KC_END,
     U_NP,    U_NP,    U_NA,    U_NA,    U_NA,    KC_ENT,  KC_SPC,  KC_DEL,  U_NP,    U_NP
   ),
   [MOUR] = LAYOUT_miryoku(
     U_NA,    U_NA,    U_NA,    U_NA,    U_NA,    U_NU,    U_NU,    U_NU,    U_NU,    U_NU,
-    KC_LGUI, KC_LALT, KC_LCTL, KC_LSFT, U_NA,    U_NU,    KC_MS_L, KC_MS_D, KC_MS_U, KC_MS_R,
-    U_NA,    KC_ALGR, U_NA,    U_NA,    U_NA,    U_NU,    KC_WH_L, KC_WH_D, KC_WH_U, KC_WH_R,
+    U_NA,    U_NA,    U_NA,    U_NA,    U_NA,    U_NU,    KC_MS_L, KC_MS_D, KC_MS_U, KC_MS_R,
+    KC_LGUI, KC_LALT, KC_LCTL, KC_LSFT, U_NA,    U_NU,    KC_WH_L, KC_WH_D, KC_WH_U, KC_WH_R,
     U_NP,    U_NP,    U_NA,    U_NA,    U_NA,    KC_BTN1, KC_BTN3, KC_BTN2, U_NP,    U_NP
   ),
   [FUNL] = LAYOUT_miryoku(
     KC_F12,  KC_F7,   KC_F8,   KC_F9,   U_NU,    U_NA,    U_NA,    DF(NOM), PLOVER,  RESET,
-    KC_F11,  KC_F4,   KC_F5,   KC_F6,   KC_BRMD, U_NA,    KC_LSFT, KC_LCTL, KC_LALT, KC_LGUI,
-    KC_F10,  KC_F1,   KC_F2,   KC_F3,   KC_BRMU, U_NA,    KC_MUTE, KC_VOLD, KC_VOLU, U_NU,
+    KC_F11,  KC_F4,   KC_F5,   KC_F6,   KC_BRMU, U_NA,    KC_MUTE, KC_VOLD, KC_VOLU, U_NU,
+    KC_F10,  KC_F1,   KC_F2,   KC_F3,   KC_BRMD, U_NA,    KC_LSFT, KC_LCTL, KC_LALT, KC_LGUI,
     U_NP,    U_NP,    U_NU,    KC_BSPC, KC_TAB,  U_NA,    U_NA,    U_NA,    U_NP,    U_NP
   ),
   [NSL] = LAYOUT_miryoku(
     U_NA,    U_NA,    U_NA,    U_NA,    U_NA,    KC_LBRC, KC_7,    KC_8,    KC_9,    KC_RBRC,
-    KC_LGUI, KC_LALT, KC_LCTL, KC_LSFT, U_NA,    KC_EQL,  KC_4,    KC_5,    KC_6,    KC_COLN,
-    KC_TRNS, KC_TRNS, KC_TRNS, U_NA,    U_NA,    KC_BSLS, KC_1,    KC_2,    KC_3,    KC_GRV,
+    U_NA,    U_NA,    U_NA,    U_NA,    U_NA,    KC_EQL,  KC_4,    KC_5,    KC_6,    KC_COLN,
+    KC_LGUI, KC_LALT, KC_LCTL, KC_LSFT, U_NA,    KC_BSLS, KC_1,    KC_2,    KC_3,    KC_GRV,
     U_NP,    U_NP,    U_NA,    U_NA,    U_NA,    KC_MINS, KC_0,    KC_DOT,  U_NP,    U_NP
   ),
   [NSSL] = LAYOUT_miryoku(
     KC_LCBR, KC_AMPR, KC_ASTR, KC_LPRN, KC_RCBR, DM_REC2, DM_REC1, DM_RSTP, DM_PLY1, DM_PLY2,
-    KC_SCLN, KC_DLR,  KC_PERC, KC_CIRC, KC_PLUS, U_NA,    KC_LSFT, KC_LCTL, KC_LALT, KC_LGUI,
-    KC_TILD, KC_EXLM, KC_AT,   KC_HASH, KC_PIPE, U_NA,    U_NA,    KC_TRNS, KC_TRNS, KC_TRNS,
+    KC_SCLN, KC_DLR,  KC_PERC, KC_CIRC, KC_PLUS, U_NA,    U_NA,    U_NA,    U_NA,    U_NA,
+    KC_TILD, KC_EXLM, KC_AT,   KC_HASH, KC_PIPE, U_NA,    KC_LSFT, KC_LCTL, KC_LALT, KC_LGUI,
     U_NP,    U_NP,    KC_LPRN, KC_RPRN, KC_UNDS, U_NA,    U_NA,    U_NA,    U_NP,    U_NP
   ),
 
@@ -102,7 +102,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       if (record->event.pressed) {
         layer_move(_PLOVER);
         // start plover/plojo with ctrl-alt-shift-p
-        SEND_STRING(SS_LCTL(SS_LALT(SS_LSFT("p"))));
+        SEND_STRING(SS_LSFT(SS_TAP(X_F7)));
       }
       return false;
       break;
