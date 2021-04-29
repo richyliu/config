@@ -5,7 +5,7 @@
 #define U_NA KC_NO // present but not available for use
 #define U_NU KC_NO // available but not used
 
-enum layers { BASE, MBO, MEDR, NAVR, MOUR, NSSL, NSL, FUNL, _PLOVER, CFG };
+enum layers { BASE, NOM, NAVR, MOUR, FUNL, NSL, NSSL, _PLOVER };
 
 #define U_RDO SCMD(KC_Z)
 #define U_PST LCMD(KC_V)
@@ -34,16 +34,22 @@ KC_NO, KC_NO, K32,   K33,   K34,   KC_NO, KC_NO, K35,   K36,   K37,   KC_NO, KC_
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   [BASE] = LAYOUT_miryoku(
-    KC_Q,              KC_W,              KC_F,              KC_P,              KC_B,              KC_J,              KC_L,              KC_U,              KC_Y,              KC_QUOT,
-    LGUI_T(KC_A),      LALT_T(KC_R),      LCTL_T(KC_S),      LSFT_T(KC_T),      KC_G,              KC_M,              LSFT_T(KC_N),      LCTL_T(KC_E),      LALT_T(KC_I),      LGUI_T(KC_O),
-    KC_Z,              ALGR_T(KC_X),      KC_C,              KC_D,              KC_V,              KC_K,              KC_H,              KC_COMM,           ALGR_T(KC_DOT),    KC_SLSH,
-    U_NP,              U_NP,              LT(MEDR, KC_ESC),  LT(NAVR, KC_BSPC),  LT(MOUR, KC_TAB),  LT(NSSL, KC_ENT),  LT(NSL, KC_SPC),  LT(FUNL, KC_DEL),  U_NP,              U_NP
+    KC_Q,         KC_W,         KC_F,             KC_P,              KC_B,             KC_J,             KC_L,         KC_U,             KC_Y,           KC_QUOT,
+    LGUI_T(KC_A), LALT_T(KC_R), LCTL_T(KC_S),     LSFT_T(KC_T),      KC_G,             KC_M,             LSFT_T(KC_N), LCTL_T(KC_E),     LALT_T(KC_I),   LGUI_T(KC_O),
+    KC_Z,         ALGR_T(KC_X), KC_C,             KC_D,              KC_V,             KC_K,             KC_H,         KC_COMM,          ALGR_T(KC_DOT), KC_SLSH,
+    U_NP,         U_NP,         LT(MOUR, KC_ESC), LT(NAVR, KC_BSPC), LT(NSL, KC_TAB),  LT(NSSL, KC_ENT), KC_SPC,       LT(FUNL, KC_DEL), U_NP,           U_NP
+  ),
+  [NOM] = LAYOUT_planck_grid(
+    KC_Q,    KC_W,    KC_F,    KC_P,    KC_B,    OSM(MOD_LALT), OSM(MOD_LALT), KC_J,    KC_L,    KC_U,             KC_Y,    KC_QUOT,
+    KC_A,    KC_R,    KC_S,    KC_T,    KC_G,    OSM(MOD_LSFT), OSM(MOD_LSFT), KC_M,    KC_N,    KC_E,             KC_I,    KC_O,
+    KC_Z,    KC_X,    KC_C,    KC_D,    KC_V,    OSM(MOD_LCTL), OSM(MOD_LCTL), KC_K,    KC_H,    KC_COMM,          KC_DOT,  KC_SLSH,
+    MO(NAVR),MO(NSL), KC_ESC,  KC_BSPC, KC_TAB,  OSM(MOD_LGUI), OSM(MOD_LGUI), KC_ENT,  KC_SPC,  LT(FUNL, KC_DEL), DF(BASE),MO(NSSL)
   ),
   [NAVR] = LAYOUT_miryoku(
     U_UND,   U_CUT,   U_CPY,   U_PST,   U_RDO,   U_RDO,   U_PST,   U_CPY,   U_CUT,   U_UND,
     KC_LGUI, KC_LALT, KC_LCTL, KC_LSFT, U_NA,    KC_CAPS, KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT,
     U_NA,    KC_ALGR, U_NA,    U_NA,    U_NA,    KC_INS,  KC_HOME, KC_PGDN, KC_PGUP, KC_END,
-    U_NP,    U_NP,    U_NA,    U_NA,    U_NA,    KC_ENT,  KC_SPC, KC_DEL,  U_NP,    U_NP
+    U_NP,    U_NP,    U_NA,    U_NA,    U_NA,    KC_ENT,  KC_SPC,  KC_DEL,  U_NP,    U_NP
   ),
   [MOUR] = LAYOUT_miryoku(
     U_NA,    U_NA,    U_NA,    U_NA,    U_NA,    U_NU,    U_NU,    U_NU,    U_NU,    U_NU,
@@ -51,22 +57,10 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     U_NA,    KC_ALGR, U_NA,    U_NA,    U_NA,    U_NU,    KC_WH_L, KC_WH_D, KC_WH_U, KC_WH_R,
     U_NP,    U_NP,    U_NA,    U_NA,    U_NA,    KC_BTN1, KC_BTN3, KC_BTN2, U_NP,    U_NP
   ),
-  [MEDR] = LAYOUT_miryoku(
-    U_NA,    U_NA,    U_NA,    U_NA,    U_NA,    RGB_TOG, RGB_MOD, RGB_HUI, RGB_SAI, RGB_VAI,
-    KC_LGUI, KC_LALT, KC_LCTL, KC_LSFT, U_NA,    U_NU,    KC_MPRV, KC_VOLD, KC_VOLU, KC_MNXT,
-    U_NA,    KC_ALGR, U_NA,    U_NA,    U_NA,    U_NU,    U_NU,    U_NU,    U_NU,    U_NU,
-    U_NP,    U_NP,    U_NA,    U_NA,    U_NA,    KC_MSTP, KC_MPLY, KC_MUTE, U_NP,    U_NP
-  ),
-  [MBO] = LAYOUT_miryoku(
-    KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS,
-    KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS,
-    KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS,
-    U_NP,    U_NP,    KC_TRNS, KC_TRNS, KC_TRNS, KC_BTN1, KC_BTN3, KC_BTN2, U_NP,    U_NP
-  ),
   [FUNL] = LAYOUT_miryoku(
-    KC_F12,  KC_F7,   KC_F8,   KC_F9,   U_NU,    U_NA,    U_NA,    U_NA,    PLOVER,  RESET,
+    KC_F12,  KC_F7,   KC_F8,   KC_F9,   U_NU,    U_NA,    U_NA,    DF(NOM), PLOVER,  RESET,
     KC_F11,  KC_F4,   KC_F5,   KC_F6,   KC_BRMD, U_NA,    KC_LSFT, KC_LCTL, KC_LALT, KC_LGUI,
-    KC_F10,  KC_F1,   KC_F2,   KC_F3,   KC_BRMU, U_NA,    U_NA,    U_NA,    U_NA,    U_NA,
+    KC_F10,  KC_F1,   KC_F2,   KC_F3,   KC_BRMU, U_NA,    KC_MUTE, KC_VOLD, KC_VOLU, U_NU,
     U_NP,    U_NP,    U_NU,    KC_BSPC, KC_TAB,  U_NA,    U_NA,    U_NA,    U_NP,    U_NP
   ),
   [NSL] = LAYOUT_miryoku(
@@ -97,31 +91,16 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     XXXXXXX, KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_LBRC,
     XXXXXXX, KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, KC_QUOT,
     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
-    EXT_PLV, XXXXXXX, XXXXXXX, KC_1,    KC_C,    KC_V,    KC_N,    KC_M,    KC_1,    XXXXXXX, XXXXXXX, XXXXXXX
+    XXXXXXX, XXXXXXX, EXT_PLV, KC_1,    KC_C,    KC_V,    KC_N,    KC_M,    KC_1,    XXXXXXX, XXXXXXX, XXXXXXX
 )
 
 };
-
-#ifdef AUDIO_ENABLE
-  float plover_song[][2]     = SONG(PLOVER_SOUND);
-  float plover_gb_song[][2]  = SONG(PLOVER_GOODBYE_SOUND);
-#endif
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   switch (keycode) {
     case PLOVER:
       if (record->event.pressed) {
-        #ifdef AUDIO_ENABLE
-          stop_all_notes();
-          PLAY_SONG(plover_song);
-        #endif
         layer_move(_PLOVER);
-        if (!eeconfig_is_enabled()) {
-            eeconfig_init();
-        }
-        keymap_config.raw = eeconfig_read_keymap();
-        keymap_config.nkro = 1;
-        eeconfig_update_keymap(keymap_config.raw);
         // start plover/plojo with ctrl-alt-shift-p
         SEND_STRING(SS_LCTL(SS_LALT(SS_LSFT("p"))));
       }
@@ -129,9 +108,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       break;
     case EXT_PLV:
       if (record->event.pressed) {
-        #ifdef AUDIO_ENABLE
-          PLAY_SONG(plover_gb_song);
-        #endif
         layer_move(BASE);
         // exit plover/plojo with "PHR*OF" stroke (erfvyu keys)
         // all the keys must be pressed down at the same time to simulate a steno chord
@@ -143,5 +119,3 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   }
   return true;
 }
-
-bool muse_mode = false;
