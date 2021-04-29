@@ -1,6 +1,6 @@
 {
   "excludedUrls": "",
-  "linkHintCharacters": "aorwkshpt",
+  "linkHintCharacters": "abcdefghijklmnopqrstuvwxyz",
   "detectByCursorStyle": false,
   "scrollSize": 150,
   "openTabUrl": "https://duckduckgo.com/",
@@ -10,6 +10,6 @@
   "transparentBindings": true,
   "bindings": {
       "hintToggle": "alt+f",
-      "newTabHintToggle": "shift+f",
+      "newTabHintToggle": "shift+f"
   }
 }
