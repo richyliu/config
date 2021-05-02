@@ -34,10 +34,10 @@ KC_NO, KC_NO, K32,   K33,   K34,   KC_NO, KC_NO, K35,   K36,   K37,   KC_NO, KC_
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   [BASE] = LAYOUT_planck_grid(
-    KC_Q,         KC_W,         KC_F,          KC_P,              KC_B,             U_NA,          U_NA,          KC_J,             KC_L,   KC_U,       KC_Y,           KC_QUOT,
-    KC_A,         KC_R,         KC_S,          KC_T,              KC_G,             OSM(MOD_LALT), OSM(MOD_LALT), KC_M,             KC_N,   KC_E,       KC_I,           KC_O,
-    LGUI_T(KC_Z), LCTL_T(KC_X), KC_C,          KC_D,              KC_V,             U_NA,          U_NA,          KC_K,             KC_H,   KC_COMM,    LCTL_T(KC_DOT), LGUI_T(KC_SLSH),
-    MO(MOUR),     KC_LALT,      SFT_T(KC_ESC), LT(NAVR, KC_BSPC), LT(NSL, KC_TAB),  OSM(MOD_LSFT), OSM(MOD_LSFT), LT(NSSL, KC_ENT), KC_SPC, A(KC_BSPC), U_NP,           MO(FUNL)
+    KC_Q,         KC_W,          KC_F,          KC_P,              KC_B,             U_NA,          U_NA,          KC_J,             KC_L,   KC_U,       KC_Y,           KC_QUOT,
+    KC_A,         KC_R,          KC_S,          KC_T,              KC_G,             OSM(MOD_LALT), OSM(MOD_LALT), KC_M,             KC_N,   KC_E,       KC_I,           KC_O,
+    LGUI_T(KC_Z), LCTL_T(KC_X),  KC_C,          KC_D,              KC_V,             U_NA,          U_NA,          KC_K,             KC_H,   KC_COMM,    LCTL_T(KC_DOT), LGUI_T(KC_SLSH),
+    MO(MOUR),     OSM(MOD_LALT), SFT_T(KC_ESC), LT(NAVR, KC_BSPC), LT(NSL, KC_TAB),  OSM(MOD_LSFT), OSM(MOD_LSFT), LT(NSSL, KC_ENT), KC_SPC, A(KC_BSPC), U_NP,           MO(FUNL)
   ),
   [NOM] = LAYOUT_planck_grid(
     KC_Q,    KC_W,    KC_F,    KC_P,    KC_B,    U_NA,    U_NA,    KC_J,    KC_L,    KC_U,    KC_Y,     KC_QUOT,
@@ -97,7 +97,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     XXXXXXX, KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_LBRC,
     XXXXXXX, KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, KC_QUOT,
     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
-    XXXXXXX, XXXXXXX, EXT_PLV, KC_1,    KC_C,    KC_V,    KC_N,    KC_M,    KC_1,    XXXXXXX, XXXXXXX, XXXXXXX
+    XXXXXXX, XXXXXXX, EXT_PLV, KC_1,    KC_C,    KC_V,    KC_N,    KC_M,    KC_1,    XXXXXXX, EXT_PLV, XXXXXXX
 )
 
 };

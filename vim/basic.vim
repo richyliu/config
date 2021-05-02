@@ -1,7 +1,7 @@
 " Basic vimrc all in one file
 
 " Quick install commmand for Unix:
-" curl https://raw.githubusercontent.com/richyliu/vimrc/master/vim/basic.vim -o myvimrc.vim
+" curl https://raw.githubusercontent.com/richyliu/config/master/vim/basic.vim -o myvimrc.vim
 "
 " Usage:
 " vim -u myvimrc.vim [FILE]
