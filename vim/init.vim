@@ -27,6 +27,7 @@ Plug 'autozimu/LanguageClient-neovim' " Language server client
 Plug 'cespare/vim-toml'               " TOML config file format support
 Plug 'glench/vim-jinja2-syntax'       " Jinja2 template (closest to Tera) support
 Plug 'purescript-contrib/purescript-vim' " Purescript language suppot
+Plug 'evanleck/vim-svelte'            " Svelte language support
 
 call plug#end()
 

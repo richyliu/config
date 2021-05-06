@@ -1,4 +1,5 @@
 #include QMK_KEYBOARD_H
+#include "print.h"
 
 #define U_NP KC_NO // key is not present
 #define U_NA KC_NO // present but not available for use
@@ -43,10 +44,10 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     U_NP,    U_NP,    U_NA,    KC_SPC,  U_NA,    U_NA,    U_NA,    U_NA,    KC_SPC,        U_NA,    DF(BASE), U_NP
   ),
   [NAVR] = LAYOUT_ortho_4x12(
-    U_UND,   U_CUT,   U_CPY,   U_PST,   U_RDO,   KC_NO, KC_NO, U_NA,    LALT(KC_LEFT), U_NA,    U_NA,     LALT(KC_RIGHT),
-    U_NA,    U_NA,    U_NA,    U_NA,    U_NA,    KC_NO, KC_NO, KC_CAPS, KC_LEFT,       KC_DOWN, KC_UP,    KC_RGHT,
-    KC_LGUI, KC_LCTL, U_NA,    U_NA,    U_NA,    KC_NO, KC_NO, U_NA,    KC_PGDN,       KC_PGUP, KC_HOME,  KC_END,
-    U_NP,    U_NP,    U_NA,    U_NA,    U_NA,    KC_NO, KC_NO, KC_ENT,  KC_SPC,        KC_LSFT, U_NP,     U_NP
+    U_UND,        U_CUT,   U_CPY,   U_PST,     U_RDO, KC_NO, KC_NO, U_NA,    LALT(KC_LEFT), U_NA,    U_NA,     LALT(KC_RIGHT),
+    C(S(KC_TAB)), U_NA,    U_NA,    C(KC_TAB), U_NA,  KC_NO, KC_NO, KC_CAPS, KC_LEFT,       KC_DOWN, KC_UP,    KC_RGHT,
+    KC_LGUI,      KC_LCTL, U_NA,    U_NA,      U_NA,  KC_NO, KC_NO, U_NA,    KC_PGDN,       KC_PGUP, KC_HOME,  KC_END,
+    U_NP,         U_NP,    U_NA,    U_NA,      U_NA,  KC_NO, KC_NO, KC_ENT,  KC_SPC,        KC_LSFT, U_NP,     U_NP
   ),
   [MOUR] = LAYOUT_ortho_4x12(
     U_NA,    U_NA,    U_NA,    U_NA,    U_NA,    KC_NO, KC_NO, U_NU,    U_NU,    U_NU,    U_NU,    U_NU,
@@ -95,9 +96,10 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 bool is_cmd_tab_active = false;
 uint16_t cmd_tab_timer = 0;
-#define CMD_TAB_TIMEOUT 1000
+#define CMD_TAB_TIMEOUT 700
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+  dprintf("keycode: %04x\n", keycode);
   switch (keycode) {
     case PLOVER:
       if (record->event.pressed) {
@@ -144,4 +146,12 @@ void matrix_scan_user(void) {
       is_cmd_tab_active = false;
     }
   }
+}
+
+void keyboard_post_init_user(void) {
+  // Customise these values to desired behaviour
+  debug_enable=true;
+  debug_matrix=true;
+  debug_keyboard=true;
+  //debug_mouse=true;
 }
