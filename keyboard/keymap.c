@@ -94,9 +94,28 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 };
 
+/**
+ * "cmd-tab" key, as adapted from "super alt tab":
+ *    https://docs.qmk.fm/#/feature_macros?id=super-alt↯tab
+ *
+ * When the key is tapped, a single cmd-tab key is tapped, switching to the
+ * most recently used application (timeout set by TAPPING_TERM). When the key
+ * is held, it gives the user a set time to view the applications (as
+ * determined by CMD_TAB_BEFORE_FIRST_TIMEOUT). The is_cmd_tab_hold bool is set
+ * during the first hold and the is_cmd_tab_before_first is set after the hold
+ * but before the first tap after the hold. Once a key is tapped,
+ * is_cmd_tab_active will be set. Each key tap will go to the next application,
+ * and after the timeout (CMD_TAB_TIMEOUT) it will stop at the current
+ * application.
+ */
 bool is_cmd_tab_active = false;
 uint16_t cmd_tab_timer = 0;
-#define CMD_TAB_TIMEOUT 700
+#define CMD_TAB_TIMEOUT 500
+bool is_cmd_tab_hold = false;
+uint16_t cmd_tab_hold_timer = 0;
+bool is_cmd_tab_before_first = false;
+uint16_t cmd_tab_before_first_timer = 0;
+#define CMD_TAB_BEFORE_FIRST_TIMEOUT 5000
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   dprintf("keycode: %04x\n", keycode);
@@ -123,16 +142,27 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       }
       return true;
     case CMD_TAB:
-      /* "super alt tab" (source: https://docs.qmk.fm/#/feature_macros?id=super-alt↯tab) */
       if (record->event.pressed) {
         if (!is_cmd_tab_active) {
-          is_cmd_tab_active = true;
-          register_code(KC_LGUI);
+          is_cmd_tab_hold = true;
+          cmd_tab_hold_timer = timer_read();
+        } else {
+          is_cmd_tab_before_first = false;
+          cmd_tab_timer = timer_read();
+          register_code(KC_TAB);
         }
-        cmd_tab_timer = timer_read();
-        register_code(KC_TAB);
       } else {
-        unregister_code(KC_TAB);
+        if (is_cmd_tab_hold) {
+          if (timer_elapsed(cmd_tab_hold_timer) < TAPPING_TERM) {
+            register_code(KC_LGUI);
+            tap_code(KC_TAB);
+            unregister_code(KC_LGUI);
+            is_cmd_tab_hold = false;
+          }
+        }
+        if (is_cmd_tab_active) {
+          unregister_code(KC_TAB);
+        }
       }
       return false;
   }
@@ -140,10 +170,28 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 }
 
 void matrix_scan_user(void) {
-  if (is_cmd_tab_active) {
-    if (timer_elapsed(cmd_tab_timer) > CMD_TAB_TIMEOUT) {
+  if (is_cmd_tab_before_first) {
+    if (timer_elapsed(cmd_tab_before_first_timer) > CMD_TAB_BEFORE_FIRST_TIMEOUT) {
       unregister_code(KC_LGUI);
+      is_cmd_tab_before_first = false;
       is_cmd_tab_active = false;
+    }
+  } else {
+    if (is_cmd_tab_active) {
+      if (timer_elapsed(cmd_tab_timer) > CMD_TAB_TIMEOUT) {
+        unregister_code(KC_LGUI);
+        is_cmd_tab_active = false;
+      }
+    }
+  }
+  if (is_cmd_tab_hold) {
+    if (timer_elapsed(cmd_tab_hold_timer) > TAPPING_TERM) {
+      register_code(KC_LGUI);
+      tap_code(KC_TAB);
+      is_cmd_tab_hold = false;
+      is_cmd_tab_active = true;
+      is_cmd_tab_before_first = true;
+      cmd_tab_before_first_timer = timer_read();
     }
   }
 }
