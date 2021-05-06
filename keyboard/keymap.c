@@ -16,7 +16,8 @@ enum layers { BASE, NOM, ARROW, NAVR, MOUR, FUNL, NSL, NSSL, _PLOVER };
 enum planck_keycodes {
   PLOVER = SAFE_RANGE,
   EXT_PLV,
-  CMD_TAB
+  CMD_TAB,
+  MY_CAPS
 };
 
 // use an unused keycode because of mod-tap keycode restrictions:
@@ -45,7 +46,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   ),
   [NAVR] = LAYOUT_ortho_4x12(
     U_UND,        U_CUT,   U_CPY,   U_PST,     U_RDO, KC_NO, KC_NO, U_NA,    LALT(KC_LEFT), U_NA,    U_NA,     LALT(KC_RIGHT),
-    C(S(KC_TAB)), U_NA,    U_NA,    C(KC_TAB), U_NA,  KC_NO, KC_NO, KC_CAPS, KC_LEFT,       KC_DOWN, KC_UP,    KC_RGHT,
+    C(S(KC_TAB)), U_NA,    U_NA,    C(KC_TAB), U_NA,  KC_NO, KC_NO, MY_CAPS, KC_LEFT,       KC_DOWN, KC_UP,    KC_RGHT,
     KC_LGUI,      KC_LCTL, U_NA,    U_NA,      U_NA,  KC_NO, KC_NO, U_NA,    KC_PGDN,       KC_PGUP, KC_HOME,  KC_END,
     U_NP,         U_NP,    U_NA,    U_NA,      U_NA,  KC_NO, KC_NO, KC_ENT,  KC_SPC,        KC_LSFT, U_NP,     U_NP
   ),
@@ -165,6 +166,17 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         }
       }
       return false;
+    case MY_CAPS:
+      if (record->event.pressed) {
+        tap_code_delay(KC_CAPS, 200);
+      }
+      return false;
+  }
+
+  // exit cmd-tab if the cmd mod was released
+  if ((keycode >> 8) & MOD_LGUI && !record->event.pressed) {
+    is_cmd_tab_active = false;
+    is_cmd_tab_before_first = false;
   }
   return true;
 }
