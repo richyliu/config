@@ -21,6 +21,7 @@ Plug 'AndrewRadev/sideways.vim'       " Easily swap arguments
 Plug 'pangloss/vim-javascript'        " JS syntax
 Plug 'MaxMEllon/vim-jsx-pretty'       " JSX syntax
 Plug 'prettier/vim-prettier'          " Prettier (JS formatter)
+Plug 'mattn/emmet-vim'                " Emmet
 Plug 'alvan/vim-closetag'             " Automatically close html tags
 Plug 'rust-lang/rust.vim'             " Rust language support
 Plug 'autozimu/LanguageClient-neovim' " Language server client
@@ -140,6 +141,7 @@ set backup
 set backupcopy=yes
 set backupdir=~/.cache/nvim/backup//
 set clipboard=
+set completefunc=ListSnippets
 set cursorline
 set directory^=$HOME/.cache/nvim/swap//
 set expandtab
@@ -184,6 +186,7 @@ set wildignore+=**/node_modules/**
 set wildignorecase
 set wildmenu
 set wildmode=longest:full,full
+set nowrapscan
 
 " Enable base16 color scheme
 colorscheme base16-one-light
@@ -440,6 +443,13 @@ augroup filetype_js
   autocmd Filetype javascript,typescript,jsx,tsx setlocal tabstop=2
   " replace class with className (for React)
   autocmd Filetype javascript,typescript,jsx,tsx nnoremap <buffer> <localleader>c :%s/class=/className=/ge<cr>:%s/fill-rule/fillRule/ge<cr>:%s/clip-rule/clipRule/ge<cr>
+augroup END
+
+augroup filetype_svelte
+  " invoke prettier to format document
+  autocmd Filetype svelte nnoremap <buffer> <localleader>p :Prettier<cr>
+  autocmd Filetype svelte setlocal tabstop=2
+  autocmd Filetype svelte UltiSnipsAddFiletypes svelte.javascript
 augroup END
 
 augroup filetype_rs

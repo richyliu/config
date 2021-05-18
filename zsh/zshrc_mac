@@ -27,3 +27,9 @@ alias pjl="/Users/richard/code/plojo/target/release/lookup"
 
 # z folder fuzzy finder tool
 . $(brew --prefix)/etc/profile.d/z.sh
+
+# add `help` utility (similar to bash)
+unalias run-help
+autoload run-help
+HELPDIR=/usr/share/zsh/"${ZSH_VERSION}"/help
+alias help=run-help

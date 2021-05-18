@@ -53,6 +53,7 @@ set wildignore+=**/node_modules/**
 set wildignorecase
 set wildmenu
 set wildmode=longest:full,full
+set nowrapscan
 
 filetype plugin on
 syntax on

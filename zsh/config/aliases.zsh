@@ -6,6 +6,7 @@ alias agq="ag -fQ --color-line-number 1\;35"
 alias agl="ag -f --color-line-number 1\;35 --pager less"
 alias aglq="ag -fQ --color-line-number 1\;35 --pager less"
 alias tree="tree -I node_modules"
+alias treel="tree -I node_modules -L"
 
 alias ..="cd .."
 alias ...="cd ../.."
@@ -18,6 +19,7 @@ alias duhd="du -hd1 | sort -h"
 
 # Oh-my-zsh git overrides
 alias gcsm='git commit -S -m'
+alias gcs='git commit -v -S'
 alias grs='git restore --staged'
 alias gai="git add --interactive"
 
