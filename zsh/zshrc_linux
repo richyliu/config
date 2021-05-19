@@ -44,3 +44,5 @@ export GPG_TTY
 
 # Use neovim as the default editor
 export EDITOR=nvim
+
+export PATH="$PATH:$HOME/.local/bin"
