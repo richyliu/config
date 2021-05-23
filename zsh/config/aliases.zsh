@@ -20,7 +20,6 @@ alias duhd="du -hd1 | sort -h"
 # Oh-my-zsh git overrides
 alias gcsm='git commit -S -m'
 alias gcs='git commit -v -S'
-alias grs='git restore --staged'
 alias gai="git add --interactive"
 
 alias crc='cargo check'
