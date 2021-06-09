@@ -22,3 +22,12 @@ function rmdir() {
   # execute the original rmdir command
   command rmdir $@
 }
+
+# fd - cd to selected directory with fzf
+# adapted from: https://github.com/junegunn/fzf/wiki/examples#changing-directory
+function fd() {
+  local dir
+  dirs=$(find . -path '*/\.*' -prune -o -type d -print 2> /dev/null | fzf -f "$1") &&
+  cd "$(echo "$dirs" | head -1)" &&
+  pwd
+}

@@ -33,3 +33,6 @@ unalias run-help
 autoload run-help
 HELPDIR=/usr/share/zsh/"${ZSH_VERSION}"/help
 alias help=run-help
+
+
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
