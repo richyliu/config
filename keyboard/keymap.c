@@ -14,6 +14,9 @@ enum planck_keycodes {
   PLOVER = SAFE_RANGE,
   EXT_PLV,
   CMD_TAB,
+  HEX_SLX, // sends "\x"
+  HEX_ZRX, // sends "0x"
+  HEX_ZZ,  // sends "00"
   MY_CAPS,
   MS_RST,
   MS_LEFT,
@@ -91,8 +94,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   XXXXXXX, XXXXXXX, KC_LSFT, KC_DEL,  KC_TAB,  XXXXXXX, XXXXXXX, SCRSAVE, SCRCLIP, XXXXXXX, XXXXXXX, XXXXXXX
 ),
 [NUM] = LAYOUT_ortho_4x12(
-  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_LBRC, KC_7,    KC_8,    KC_9,    KC_RBRC,
-  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_EQL,  KC_4,    KC_5,    KC_6,    KC_COLN,
+  HEX_ZRX, KC_A,    KC_B,    KC_C,    HEX_ZZ,  XXXXXXX, XXXXXXX, KC_LBRC, KC_7,    KC_8,    KC_9,    KC_RBRC,
+  HEX_SLX, KC_D,    KC_E,    KC_F,    KC_X,    XXXXXXX, XXXXXXX, KC_EQL,  KC_4,    KC_5,    KC_6,    KC_COLN,
   KC_LGUI, KC_LCTL, KC_LALT, KC_LSFT, XXXXXXX, XXXXXXX, XXXXXXX, KC_BSLS, KC_1,    KC_2,    KC_3,    KC_GRV,
   XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_MINS, KC_0,    KC_DOT,  XXXXXXX, XXXXXXX
 ),
@@ -173,7 +176,6 @@ int8_t convert_coord(int16_t dist) {
 }
 
 report_mouse_t currentReport;
-static const int8_t EPSILON = 2;
 // send raw mouse movements
 void move_mouse_raw(int8_t x, int8_t y) {
   currentReport = pointing_device_get_report();
@@ -254,6 +256,21 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         if (is_cmd_tab_active) {
           unregister_code(KC_TAB);
         }
+      }
+      return false;
+    case HEX_SLX:
+      if (record->event.pressed) {
+        SEND_STRING("\\x");
+      }
+      return false;
+    case HEX_ZRX:
+      if (record->event.pressed) {
+        SEND_STRING("0x");
+      }
+      return false;
+    case HEX_ZZ:
+      if (record->event.pressed) {
+        SEND_STRING("00");
       }
       return false;
     case MY_CAPS:
