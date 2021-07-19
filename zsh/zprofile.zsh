@@ -29,3 +29,6 @@ export NVM_DIR="$HOME/.nvm"
 
 # Add python bin to path
 export PATH="$PATH:$HOME/Library/Python/3.9/bin"
+
+# Add ruby to path
+export PATH="$PATH:$HOME/.gem/ruby/2.6.0/bin"

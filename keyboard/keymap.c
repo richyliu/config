@@ -1,7 +1,7 @@
 #include QMK_KEYBOARD_H
 #include "pointing_device.h"
 
-enum layers { BASE, NOM, ARR, NAV, MOU, FUN, NUM, SYM, PLVR };
+enum layers { BASE, NOM, QWE, ARR, NAV, MOU, FUN, NUM, SYM, PLVR };
 
 #define U_RDO SCMD(KC_Z)
 #define U_PST LCMD(KC_V)
@@ -14,6 +14,9 @@ enum planck_keycodes {
   PLOVER = SAFE_RANGE,
   EXT_PLV,
   CMD_TAB,
+  HEX_SLX, // sends "\x"
+  HEX_ZRX, // sends "0x"
+  HEX_ZZ,  // sends "00"
   MY_CAPS,
   MS_RST,
   MS_LEFT,
@@ -53,9 +56,10 @@ enum planck_keycodes {
 #define SELC_EL G(S(KC_C))
 
 
+// reference: https://beta.docs.qmk.fm/using-qmk/simple-keycodes/keycodes
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 [BASE] = LAYOUT_ortho_4x12(
-  KC_Q,    KC_W,    KC_F,    KC_P,    KC_B,    OS_ALT,  OS_ALT,  KC_J,    KC_L,    KC_U,    KC_Y,      KC_QUOT,
+  KC_Q,    KC_W,    KC_F,    KC_P,    KC_B,    C(KC_S), C(KC_S), KC_J,    KC_L,    KC_U,    KC_Y,      KC_QUOT,
   KC_A,    KC_R,    KC_S,    KC_T,    KC_G,    OS_ALT,  OS_ALT,  KC_M,    KC_N,    KC_E,    KC_I,      KC_O,
   GT(KC_Z),CT(KC_X),KC_C,    KC_D,    KC_V,    MO(MOU), MO(MOU), KC_K,    KC_H,    KC_COMM, CT(KC_DOT),GT(KC_SLSH),
   CMD_TAB, OS_ALT,  SFT_ESC, NAV_BSPC,NUM_TAB, OS_SFT,  OS_SFT,  SYM_ENT, KC_SPC,  S_ABSPC, XXXXXXX,   MO(FUN)
@@ -65,6 +69,12 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   KC_A,    KC_R,    KC_S,    KC_T,    KC_G,    XXXXXXX, XXXXXXX, KC_M,    KC_N,    KC_E,    KC_I,    KC_O,
   KC_Z,    KC_X,    KC_C,    KC_D,    KC_V,    XXXXXXX, XXXXXXX, KC_K,    KC_H,    KC_COMM, KC_DOT,  KC_SLSH,
   XXXXXXX, XXXXXXX, KC_ESC,  KC_BSPC, KC_TAB,  XXXXXXX, XXXXXXX, KC_ENT,  KC_SPC,  KC_DEL,  DF(BASE),XXXXXXX
+),
+[QWE] = LAYOUT_ortho_4x12(
+  KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    XXXXXXX, XXXXXXX, KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,
+  KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    XXXXXXX, XXXXXXX, KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN,
+  KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    XXXXXXX, XXXXXXX, KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH,
+  XXXXXXX, KC_LALT, KC_SPC,  KC_LCTL, KC_TAB,  XXXXXXX, XXXXXXX, KC_ENT,  KC_SPC,  KC_DEL,  DF(BASE),MO(FUN)
 ),
 [ARR] = LAYOUT_ortho_4x12(
   XXXXXXX, XXXXXXX, KC_UP,   XXXXXXX, XXXXXXX,  XXXXXXX,XXXXXXX, XXXXXXX, ALT_LEFT,XXXXXXX, XXXXXXX, ALT_RIGHT,
@@ -85,14 +95,14 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, MS_RST,  XXXXXXX, XXXXXXX, XXXXXXX
 ),
 [FUN] = LAYOUT_ortho_4x12(
-  KC_F12,  KC_F7,   KC_F8,   KC_F9,   XXXXXXX, XXXXXXX, DM_REC2, DM_REC1, DM_RSTP, XXXXXXX, PLOVER,  RESET,
+  KC_F12,  KC_F7,   KC_F8,   KC_F9,   XXXXXXX, XXXXXXX, DM_REC2, DM_REC1, DM_RSTP, DF(QWE), PLOVER,  RESET,
   KC_F11,  KC_F4,   KC_F5,   KC_F6,   KC_BRMU, XXXXXXX, DM_PLY2, DM_PLY1, SELC_EL, INSP_EL, DF(NOM), DF(ARR),
   KC_F10,  KC_F1,   KC_F2,   KC_F3,   KC_BRMD, XXXXXXX, XXXXXXX, XXXXXXX, KC_MUTE, KC_VOLD, KC_VOLU, XXXXXXX,
   XXXXXXX, XXXXXXX, KC_LSFT, KC_DEL,  KC_TAB,  XXXXXXX, XXXXXXX, SCRSAVE, SCRCLIP, XXXXXXX, XXXXXXX, XXXXXXX
 ),
 [NUM] = LAYOUT_ortho_4x12(
-  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_LBRC, KC_7,    KC_8,    KC_9,    KC_RBRC,
-  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_EQL,  KC_4,    KC_5,    KC_6,    KC_COLN,
+  HEX_ZRX, KC_A,    KC_B,    KC_C,    HEX_ZZ,  XXXXXXX, XXXXXXX, KC_LBRC, KC_7,    KC_8,    KC_9,    KC_RBRC,
+  HEX_SLX, KC_D,    KC_E,    KC_F,    KC_X,    XXXXXXX, XXXXXXX, KC_EQL,  KC_4,    KC_5,    KC_6,    KC_COLN,
   KC_LGUI, KC_LCTL, KC_LALT, KC_LSFT, XXXXXXX, XXXXXXX, XXXXXXX, KC_BSLS, KC_1,    KC_2,    KC_3,    KC_GRV,
   XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_MINS, KC_0,    KC_DOT,  XXXXXXX, XXXXXXX
 ),
@@ -173,7 +183,6 @@ int8_t convert_coord(int16_t dist) {
 }
 
 report_mouse_t currentReport;
-static const int8_t EPSILON = 2;
 // send raw mouse movements
 void move_mouse_raw(int8_t x, int8_t y) {
   currentReport = pointing_device_get_report();
@@ -254,6 +263,21 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         if (is_cmd_tab_active) {
           unregister_code(KC_TAB);
         }
+      }
+      return false;
+    case HEX_SLX:
+      if (record->event.pressed) {
+        SEND_STRING("\\x");
+      }
+      return false;
+    case HEX_ZRX:
+      if (record->event.pressed) {
+        SEND_STRING("0x");
+      }
+      return false;
+    case HEX_ZZ:
+      if (record->event.pressed) {
+        SEND_STRING("00");
       }
       return false;
     case MY_CAPS:
