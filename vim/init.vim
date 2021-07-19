@@ -29,6 +29,7 @@ Plug 'cespare/vim-toml'               " TOML config file format support
 Plug 'glench/vim-jinja2-syntax'       " Jinja2 template (closest to Tera) support
 Plug 'purescript-contrib/purescript-vim' " Purescript language suppot
 Plug 'evanleck/vim-svelte'            " Svelte language support
+Plug 'metakirby5/codi.vim'            " Python scratchpad
 
 call plug#end()
 
@@ -134,6 +135,14 @@ let g:markdown_fenced_languages = ['rust']
 " Ultisnip open edit window in horizontal split
 let g:UltiSnipsEditSplit="horizontal"
 
+" Configure python3 for codi
+let g:codi#interpreters = {
+      \ 'python': {
+        \ 'bin': 'python3'
+        \ },
+      \ }
+" let g:codi#virtual_text=0
+
 " Settings
 set autoindent
 set backspace=indent,eol,start
@@ -154,7 +163,7 @@ set lazyredraw
 set linebreak
 set list
 set nomodeline
-set mouse=nc
+set mouse=nvc
 set nrformats-=octal
 set number
 set path=.,,**
@@ -207,8 +216,8 @@ nnoremap <leader>es :UltiSnipsEdit<cr>
 " Open file in current folder
 nnoremap <leader>e :e <c-d>
 nnoremap <leader>ee :e <c-d>
-" Open file
-nnoremap <leader>f :find<space>
+" Format with prettier
+nnoremap <leader>f :Prettier<cr>
 " cd to current file directory
 nnoremap <leader>c :cd %:p:h<cr>
 " change to paste mode
@@ -245,6 +254,8 @@ nnoremap <leader>q :<c-u>copen<cr>
 " move to adjacent buffers
 nnoremap <leader>] :<c-u>bnext<cr>
 nnoremap <leader>[ :<c-u>bprev<cr>
+" close buffer
+nnoremap <leader>d :<c-u>bdelete<cr>
 
 " close all vim buffers
 nnoremap ZA :qa!<cr>
