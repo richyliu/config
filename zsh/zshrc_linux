@@ -1,5 +1,5 @@
 # Path to your oh-my-zsh installation.
-export ZSH="/home/richyliu/.oh-my-zsh"
+export ZSH="${HOME}/.oh-my-zsh"
 
 # zsh theme
 ZSH_THEME="robbyrussell"
@@ -10,7 +10,7 @@ ZSH_THEME="robbyrussell"
 DISABLE_UNTRACKED_FILES_DIRTY="true"
 
 # Would you like to use another custom folder than $ZSH/custom?
-ZSH_CUSTOM=/home/richyliu/config/zsh/config
+ZSH_CUSTOM="${HOME}/config/zsh/config"
 
 # Which plugins would you like to load?
 # Standard plugins can be found in $ZSH/plugins/
@@ -37,7 +37,7 @@ export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || pr
 # Linux specific aliases
 alias sldl="node /home/richyliu/stuff/ldl/new/server.js"
 alias spo="sudo poweroff"
-alias pwninit="pwninit --template-path /home/richyliu/config/pwn_template.py"
+alias pwninit="pwninit --template-path ${HOME}/config/pwn_template.py"
 
 # For GPG
 GPG_TTY=$(tty)
