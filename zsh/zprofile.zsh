@@ -32,3 +32,8 @@ export PATH="$PATH:$HOME/Library/Python/3.9/bin"
 
 # Add ruby to path
 export PATH="$PATH:$HOME/.gem/ruby/2.6.0/bin"
+
+# show line numbers by default in less
+export LESS="-R -M"
+# go to end of file and back to beginning so that less shows percentage info
+export MANPAGER="less +Gg"

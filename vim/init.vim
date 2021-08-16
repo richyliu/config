@@ -280,6 +280,8 @@ cnoremap <c-a> <c-b>
 inoremap <c-u> <c-g>u<c-u>
 " Make shift tab go back in jumplist
 nnoremap <s-tab> <c-o>
+" Alternative way to exit insert mode
+inoremap jj <ESC>
 
 " Make { and } always work linewise
 onoremap { V{

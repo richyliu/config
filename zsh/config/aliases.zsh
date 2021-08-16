@@ -5,8 +5,8 @@ alias ag="ag -f --color-line-number 1\;35"
 alias agq="ag -fQ --color-line-number 1\;35"
 alias agl="ag -f --color-line-number 1\;35 --pager less"
 alias aglq="ag -fQ --color-line-number 1\;35 --pager less"
-alias tree="tree -I node_modules"
-alias treel="tree -I node_modules -L"
+alias tree="tree -C -I node_modules"
+alias treel="tree -C -I node_modules -L"
 
 alias ..="cd .."
 alias ...="cd ../.."
@@ -28,3 +28,6 @@ alias crt='cargo test'
 alias crtq='cargo test --quiet'
 
 alias wcl="wc -l"
+
+# to make piping to less easier to type ("|_")
+alias _="less"
