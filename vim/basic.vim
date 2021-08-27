@@ -14,8 +14,11 @@ colorscheme default
 set autoindent
 set background=light
 set backspace=indent,eol,start
+set breakindent
+set breakindentopt=min:20,sbr
 set clipboard=
 set cursorline
+set display+=truncate
 set expandtab
 set foldmethod=marker
 set hidden
@@ -24,6 +27,8 @@ set ignorecase
 set incsearch
 set lazyredraw
 set linebreak
+set list
+set listchars=tab:>\ ,trail:-,extends:>,precedes:<
 set nomodeline
 set mouse=a
 set nrformats-=octal
@@ -36,6 +41,7 @@ set sidescroll=5
 set sidescrolloff=10
 set shiftwidth=2
 set noshelltemp
+set showbreak=^
 set showcmd
 set smartcase
 set softtabstop=2

@@ -149,10 +149,13 @@ set backspace=indent,eol,start
 set backup
 set backupcopy=yes
 set backupdir=~/.cache/nvim/backup//
+set breakindent
+set breakindentopt=min:20,sbr
 set clipboard=
 set completefunc=ListSnippets
 set cursorline
 set directory^=$HOME/.cache/nvim/swap//
+set display+=truncate
 set expandtab
 set hidden
 set hlsearch
@@ -162,6 +165,7 @@ set inccommand=nosplit
 set lazyredraw
 set linebreak
 set list
+set listchars=tab:→\ ,trail:·,extends:⟩,precedes:⟨
 set nomodeline
 set mouse=nvc
 set nrformats-=octal
@@ -174,6 +178,7 @@ set sidescroll=5
 set sidescrolloff=10
 set shiftwidth=2
 set noshelltemp
+set showbreak=↪
 set showcmd
 set smartcase
 set softtabstop=2
