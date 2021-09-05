@@ -12,7 +12,7 @@ Plug 'honza/vim-snippets'             " Provides the snippets
 
 Plug 'tpope/vim-surround'             " For changing surroundings characters
 Plug 'tpope/vim-repeat'               " Allow for repeating vim-surround
-Plug 'jiangmiao/auto-pairs'           " Auto pair quotes, braces, etc.
+Plug 'Raimondi/delimitMate'           " Auto pair quotes, braces, etc.
 Plug 'tpope/vim-abolish'              " Smart find and replace that preserves case
 Plug 'tpope/vim-commentary'           " Allow for easy commenting via 'gcc'
 Plug 'romainl/vim-cool'               " Automatically disable search highlighting
@@ -141,7 +141,10 @@ let g:codi#interpreters = {
         \ 'bin': 'python3'
         \ },
       \ }
-" let g:codi#virtual_text=0
+
+" delimitMate auto cloing options
+let delimitMate_expand_cr = 1
+let delimitMate_expand_space = 1
 
 " Settings
 set autoindent
@@ -484,6 +487,12 @@ augroup END
 augroup filetype_rs
   autocmd!
   autocmd Filetype rust nnoremap <buffer> <localleader>p :RustFmt<cr>
+augroup END
+
+augroup filetype_cpp
+  autocmd!
+  autocmd Filetype cpp nnoremap <buffer> <localleader>p :py3file /usr/local/Cellar/clang-format/12.0.0/share/clang/clang-format.py<cr>
+  autocmd Filetype cpp inoremap <buffer> <localleader>p :py3file /usr/local/Cellar/clang-format/12.0.0/share/clang/clang-format.py<cr>
 augroup END
 
 augroup shorthand_transcription

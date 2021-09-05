@@ -67,6 +67,10 @@ syntax on
 let g:buftabline_indicators=1
 let g:buftabline_numbers=2
 
+" delimitMate auto cloing options
+let delimitMate_expand_cr = 1
+let delimitMate_expand_space = 1
+
 " }}}1
 
 " Keymaps {{{1
@@ -1001,680 +1005,1057 @@ endif
 
 
 
-" auto-pairs - Insert or delete brackets, parens, quotes in pairs. {{{1
-" Maintainer:	JiangMiao <jiangfriend@gmail.com>
-" Contributor: camthompson
-" Last Change:  2019-02-02
-" Version: 2.0.0
-" Homepage: http://www.vim.org/scripts/script.php?script_id=3599
-" Repository: https://github.com/jiangmiao/auto-pairs
-" License: MIT
+" delimitMate - auto closing {{{1
+" File:        autoload/delimitMate.vim
+" Version:     2.7
+" Modified:    2013-07-15
+" Description: This plugin provides auto-completion for quotes, parens, etc.
+" Maintainer:  Israel Chauca F. <israelchauca@gmail.com>
+" Manual:      Read ":help delimitMate".
+" ============================================================================
 
-if exists('g:AutoPairsLoaded') || &cp
-  finish
-end
-let g:AutoPairsLoaded = 1
+"let delimitMate_loaded = 1
 
-if !exists('g:AutoPairs')
-  let g:AutoPairs = {'(':')', '[':']', '{':'}',"'":"'",'"':'"', '```':'```', '"""':'"""', "'''":"'''", "`":"`"}
-end
-
-" default pairs base on filetype
-func! AutoPairsDefaultPairs()
-  if exists('b:autopairs_defaultpairs')
-    return b:autopairs_defaultpairs
-  end
-  let r = copy(g:AutoPairs)
-  let allPairs = {
-        \ 'vim': {'\v^\s*\zs"': ''},
-        \ 'rust': {'\w\zs<': '>', '&\zs''': ''},
-        \ 'php': {'<?': '?>//k]', '<?php': '?>//k]'}
-        \ }
-  for [filetype, pairs] in items(allPairs)
-    if &filetype == filetype
-      for [open, close] in items(pairs)
-        let r[open] = close
-      endfor
-    end
-  endfor
-  let b:autopairs_defaultpairs = r
-  return r
-endf
-
-if !exists('g:AutoPairsMapBS')
-  let g:AutoPairsMapBS = 1
-end
-
-" Map <C-h> as the same BS
-if !exists('g:AutoPairsMapCh')
-  let g:AutoPairsMapCh = 1
-end
-
-if !exists('g:AutoPairsMapCR')
-  let g:AutoPairsMapCR = 1
-end
-
-if !exists('g:AutoPairsWildClosedPair')
-  let g:AutoPairsWildClosedPair = ''
-end
-
-if !exists('g:AutoPairsMapSpace')
-  let g:AutoPairsMapSpace = 1
-end
-
-if !exists('g:AutoPairsCenterLine')
-  let g:AutoPairsCenterLine = 1
-end
-
-if !exists('g:AutoPairsShortcutToggle')
-  let g:AutoPairsShortcutToggle = '<M-p>'
-end
-
-if !exists('g:AutoPairsShortcutFastWrap')
-  let g:AutoPairsShortcutFastWrap = '<M-e>'
-end
-
-if !exists('g:AutoPairsMoveCharacter')
-  let g:AutoPairsMoveCharacter = "()[]{}\"'"
-end
-
-if !exists('g:AutoPairsShortcutJump')
-  let g:AutoPairsShortcutJump = '<M-n>'
+if !exists('s:options')
+  let s:options = {}
 endif
 
-" Fly mode will for closed pair to jump to closed pair instead of insert.
-" also support AutoPairsBackInsert to insert pairs where jumped.
-if !exists('g:AutoPairsFlyMode')
-  let g:AutoPairsFlyMode = 0
-endif
+function! s:set(name, value) "{{{
+  let bufnr = bufnr('%')
+  if !has_key(s:options, bufnr)
+    let s:options[bufnr] = {}
+  endif
+  let s:options[bufnr][a:name] = a:value
+endfunction "}}}
 
-" When skipping the closed pair, look at the current and
-" next line as well.
-if !exists('g:AutoPairsMultilineClose')
-  let g:AutoPairsMultilineClose = 1
-endif
+function! s:get(...) "{{{
+  let options = deepcopy(eval('s:options.' . bufnr('%')))
+  if a:0
+    return options[a:1]
+  endif
+  return options
+endfunction "}}}
 
-" Work with Fly Mode, insert pair where jumped
-if !exists('g:AutoPairsShortcutBackInsert')
-  let g:AutoPairsShortcutBackInsert = '<M-b>'
-endif
+function! s:exists(name, ...) "{{{
+  let scope = a:0 ? a:1 : 's'
+  if scope == 's'
+    let bufnr = bufnr('%')
+    let name = 'options.' . bufnr . '.' . a:name
+  else
+    let name = 'delimitMate_' . a:name
+  endif
+  return exists(scope . ':' . name)
+endfunction "}}}
 
-if !exists('g:AutoPairsSmartQuotes')
-  let g:AutoPairsSmartQuotes = 1
-endif
+function! s:is_jump(...) "{{{
+  " Returns 1 if the next character is a closing delimiter.
+  let char = s:get_char(0)
+  let list = s:get('right_delims') + s:get('quotes_list')
 
-" 7.4.849 support <C-G>U to avoid breaking '.'
-" Issue talk: https://github.com/jiangmiao/auto-pairs/issues/3
-" Vim note: https://github.com/vim/vim/releases/tag/v7.4.849
-if v:version > 704 || v:version == 704 && has("patch849")
-  let s:Go = "\<C-G>U"
-else
-  let s:Go = ""
-endif
+  " Closing delimiter on the right.
+  if (!a:0 && index(list, char) > -1)
+        \ || (a:0 && char == a:1)
+    return 1
+  endif
 
-let s:Left = s:Go."\<LEFT>"
-let s:Right = s:Go."\<RIGHT>"
+  " Closing delimiter with space expansion.
+  let nchar = s:get_char(1)
+  if !a:0 && s:get('expand_space') && char == " "
+    if index(list, nchar) > -1
+      return 2
+    endif
+  elseif a:0 && s:get('expand_space') && nchar == a:1 && char == ' '
+    return 3
+  endif
 
+  if !s:get('jump_expansion')
+    return 0
+  endif
 
+  " Closing delimiter with CR expansion.
+  let uchar = matchstr(getline(line('.') + 1), '^\s*\zs\S')
+  if !a:0 && s:get('expand_cr') && char == ""
+    if index(list, uchar) > -1
+      return 4
+    endif
+  elseif a:0 && s:get('expand_cr') && uchar == a:1
+    return 5
+  endif
+  return 0
+endfunction "}}}
 
+function! s:rquote(char) "{{{
+  let pos = matchstr(getline('.')[col('.') : ], escape(a:char, '[]*.^$\'), 1)
+  let i = 0
+  while s:get_char(i) ==# a:char
+    let i += 1
+  endwhile
+  return i
+endfunction "}}}
 
-" unicode len
-func! s:ulen(s)
-  return len(split(a:s, '\zs'))
-endf
+function! s:lquote(char) "{{{
+  let i = 0
+  while s:get_char(i - 1) ==# a:char
+    let i -= 1
+  endwhile
+  return i * -1
+endfunction "}}}
 
-func! s:left(s)
-  return repeat(s:Left, s:ulen(a:s))
-endf
+function! s:get_char(...) "{{{
+  let idx = col('.') - 1
+  if !a:0 || (a:0 && a:1 >= 0)
+    " Get char from cursor.
+    let line = getline('.')[idx :]
+    let pos = a:0 ? a:1 : 0
+    return matchstr(line, '^'.repeat('.', pos).'\zs.')
+  endif
+  " Get char behind cursor.
+  let line = getline('.')[: idx - 1]
+  let pos = 0 - (1 + a:1)
+  return matchstr(line, '.\ze'.repeat('.', pos).'$')
+endfunction "s:get_char }}}
 
-func! s:right(s)
-  return repeat(s:Right, s:ulen(a:s))
-endf
+function! s:is_cr_expansion(...) " {{{
+  let nchar = getline(line('.')-1)[-1:]
+  let schar = matchstr(getline(line('.')+1), '^\s*\zs\S')
+  let isEmpty = a:0 ? getline('.') =~ '^\s*$' : empty(getline('.'))
+  if index(s:get('left_delims'), nchar) > -1
+        \ && index(s:get('left_delims'), nchar)
+        \    == index(s:get('right_delims'), schar)
+        \ && isEmpty
+    return 1
+  elseif index(s:get('quotes_list'), nchar) > -1
+        \ && index(s:get('quotes_list'), nchar)
+        \    == index(s:get('quotes_list'), schar)
+        \ && isEmpty
+    return 1
+  else
+    return 0
+  endif
+endfunction " }}} s:is_cr_expansion()
 
-func! s:delete(s)
-  return repeat("\<DEL>", s:ulen(a:s))
-endf
+function! s:is_space_expansion() " {{{
+  if col('.') > 2
+    let pchar = s:get_char(-2)
+    let nchar = s:get_char(1)
+    let isSpaces =
+          \ (s:get_char(-1)
+          \   == s:get_char(0)
+          \ && s:get_char(-1) == " ")
 
-func! s:backspace(s)
-  return repeat("\<BS>", s:ulen(a:s))
-endf
+    if index(s:get('left_delims'), pchar) > -1 &&
+        \ index(s:get('left_delims'), pchar)
+        \   == index(s:get('right_delims'), nchar) &&
+        \ isSpaces
+      return 1
+    elseif index(s:get('quotes_list'), pchar) > -1 &&
+        \ index(s:get('quotes_list'), pchar)
+        \   == index(s:get('quotes_list'), nchar) &&
+        \ isSpaces
+      return 1
+    endif
+  endif
+  return 0
+endfunction " }}} IsSpaceExpansion()
 
-func! s:getline()
+function! s:is_empty_matchpair() "{{{
+  " get char before the cursor.
+  let open = s:get_char(-1)
+  let idx = index(s:get('left_delims'), open)
+  if idx == -1
+    return 0
+  endif
+  let close = get(s:get('right_delims'), idx, '')
+  return close ==# s:get_char(0)
+endfunction "}}}
+
+function! s:is_empty_quotes() "{{{
+  " get char before the cursor.
+  let quote = s:get_char(-1)
+  let idx = index(s:get('quotes_list'), quote)
+  if idx == -1
+    return 0
+  endif
+  return quote ==# s:get_char(0)
+endfunction "}}}
+
+function! s:cursor_idx() "{{{
+  let idx = len(split(getline('.')[: col('.') - 1], '\zs')) - 1
+  return idx
+endfunction "DelimitMate__CursorCol }}}
+
+function! s:get_syn_name() "{{{
+  let col = col('.')
+  if  col == col('$')
+    let col = col - 1
+  endif
+  return synIDattr(synIDtrans(synID(line('.'), col, 1)), 'name')
+endfunction " }}}
+
+function! s:is_excluded_ft(ft) "{{{
+  if !exists("g:delimitMate_excluded_ft")
+    return 0
+  endif
+  return index(split(g:delimitMate_excluded_ft, ','), a:ft, 0, 1) >= 0
+endfunction "}}}
+
+function! s:is_forbidden(char) "{{{
+  if s:is_excluded_ft(&filetype)
+    return 1
+  endif
+  if !s:get('excluded_regions_enabled')
+    return 0
+  endif
+  let region = s:get_syn_name()
+  return index(s:get('excluded_regions_list'), region) >= 0
+endfunction "}}}
+
+function! s:balance_matchpairs(char) "{{{
+  " Returns:
+  " = 0 => Parens balanced.
+  " > 0 => More opening parens.
+  " < 0 => More closing parens.
+
   let line = getline('.')
-  let pos = col('.') - 1
-  let before = strpart(line, 0, pos)
-  let after = strpart(line, pos)
-  let afterline = after
-  if g:AutoPairsMultilineClose
-    let n = line('$')
-    let i = line('.')+1
-    while i <= n
-      let line = getline(i)
-      let after = after.' '.line
-      if !(line =~ '\v^\s*$')
-        break
-      end
-      let i = i+1
-    endwhile
-  end
-  return [before, after, afterline]
-endf
+  let col = s:cursor_idx() - 1
+  let col = col >= 0 ? col : 0
+  let list = split(line, '\zs')
+  let left = s:get('left_delims')[index(s:get('right_delims'), a:char)]
+  let right = a:char
+  let opening = 0
+  let closing = 0
 
-" split text to two part
-" returns [orig, text_before_open, open]
-func! s:matchend(text, open)
-    let m = matchstr(a:text, '\V'.a:open.'\v$')
-    if m == ""
-      return []
-    end
-    return [a:text, strpart(a:text, 0, len(a:text)-len(m)), m]
-endf
-
-" returns [orig, close, text_after_close]
-func! s:matchbegin(text, close)
-    let m = matchstr(a:text, '^\V'.a:close)
-    if m == ""
-      return []
-    end
-    return [a:text, m, strpart(a:text, len(m), len(a:text)-len(m))]
-endf
-
-" add or delete pairs base on g:AutoPairs
-" AutoPairsDefine(addPairs:dict[, removeOpenPairList:list])
-"
-" eg:
-"   au FileType html let b:AutoPairs = AutoPairsDefine({'<!--' : '-->'}, ['{'])
-"   add <!-- --> pair and remove '{' for html file
-func! AutoPairsDefine(pairs, ...)
-  let r = AutoPairsDefaultPairs()
-  if a:0 > 0
-    for open in a:1
-      unlet r[open]
-    endfor
-  end
-  for [open, close] in items(a:pairs)
-    let r[open] = close
-  endfor
-  return r
-endf
-
-func! AutoPairsInsert(key)
-  if !b:autopairs_enabled
-    return a:key
-  end
-
-  let b:autopairs_saved_pair = [a:key, getpos('.')]
-
-  let [before, after, afterline] = s:getline()
-
-  " Ignore auto close if prev character is \
-  if before[-1:-1] == '\'
-    return a:key
-  end
-
-  " check open pairs
-  for [open, close, opt] in b:AutoPairsList
-    let ms = s:matchend(before.a:key, open)
-    let m = matchstr(afterline, '^\v\s*\zs\V'.close)
-    if len(ms) > 0
-      " process the open pair
-
-      " remove inserted pair
-      " eg: if the pairs include < > and  <!-- -->
-      " when <!-- is detected the inserted pair < > should be clean up
-      let target = ms[1]
-      let openPair = ms[2]
-      if len(openPair) == 1 && m == openPair
-        break
-      end
-      let bs = ''
-      let del = ''
-      while len(before) > len(target)
-        let found = 0
-        " delete pair
-        for [o, c, opt] in b:AutoPairsList
-          let os = s:matchend(before, o)
-          if len(os) && len(os[1]) < len(target)
-            " any text before openPair should not be deleted
-            continue
-          end
-          let cs = s:matchbegin(afterline, c)
-          if len(os) && len(cs)
-            let found = 1
-            let before = os[1]
-            let afterline = cs[2]
-            let bs = bs.s:backspace(os[2])
-            let del = del.s:delete(cs[1])
-            break
-          end
-        endfor
-        if !found
-          " delete charactor
-          let ms = s:matchend(before, '\v.')
-          if len(ms)
-            let before = ms[1]
-            let bs = bs.s:backspace(ms[2])
-          end
-        end
-      endwhile
-      return bs.del.openPair.close.s:left(close)
-    end
-  endfor
-
-  " check close pairs
-  for [open, close, opt] in b:AutoPairsList
-    if close == ''
-      continue
-    end
-    if a:key == g:AutoPairsWildClosedPair || opt['mapclose'] && opt['key'] == a:key
-      " the close pair is in the same line
-      let m = matchstr(afterline, '^\v\s*\V'.close)
-      if m != ''
-        if before =~ '\V'.open.'\v\s*$' && m[0] =~ '\v\s'
-          " remove the space we inserted if the text in pairs is blank
-          return "\<DEL>".s:right(m[1:])
-        else
-          return s:right(m)
-        end
-      end
-      let m = matchstr(after, '^\v\s*\zs\V'.close)
-      if m != ''
-        if a:key == g:AutoPairsWildClosedPair || opt['multiline']
-          if b:autopairs_return_pos == line('.') && getline('.') =~ '\v^\s*$'
-            normal! ddk$
-          end
-          call search(m, 'We')
-          return "\<Right>"
-        else
-          break
-        end
-      end
-    end
-  endfor
-
-
-  " Fly Mode, and the key is closed-pairs, search closed-pair and jump
-  if g:AutoPairsFlyMode &&  a:key =~ '\v[\}\]\)]'
-    if search(a:key, 'We')
-      return "\<Right>"
-    endif
+  " If the cursor is not at the beginning, count what's behind it.
+  if col > 0
+      " Find the first opening paren:
+      let start = index(list, left)
+      " Must be before cursor:
+      let start = start < col ? start : col - 1
+      " Now count from the first opening until the cursor, this will prevent
+      " extra closing parens from being counted.
+      let opening = count(list[start : col - 1], left)
+      let closing = count(list[start : col - 1], right)
+      " I don't care if there are more closing parens than opening parens.
+      let closing = closing > opening ? opening : closing
   endif
 
-  return a:key
-endf
+  " Evaluate parens from the cursor to the end:
+  let opening += count(list[col :], left)
+  let closing += count(list[col :], right)
 
-func! AutoPairsDelete()
-  if !b:autopairs_enabled
-    return "\<BS>"
-  end
+  " Return the found balance:
+  return opening - closing
+endfunction "}}}
 
-  let [before, after, ig] = s:getline()
-  for [open, close, opt] in b:AutoPairsList
-    let b = matchstr(before, '\V'.open.'\v\s?$')
-    let a = matchstr(after, '^\v\s*\V'.close)
-    if b != '' && a != ''
-      if b[-1:-1] == ' '
-        if a[0] == ' '
-          return "\<BS>\<DELETE>"
-        else
-          return "\<BS>"
-        end
-      end
-      return s:backspace(b).s:delete(a)
-    end
-  endfor
+function! s:is_smart_quote(char) "{{{
+  " TODO: Allow using a:char in the pattern.
+  let tmp = s:get('smart_quotes')
+  if empty(tmp)
+    return 0
+  endif
+  let regex = matchstr(tmp, '^!\?\zs.*')
+  " Flip matched value if regex starts with !
+  let mod = tmp =~ '^!' ? [1, 0] : [0, 1]
+  let matched = search(regex, 'ncb', line('.')) > 0
+  let noescaped = substitute(getline('.'), '\\.', '', 'g')
+  let odd =  (count(split(noescaped, '\zs'), a:char) % 2)
+  let result = mod[matched] || odd
+  return result
+endfunction "DelimitMate__SmartQuote }}}
 
-  return "\<BS>"
-  " delete the pair foo[]| <BS> to foo
-  for [open, close, opt] in b:AutoPairsList
-    let m = s:matchend(before, '\V'.open.'\v\s*'.'\V'.close.'\v$')
-    if len(m) > 0
-      return s:backspace(m[2])
-    end
-  endfor
-  return "\<BS>"
-endf
+function! g:DelimitMate__Set(...) "{{{
+  return call('s:set', a:000)
+endfunction "}}}
 
+function! g:DelimitMate__Get(...) "{{{
+  return call('s:get', a:000)
+endfunction "}}}
 
-" Fast wrap the word in brackets
-func! AutoPairsFastWrap()
-  let c = @"
-  normal! x
-  let [before, after, ig] = s:getline()
-  if after[0] =~ '\v[\{\[\(\<]'
-    normal! %
-    normal! p
+function! g:DelimitMate__ShouldJump(...) "{{{
+  return call('s:is_jump', a:000)
+endfunction "}}}
+
+function! g:DelimitMate__IsEmptyPair(str) "{{{
+  if strlen(substitute(a:str, ".", "x", "g")) != 2
+    return 0
+  endif
+  let idx = index(s:get('left_delims'), matchstr(a:str, '^.'))
+  if idx > -1 &&
+        \ s:get('right_delims')[idx] == matchstr(a:str, '.$')
+    return 1
+  endif
+  let idx = index(s:get('quotes_list'), matchstr(a:str, '^.'))
+  if idx > -1 &&
+        \ s:get('quotes_list')[idx] == matchstr(a:str, '.$')
+    return 1
+  endif
+  return 0
+endfunction "}}}
+
+function! g:DelimitMate__WithinEmptyPair() "{{{
+  " if cursor is at column 1 return 0
+  if col('.') == 1
+    return 0
+  endif
+  " get char before the cursor.
+  let char1 = s:get_char(-1)
+  " get char under the cursor.
+  let char2 = s:get_char(0)
+  return DelimitMate__IsEmptyPair( char1.char2 )
+endfunction "}}}
+
+function! g:DelimitMate__SkipDelim(char) "{{{
+  if s:is_forbidden(a:char)
+    return a:char
+  endif
+  let col = col('.') - 1
+  let line = getline('.')
+  if col > 0
+    let cur = s:get_char(0)
+    let pre = s:get_char(-1)
   else
-    for [open, close, opt] in b:AutoPairsList
-      if close == ''
-        continue
-      end
-      if after =~ '^\s*\V'.open
-        call search(close, 'We')
-        normal! p
-        let @" = c
-        return ""
-      end
-    endfor
-    if after[1:1] =~ '\v\w'
-      normal! e
-      normal! p
-    else
-      normal! p
-    end
-  end
-  let @" = c
-  return ""
-endf
+    let cur = s:get_char(0)
+    let pre = ""
+  endif
+  if pre == "\\"
+    " Escaped character
+    return a:char
+  elseif cur == a:char
+    " Exit pair
+    return a:char . "\<Del>"
+  elseif DelimitMate__IsEmptyPair( pre . a:char )
+    " Add closing delimiter and jump back to the middle.
+    return a:char . s:joinUndo() . "\<Left>"
+  else
+    " Nothing special here, return the same character.
+    return a:char
+  endif
+endfunction "}}}
 
-func! AutoPairsJump()
-  call search('["\]'')}]','W')
-endf
+function! g:DelimitMate__ParenDelim(right) " {{{
+  let left = s:get('left_delims')[index(s:get('right_delims'),a:right)]
+  if s:is_forbidden(a:right)
+    return left
+  endif
+  " Try to balance matchpairs
+  if s:get('balance_matchpairs') &&
+        \ s:balance_matchpairs(a:right) < 0
+    return left
+  endif
+  let line = getline('.')
+  let col = col('.')-2
+  if s:get('smart_matchpairs') != ''
+    let smart_matchpairs = substitute(s:get('smart_matchpairs'), '\\!', left, 'g')
+    let smart_matchpairs = substitute(smart_matchpairs, '\\#', a:right, 'g')
+    if line[col+1:] =~ smart_matchpairs
+      return left
+    endif
+  endif
+  if len(line) == (col + 1) && s:get('insert_eol_marker') == 1
+    let tail = s:get('eol_marker')
+  else
+    let tail = ''
+  endif
+  return left . a:right . tail . repeat(s:joinUndo() . "\<Left>", len(split(tail, '\zs')) + 1)
+endfunction " }}}
 
-func! AutoPairsMoveCharacter(key)
-  let c = getline(".")[col(".")-1]
-  let escaped_key = substitute(a:key, "'", "''", 'g')
-  return "\<DEL>\<ESC>:call search("."'".escaped_key."'".")\<CR>a".c."\<LEFT>"
-endf
+function! g:DelimitMate__QuoteDelim(char) "{{{
+  if s:is_forbidden(a:char)
+    return a:char
+  endif
+  let char_at = s:get_char(0)
+  let char_before = s:get_char(-1)
+  let nesting_on = index(s:get('nesting_quotes'), a:char) > -1
+  let left_q = nesting_on ? s:lquote(a:char) : 0
+  if nesting_on && left_q > 1
+    " Nesting quotes.
+    let right_q =  s:rquote(a:char)
+    let quotes = right_q > left_q + 1 ? 0 : left_q - right_q + 2
+    let lefts = quotes - 1
+    return repeat(a:char, quotes) . repeat(s:joinUndo() . "\<Left>", lefts)
+  elseif char_at == a:char
+    " Inside an empty pair, jump out
+    return a:char . "\<Del>"
+  elseif a:char == '"' && index(split(&ft, '\.'), "vim") != -1 && getline('.') =~ '^\s*$'
+    " If we are in a vim file and it looks like we're starting a comment, do
+    " not add a closing char.
+    return a:char
+  elseif s:is_smart_quote(a:char)
+    " Seems like a smart quote, insert a single char.
+    return a:char
+  elseif (char_before == a:char && char_at != a:char)
+        \ && !empty(s:get('smart_quotes'))
+    " Seems like we have an unbalanced quote, insert one quotation
+    " mark and jump to the middle.
+    return a:char . s:joinUndo() . "\<Left>"
+  else
+    " Insert a pair and jump to the middle.
+    let sufix = ''
+    if !empty(s:get('eol_marker')) && col('.') - 1 == len(getline('.'))
+      let idx = len(s:get('eol_marker')) * -1
+      let marker = getline('.')[idx : ]
+      let has_marker = marker == s:get('eol_marker')
+      let sufix = !has_marker ? s:get('eol_marker') : ''
+    endif
+    return a:char . a:char . s:joinUndo() . "\<Left>"
+  endif
+endfunction "}}}
 
-func! AutoPairsBackInsert()
-  let pair = b:autopairs_saved_pair[0]
-  let pos  = b:autopairs_saved_pair[1]
-  call setpos('.', pos)
-  return pair
-endf
+function! g:DelimitMate__JumpOut(char) "{{{
+  if s:is_forbidden(a:char)
+    return a:char
+  endif
+  let jump = s:is_jump(a:char)
+  if jump == 1
+    " HACK: Instead of <Right>, we remove the char to be jumped over and
+    " insert it again. This will trigger re-indenting via 'indentkeys'.
+    " Ref: https://github.com/Raimondi/delimitMate/issues/168
+    return "\<Del>".a:char
+  elseif jump == 3
+    return s:joinUndo() . "\<Right>" . s:joinUndo() . "\<Right>"
+  elseif jump == 5
+    return "\<Down>\<C-O>I" . s:joinUndo() . "\<Right>"
+  else
+    return a:char
+  endif
+endfunction " }}}
 
-func! AutoPairsReturn()
-  if b:autopairs_enabled == 0
+function! g:DelimitMate__JumpAny(...) " {{{
+  if s:is_forbidden('')
     return ''
-  end
-  let b:autopairs_return_pos = 0
-  let before = getline(line('.')-1)
-  let [ig, ig, afterline] = s:getline()
-  let cmd = ''
-  for [open, close, opt] in b:AutoPairsList
-    if close == ''
-      continue
-    end
-
-    if before =~ '\V'.open.'\v\s*$' && afterline =~ '^\s*\V'.close
-      let b:autopairs_return_pos = line('.')
-      if g:AutoPairsCenterLine && winline() * 3 >= winheight(0) * 2
-        " Recenter before adding new line to avoid replacing line content
-        let cmd = "zz"
-      end
-
-      " If equalprg has been set, then avoid call =
-      " https://github.com/jiangmiao/auto-pairs/issues/24
-      if &equalprg != ''
-        return "\<ESC>".cmd."O"
-      endif
-
-      " conflict with javascript and coffee
-      " javascript   need   indent new line
-      " coffeescript forbid indent new line
-      if &filetype == 'coffeescript' || &filetype == 'coffee'
-        return "\<ESC>".cmd."k==o"
-      else
-        return "\<ESC>".cmd."=ko"
-      endif
-    end
-  endfor
-  return ''
-endf
-
-func! AutoPairsSpace()
-  if !b:autopairs_enabled
-    return "\<SPACE>"
-  end
-
-  let [before, after, ig] = s:getline()
-
-  for [open, close, opt] in b:AutoPairsList
-    if close == ''
-      continue
-    end
-    if before =~ '\V'.open.'\v$' && after =~ '^\V'.close
-      if close =~ '\v^[''"`]$'
-        return "\<SPACE>"
-      else
-        return "\<SPACE>\<SPACE>".s:Left
-      end
-    end
-  endfor
-  return "\<SPACE>"
-endf
-
-func! AutoPairsMap(key)
-  " | is special key which separate map command from text
-  let key = a:key
-  if key == '|'
-    let key = '<BAR>'
-  end
-  let escaped_key = substitute(key, "'", "''", 'g')
-  " use expr will cause search() doesn't work
-  execute 'inoremap <buffer> <silent> '.key." <C-R>=AutoPairsInsert('".escaped_key."')<CR>"
-endf
-
-func! AutoPairsToggle()
-  if b:autopairs_enabled
-    let b:autopairs_enabled = 0
-    echo 'AutoPairs Disabled.'
+  endif
+  if !s:is_jump()
+    return ''
+  endif
+  " Let's get the character on the right.
+  let char = s:get_char(0)
+  if char == " "
+    " Space expansion.
+    return s:joinUndo() . "\<Right>" . s:joinUndo() . "\<Right>"
+  elseif char == ""
+    " CR expansion.
+    return "\<CR>" . getline(line('.') + 1)[0] . "\<Del>\<Del>"
   else
-    let b:autopairs_enabled = 1
-    echo 'AutoPairs Enabled.'
-  end
-  return ''
-endf
-
-func! s:sortByLength(i1, i2)
-  return len(a:i2[0])-len(a:i1[0])
-endf
-
-func! AutoPairsInit()
-  let b:autopairs_loaded  = 1
-  if !exists('b:autopairs_enabled')
-    let b:autopairs_enabled = 1
-  end
-
-  if !exists('b:AutoPairs')
-    let b:AutoPairs = AutoPairsDefaultPairs()
-  end
-
-  if !exists('b:AutoPairsMoveCharacter')
-    let b:AutoPairsMoveCharacter = g:AutoPairsMoveCharacter
-  end
-
-  let b:autopairs_return_pos = 0
-  let b:autopairs_saved_pair = [0, 0]
-  let b:AutoPairsList = []
-
-  " buffer level map pairs keys
-  " n - do not map the first charactor of closed pair to close key
-  " m - close key jumps through multi line
-  " s - close key jumps only in the same line
-  for [open, close] in items(b:AutoPairs)
-    let o = open[-1:-1]
-    let c = close[0]
-    let opt = {'mapclose': 1, 'multiline':1}
-    let opt['key'] = c
-    if o == c
-      let opt['multiline'] = 0
-    end
-    let m = matchlist(close, '\v(.*)//(.*)$')
-    if len(m) > 0
-      if m[2] =~ 'n'
-        let opt['mapclose'] = 0
-      end
-      if m[2] =~ 'm'
-        let opt['multiline'] = 1
-      end
-      if m[2] =~ 's'
-        let opt['multiline'] = 0
-      end
-      let ks = matchlist(m[2], '\vk(.)')
-      if len(ks) > 0
-        let opt['key'] = ks[1]
-        let c = opt['key']
-      end
-      let close = m[1]
-    end
-    call AutoPairsMap(o)
-    if o != c && c != '' && opt['mapclose']
-      call AutoPairsMap(c)
-    end
-    let b:AutoPairsList += [[open, close, opt]]
-  endfor
-
-  " sort pairs by length, longer pair should have higher priority
-  let b:AutoPairsList = sort(b:AutoPairsList, "s:sortByLength")
-
-  for item in b:AutoPairsList
-    let [open, close, opt] = item
-    if open == "'" && open == close
-      let item[0] = '\v(^|\W)\zs'''
-    end
-  endfor
-
-
-  for key in split(b:AutoPairsMoveCharacter, '\s*')
-    let escaped_key = substitute(key, "'", "''", 'g')
-    execute 'inoremap <silent> <buffer> <M-'.key."> <C-R>=AutoPairsMoveCharacter('".escaped_key."')<CR>"
-  endfor
-
-  " Still use <buffer> level mapping for <BS> <SPACE>
-  if g:AutoPairsMapBS
-    " Use <C-R> instead of <expr> for issue #14 sometimes press BS output strange words
-    execute 'inoremap <buffer> <silent> <BS> <C-R>=AutoPairsDelete()<CR>'
-  end
-
-  if g:AutoPairsMapCh
-    execute 'inoremap <buffer> <silent> <C-h> <C-R>=AutoPairsDelete()<CR>'
+    return s:joinUndo() . "\<Right>"
   endif
+endfunction " DelimitMate__JumpAny() }}}
 
-  if g:AutoPairsMapSpace
-    " Try to respect abbreviations on a <SPACE>
-    let do_abbrev = ""
-    if v:version == 703 && has("patch489") || v:version > 703
-      let do_abbrev = "<C-]>"
-    endif
-    execute 'inoremap <buffer> <silent> <SPACE> '.do_abbrev.'<C-R>=AutoPairsSpace()<CR>'
-  end
-
-  if g:AutoPairsShortcutFastWrap != ''
-    execute 'inoremap <buffer> <silent> '.g:AutoPairsShortcutFastWrap.' <C-R>=AutoPairsFastWrap()<CR>'
-  end
-
-  if g:AutoPairsShortcutBackInsert != ''
-    execute 'inoremap <buffer> <silent> '.g:AutoPairsShortcutBackInsert.' <C-R>=AutoPairsBackInsert()<CR>'
-  end
-
-  if g:AutoPairsShortcutToggle != ''
-    " use <expr> to ensure showing the status when toggle
-    execute 'inoremap <buffer> <silent> <expr> '.g:AutoPairsShortcutToggle.' AutoPairsToggle()'
-    execute 'noremap <buffer> <silent> '.g:AutoPairsShortcutToggle.' :call AutoPairsToggle()<CR>'
-  end
-
-  if g:AutoPairsShortcutJump != ''
-    execute 'inoremap <buffer> <silent> ' . g:AutoPairsShortcutJump. ' <ESC>:call AutoPairsJump()<CR>a'
-    execute 'noremap <buffer> <silent> ' . g:AutoPairsShortcutJump. ' :call AutoPairsJump()<CR>'
-  end
-
-  if &keymap != ''
-    let l:imsearch = &imsearch
-    let l:iminsert = &iminsert
-    let l:imdisable = &imdisable
-    execute 'setlocal keymap=' . &keymap
-    execute 'setlocal imsearch=' . l:imsearch
-    execute 'setlocal iminsert=' . l:iminsert
-    if l:imdisable
-      execute 'setlocal imdisable'
+function! g:DelimitMate__JumpMany() " {{{
+  let line = split(getline('.')[col('.') - 1 : ], '\zs')
+  let rights = ""
+  let found = 0
+  for char in line
+    if index(s:get('quotes_list'), char) >= 0 ||
+          \ index(s:get('right_delims'), char) >= 0
+      let rights .= s:joinUndo() . "\<Right>"
+      let found = 1
+    elseif found == 0
+      let rights .= s:joinUndo() . "\<Right>"
     else
-      execute 'setlocal noimdisable'
-    end
-  end
+      break
+    endif
+  endfor
+  if found == 1
+    return rights
+  else
+    return ''
+  endif
+endfunction " DelimitMate__JumpMany() }}}
 
-endf
+function! g:DelimitMate__ExpandReturn() "{{{
+  if s:is_forbidden("")
+    return "\<CR>"
+  endif
+  let escaped = s:cursor_idx() >= 2
+        \ && s:get_char(-2) == '\'
+  let expand_right_matchpair = s:get('expand_cr') == 2
+        \     && index(s:get('right_delims'), s:get_char(0)) > -1
+  let expand_inside_quotes = s:get('expand_inside_quotes')
+          \     && s:is_empty_quotes()
+          \     && !escaped
+  let is_empty_matchpair = s:is_empty_matchpair()
+  if !pumvisible(  )
+        \ && (   is_empty_matchpair
+        \     || expand_right_matchpair
+        \     || expand_inside_quotes)
+    let val = "\<Esc>a"
+    if is_empty_matchpair && s:get('insert_eol_marker') == 2
+          \ && !search(escape(s:get('eol_marker'), '[]\.*^$').'$', 'cnW', '.')
+      let tail = getline('.')[col('.') - 1 : ]
+      let times = len(split(tail, '\zs'))
+      let val .= repeat(s:joinUndo() . "\<Right>", times) . s:get('eol_marker') . repeat(s:joinUndo() . "\<Left>", times + 1)
+    endif
+    let val .= "\<CR>"
+    if &smartindent && !&cindent && !&indentexpr
+          \ && s:get_char(0) == '}'
+      " indentation is controlled by 'smartindent', and the first character on
+      " the new line is '}'. If this were typed manually it would reindent to
+      " match the current line. Let's reproduce that behavior.
+      let shifts = indent('.') / &sw
+      let spaces = indent('.') - (shifts * &sw)
+      let val .= "^\<C-D>".repeat("\<C-T>", shifts).repeat(' ', spaces)
+    endif
+    " Expand:
+    " XXX zv prevents breaking expansion with syntax folding enabled by
+    " InsertLeave.
+    let val .= "\<Esc>zvO"
+    return val
+  else
+    return "\<CR>"
+  endif
+endfunction "}}}
 
-func! s:ExpandMap(map)
-  let map = a:map
-  let map = substitute(map, '\(<Plug>\w\+\)', '\=maparg(submatch(1), "i")', 'g')
-  let map = substitute(map, '\(<Plug>([^)]*)\)', '\=maparg(submatch(1), "i")', 'g')
-  return map
-endf
+function! g:DelimitMate__ExpandSpace() "{{{
+  if s:is_forbidden("\<Space>")
+    return "\<Space>"
+  endif
+  let escaped = s:cursor_idx() >= 2
+        \ && s:get_char(-2) == '\'
+  let expand_inside_quotes = s:get('expand_inside_quotes')
+          \     && s:is_empty_quotes()
+          \     && !escaped
+  if s:is_empty_matchpair() || expand_inside_quotes
+    " Expand:
+    return "\<Space>\<Space>" . s:joinUndo() . "\<Left>"
+  else
+    return "\<Space>"
+  endif
+endfunction "}}}
 
-func! AutoPairsTryInit()
-  if exists('b:autopairs_loaded')
-    return
-  end
+function! g:DelimitMate__BS() " {{{
+  if s:is_forbidden("")
+    let extra = ''
+  elseif &bs !~ 'start\|2'
+    let extra = ''
+  elseif DelimitMate__WithinEmptyPair()
+    let extra = "\<Del>"
+  elseif s:is_space_expansion()
+    let extra = "\<Del>"
+  elseif s:is_cr_expansion()
+    let extra = repeat("\<Del>",
+          \ len(matchstr(getline(line('.') + 1), '^\s*\S')))
+  else
+    let extra = ''
+  endif
+  return "\<BS>" . extra
+endfunction " }}} DelimitMate__BS()
 
-  " for auto-pairs starts with 'a', so the priority is higher than supertab and vim-endwise
-  "
-  " vim-endwise doesn't support <Plug>AutoPairsReturn
-  " when use <Plug>AutoPairsReturn will cause <Plug> isn't expanded
-  "
-  " supertab doesn't support <SID>AutoPairsReturn
-  " when use <SID>AutoPairsReturn  will cause Duplicated <CR>
-  "
-  " and when load after vim-endwise will cause unexpected endwise inserted.
-  " so always load AutoPairs at last
+function! g:DelimitMate__Test() "{{{
+  %d _
+  " Check for script options:
+  let result = [
+        \ 'delimitMate Report',
+        \ '==================',
+        \ '',
+        \ '* Options: ( ) default, (g) global, (b) buffer',
+        \ '']
+  for option in sort(keys(s:options[bufnr('%')]))
+    if s:exists(option, 'b')
+      let scope = '(b)'
+    elseif s:exists(option, 'g')
+      let scope = '(g)'
+    else
+      let scope = '( )'
+    endif
+    call add(result,
+          \ scope . ' delimitMate_' . option
+          \ . ' = '
+          \ . string(s:get(option)))
+  endfor
+  call add(result, '')
 
-  " Buffer level keys mapping
-  " comptible with other plugin
-  if g:AutoPairsMapCR
-    if v:version == 703 && has('patch32') || v:version > 703
-      " VIM 7.3 supports advancer maparg which could get <expr> info
-      " then auto-pairs could remap <CR> in any case.
-      let info = maparg('<CR>', 'i', 0, 1)
-      if empty(info)
-        let old_cr = '<CR>'
-        let is_expr = 0
-      else
-        let old_cr = info['rhs']
-        let old_cr = s:ExpandMap(old_cr)
-        let old_cr = substitute(old_cr, '<SID>', '<SNR>' . info['sid'] . '_', 'g')
-        let is_expr = info['expr']
-        let wrapper_name = '<SID>AutoPairsOldCRWrapper73'
+  let option = 'delimitMate_excluded_ft'
+  call add(result,
+        \(exists('g:'.option) ? '(g) ' : '( ) g:') . option . ' = '
+        \. string(get(g:, option, '')))
+
+  call add(result, '--------------------')
+  call add(result, '')
+
+  " Check if mappings were set.
+  let left_delims = s:get('autoclose') ? s:get('left_delims') : []
+  let special_keys = ['<BS>', '<S-BS>', '<S-Tab>', '<C-G>g']
+  if s:get('expand_cr')
+    call add(special_keys, '<CR>')
+  endif
+  if s:get('expand_space')
+    call add(special_keys, '<Space>')
+  endif
+  let maps =
+        \ s:get('right_delims')
+        \ + left_delims
+        \ + s:get('quotes_list')
+        \ + s:get('apostrophes_list')
+        \ + special_keys
+
+  call add(result, '* Mappings:')
+  call add(result, '')
+  for map in maps
+    let output = ''
+    if map == '|'
+      let map = '<Bar>'
+    endif
+    redir => output | execute "verbose imap ".map | redir END
+    call extend(result, split(output, '\n'))
+  endfor
+
+  call add(result, '--------------------')
+  call add(result, '')
+  call add(result, '* Showcase:')
+  call add(result, '')
+  call setline(1, result)
+  call s:test_mappings(s:get('left_delims'), 1)
+  call s:test_mappings(s:get('quotes_list'), 0)
+
+  let result = []
+  redir => setoptions
+  echo " * Vim configuration:\<NL>"
+  filetype
+  echo ""
+  set
+  version
+  redir END
+  call extend(result, split(setoptions,"\n"))
+  call add(result, '--------------------')
+  setlocal nowrap
+  call append('$', result)
+  call feedkeys("\<Esc>\<Esc>", 'n')
+endfunction "}}}
+
+function! s:test_mappings(list, is_matchpair) "{{{
+  let prefix = "normal Go0\<C-D>"
+  let last = "|"
+  let open = s:get('autoclose') ? 'Open: ' : 'Open & close: '
+  for s in a:list
+    if a:is_matchpair
+      let pair = s:get('right_delims')[index(s:get('left_delims'), s)]
+    else
+      let pair = s
+    endif
+    if !s:get('autoclose')
+      let s .= pair
+    endif
+    exec prefix . open . s . last
+    exec prefix . "Delete: " . s . "\<BS>" . last
+    exec prefix . "Exit: " . s . pair . last
+    if s:get('expand_space')
+          \ && (a:is_matchpair || s:get('expand_inside_quotes'))
+      exec prefix . "Space: " . s . " " . last
+      exec prefix . "Delete space: " . s . " \<BS>" . last
+    endif
+    if s:get('expand_cr')
+          \ && (a:is_matchpair || s:get('expand_inside_quotes'))
+      exec prefix . "Car return: " . s . "\<CR>" . last
+      exec prefix . "Delete car return: " . s . "\<CR>0\<C-D>\<BS>" . last
+    endif
+    call append('$', '')
+  endfor
+endfunction "}}}
+
+function! s:joinUndo() "{{{
+  if v:version < 704
+        \ || ( v:version == 704 && !has('patch849') )
+    return ''
+  endif
+  return "\<C-G>U"
+endfunction "}}}
+
+" vim:foldmethod=marker:foldcolumn=4:ts=2:sw=2
+
+" File:        plugin/delimitMate.vim
+" Version:     2.7
+" Modified:    2013-07-15
+" Description: This plugin provides auto-completion for quotes, parens, etc.
+" Maintainer:  Israel Chauca F. <israelchauca@gmail.com>
+" Manual:      Read ":help delimitMate".
+" ============================================================================
+
+" Initialization: {{{
+
+if exists("g:loaded_delimitMate") || &cp
+  " User doesn't want this plugin or compatible is set, let's get out!
+  finish
+endif
+let g:loaded_delimitMate = 1
+let save_cpo = &cpo
+set cpo&vim
+
+if v:version < 700
+  echoerr "delimitMate: this plugin requires vim >= 7!"
+  finish
+endif
+
+let s:loaded_delimitMate = 1
+let delimitMate_version = "2.8"
+
+"}}}
+
+" Functions: {{{
+
+function! s:option_init(name, default) "{{{
+  let opt_name = "delimitMate_" . a:name
+  " Find value to use.
+  if !has_key(b:, opt_name) && !has_key(g:, opt_name)
+    let value = a:default
+  elseif has_key(b:, opt_name)
+    let value = b:[opt_name]
+  else
+    let value = g:[opt_name]
+  endif
+  call s:set(a:name, value)
+endfunction "}}}
+
+function! s:init() "{{{
+" Initialize variables:
+  " autoclose
+  call s:option_init("autoclose", 1)
+  " matchpairs
+  call s:option_init("matchpairs", string(&matchpairs)[1:-2])
+  call s:option_init("matchpairs_list", map(split(s:get('matchpairs', ''), '.:.\zs,\ze.:.'), 'split(v:val, ''^.\zs:\ze.$'')'))
+  let pairs = s:get('matchpairs_list', [])
+  if len(filter(pairs, 'v:val[0] ==# v:val[1]'))
+    echohl ErrorMsg
+    echom 'delimitMate: each member of a pair in delimitMate_matchpairs must be different from each other.'
+    echom 'delimitMate: invalid pairs: ' . join(map(pairs, 'join(v:val, ":")'), ', ')
+    echohl Normal
+    return 0
+  endif
+  call s:option_init("left_delims", map(copy(s:get('matchpairs_list', [])), 'v:val[0]'))
+  call s:option_init("right_delims", map(copy(s:get('matchpairs_list', [])), 'v:val[1]'))
+  " quotes
+  call s:option_init("quotes", "\" ' `")
+  call s:option_init("quotes_list",split(s:get('quotes', ''), '\s\+'))
+  " nesting_quotes
+  call s:option_init("nesting_quotes", [])
+  " excluded_regions
+  call s:option_init("excluded_regions", "Comment")
+  call s:option_init("excluded_regions_list", split(s:get('excluded_regions', ''), ',\s*'))
+  let enabled = len(s:get('excluded_regions_list', [])) > 0
+  call s:option_init("excluded_regions_enabled", enabled)
+  " expand_space
+  if exists("b:delimitMate_expand_space") && type(b:delimitMate_expand_space) == type("")
+    echom "b:delimitMate_expand_space is '".b:delimitMate_expand_space."' but it must be either 1 or 0!"
+    echom "Read :help 'delimitMate_expand_space' for more details."
+    unlet b:delimitMate_expand_space
+    let b:delimitMate_expand_space = 1
+  endif
+  if exists("g:delimitMate_expand_space") && type(g:delimitMate_expand_space) == type("")
+    echom "delimitMate_expand_space is '".g:delimitMate_expand_space."' but it must be either 1 or 0!"
+    echom "Read :help 'delimitMate_expand_space' for more details."
+    unlet g:delimitMate_expand_space
+    let g:delimitMate_expand_space = 1
+  endif
+  call s:option_init("expand_space", 0)
+  " expand_cr
+  if exists("b:delimitMate_expand_cr") && type(b:delimitMate_expand_cr) == type("")
+    echom "b:delimitMate_expand_cr is '".b:delimitMate_expand_cr."' but it must be either 1 or 0!"
+    echom "Read :help 'delimitMate_expand_cr' for more details."
+    unlet b:delimitMate_expand_cr
+    let b:delimitMate_expand_cr = 1
+  endif
+  if exists("g:delimitMate_expand_cr") && type(g:delimitMate_expand_cr) == type("")
+    echom "delimitMate_expand_cr is '".g:delimitMate_expand_cr."' but it must be either 1 or 0!"
+    echom "Read :help 'delimitMate_expand_cr' for more details."
+    unlet g:delimitMate_expand_cr
+    let g:delimitMate_expand_cr = 1
+  endif
+  if ((&backspace !~ 'eol' || &backspace !~ 'start') && &backspace != 2) &&
+        \ ((exists('b:delimitMate_expand_cr') && b:delimitMate_expand_cr == 1) ||
+        \ (exists('g:delimitMate_expand_cr') && g:delimitMate_expand_cr == 1))
+    echom "delimitMate: There seems to be some incompatibility with your settings that may interfer with the expansion of <CR>. See :help 'delimitMate_expand_cr' for details."
+  endif
+  call s:option_init("expand_cr", 0)
+  " expand_in_quotes
+  call s:option_init('expand_inside_quotes', 0)
+  " jump_expansion
+  call s:option_init("jump_expansion", 0)
+  " smart_matchpairs
+  call s:option_init("smart_matchpairs", '^\%(\w\|\!\|[£$]\|[^[:punct:][:space:]]\)')
+  " smart_quotes
+  " XXX: backward compatibility. Ugly, should go the way of the dodo soon.
+  let quotes = escape(join(s:get('quotes_list', []), ''), '\-^[]')
+  let default_smart_quotes = '\%(\w\|[^[:punct:][:space:]' . quotes . ']\|\%(\\\\\)*\\\)\%#\|\%#\%(\w\|[^[:space:][:punct:]' . quotes . ']\)'
+  if exists('g:delimitMate_smart_quotes') && type(g:delimitMate_smart_quotes) == type(0)
+    if g:delimitMate_smart_quotes
+      unlet g:delimitMate_smart_quotes
+    else
+      unlet g:delimitMate_smart_quotes
+      let g:delimitMate_smart_quotes = ''
+    endif
+  endif
+  if exists('b:delimitMate_smart_quotes') && type(b:delimitMate_smart_quotes) == type(0)
+    if b:delimitMate_smart_quotes
+      unlet b:delimitMate_smart_quotes
+      if exists('g:delimitMate_smart_quotes') && type(g:delimitMate_smart_quotes) && g:delimitMate_smart_quotes
+        let b:delimitMate_smart_quotes = default_smart_quotes
       endif
     else
-      " VIM version less than 7.3
-      " the mapping's <expr> info is lost, so guess it is expr or not, it's
-      " not accurate.
-      let old_cr = maparg('<CR>', 'i')
-      if old_cr == ''
-        let old_cr = '<CR>'
-        let is_expr = 0
-      else
-        let old_cr = s:ExpandMap(old_cr)
-        " old_cr contain (, I guess the old cr is in expr mode
-        let is_expr = old_cr =~ '\V(' && toupper(old_cr) !~ '\V<C-R>'
-
-        " The old_cr start with " it must be in expr mode
-        let is_expr = is_expr || old_cr =~ '\v^"'
-        let wrapper_name = '<SID>AutoPairsOldCRWrapper'
-      end
-    end
-
-    if old_cr !~ 'AutoPairsReturn'
-      if is_expr
-        " remap <expr> to `name` to avoid mix expr and non-expr mode
-        execute 'inoremap <buffer> <expr> <script> '. wrapper_name . ' ' . old_cr
-        let old_cr = wrapper_name
-      end
-      " Always silent mapping
-      execute 'inoremap <script> <buffer> <silent> <CR> '.old_cr.'<SID>AutoPairsReturn'
-    end
+      unlet b:delimitMate_smart_quotes
+      let b:delimitMate_smart_quotes = ''
+    endif
   endif
-  call AutoPairsInit()
-endf
+  call s:option_init("smart_quotes", default_smart_quotes)
+  " apostrophes
+  call s:option_init("apostrophes", "")
+  call s:option_init("apostrophes_list", split(s:get('apostrophes', ''), ":\s*"))
+  " tab2exit
+  call s:option_init("tab2exit", 1)
+  " balance_matchpairs
+  call s:option_init("balance_matchpairs", 0)
+  " eol marker
+  call s:option_init("insert_eol_marker", 1)
+  call s:option_init("eol_marker", "")
+  " Everything is fine.
+  return 1
+endfunction "}}} Init()
 
-" Always silent the command
-inoremap <silent> <SID>AutoPairsReturn <C-R>=AutoPairsReturn()<CR>
-imap <script> <Plug>AutoPairsReturn <SID>AutoPairsReturn
+function! s:Map() "{{{
+  " Set mappings:
+  try
+    let save_keymap = &keymap
+    let save_iminsert = &iminsert
+    let save_imsearch = &imsearch
+    let save_cpo = &cpo
+    set keymap=
+    set cpo&vim
+    silent! doautocmd <nomodeline> User delimitMate_map
+    if s:get('autoclose', 1)
+      call s:AutoClose()
+    else
+      call s:NoAutoClose()
+    endif
+    call s:ExtraMappings()
+  finally
+    let &cpo = save_cpo
+    let &keymap = save_keymap
+    let &iminsert = save_iminsert
+    let &imsearch = save_imsearch
+  endtry
 
+  let b:delimitMate_enabled = 1
+endfunction "}}} Map()
 
-au BufEnter * :call AutoPairsTryInit()
+function! s:Unmap() " {{{
+  let imaps =
+        \ s:get('right_delims', []) +
+        \ s:get('left_delims', []) +
+        \ s:get('quotes_list', []) +
+        \ s:get('apostrophes_list', []) +
+        \ ['<BS>', '<C-h>', '<S-BS>', '<Del>', '<CR>', '<Space>', '<S-Tab>', '<Esc>'] +
+        \ ['<Up>', '<Down>', '<Left>', '<Right>', '<LeftMouse>', '<RightMouse>'] +
+        \ ['<C-Left>', '<C-Right>'] +
+        \ ['<Home>', '<End>', '<PageUp>', '<PageDown>', '<S-Down>', '<S-Up>', '<C-G>g']
 
+  for map in imaps
+    if maparg(map, "i") =~# '^<Plug>delimitMate'
+      if map == '|'
+        let map = '<Bar>'
+      endif
+      exec 'silent! iunmap <buffer> ' . map
+    endif
+  endfor
+  silent! doautocmd <nomodeline> User delimitMate_unmap
+  let b:delimitMate_enabled = 0
+endfunction " }}} s:Unmap()
+
+function! s:test() "{{{
+  if &modified
+    let confirm = input("Modified buffer, type \"yes\" to write and proceed "
+          \ . "with test: ") ==? 'yes'
+    if !confirm
+      return
+    endif
+  endif
+  call DelimitMate__Test()
+  g/\%^$/d
+  0
+endfunction "}}}
+
+function! s:setup(...) "{{{
+  let swap = a:0 && a:1 == 2
+  let enable = a:0 && a:1
+  let disable = a:0 && !a:1
+  " First, remove all magic, if needed:
+  if get(b:, 'delimitMate_enabled', 0)
+    call s:Unmap()
+    " Switch
+    if swap
+      echo "delimitMate is disabled."
+      return
+    endif
+  endif
+  if disable
+    " Just disable the mappings.
+    return
+  endif
+  if !a:0
+    " Check if this file type is excluded:
+    if exists("g:delimitMate_excluded_ft") &&
+          \ index(split(g:delimitMate_excluded_ft, ','), &filetype, 0, 1) >= 0
+      " Finish here:
+      return 1
+    endif
+    " Check if user tried to disable using b:loaded_delimitMate
+    if exists("b:loaded_delimitMate")
+      return 1
+    endif
+  endif
+  " Initialize settings:
+  if ! s:init()
+    " Something went wrong.
+    return
+  endif
+  if enable || swap || !get(g:, 'delimitMate_offByDefault', 0)
+    " Now, add magic:
+    call s:Map()
+    if a:0
+      echo "delimitMate is enabled."
+    endif
+  endif
+endfunction "}}}
+
+function! s:TriggerAbb() "{{{
+  if v:version < 703
+        \ || ( v:version == 703 && !has('patch489') )
+        \ || pumvisible()
+    return ''
+  endif
+  return "\<C-]>"
+endfunction "}}}
+
+function! s:NoAutoClose() "{{{
+  " inoremap <buffer> ) <C-R>=DelimitMate__SkipDelim('\)')<CR>
+  for delim in s:get('right_delims', []) + s:get('quotes_list', [])
+    if delim == '|'
+      let delim = '<Bar>'
+    endif
+    exec 'inoremap <silent> <Plug>delimitMate' . delim . ' <C-R>=<SID>TriggerAbb().DelimitMate__SkipDelim("' . escape(delim,'"') . '")<CR>'
+    exec 'silent! imap <unique> <buffer> '.delim.' <Plug>delimitMate'.delim
+  endfor
+endfunction "}}}
+
+function! s:AutoClose() "{{{
+  " Add matching pair and jump to the midle:
+  " inoremap <silent> <buffer> ( ()<Left>
+  let i = 0
+  while i < len(s:get('matchpairs_list', []))
+    let ld = s:get('left_delims', [])[i] == '|' ? '<bar>' : s:get('left_delims', [])[i]
+    let rd = s:get('right_delims', [])[i] == '|' ? '<bar>' : s:get('right_delims', [])[i]
+    exec 'inoremap <expr><silent> <Plug>delimitMate' . ld
+                \. ' <SID>TriggerAbb().DelimitMate__ParenDelim("' . escape(rd, '|') . '")'
+    exec 'silent! imap <unique> <buffer> '.ld
+                \.' <Plug>delimitMate'.ld
+    let i += 1
+  endwhile
+
+  " Exit from inside the matching pair:
+  for delim in s:get('right_delims', [])
+    let delim = delim == '|' ? '<bar>' : delim
+    exec 'inoremap <expr><silent> <Plug>delimitMate' . delim
+                \. ' <SID>TriggerAbb().DelimitMate__JumpOut("\' . delim . '")'
+    exec 'silent! imap <unique> <buffer> ' . delim
+                \. ' <Plug>delimitMate'. delim
+  endfor
+
+  " Add matching quote and jump to the midle, or exit if inside a pair of matching quotes:
+  " inoremap <silent> <buffer> " <C-R>=DelimitMate__QuoteDelim("\"")<CR>
+  for delim in s:get('quotes_list', [])
+    if delim == '|'
+      let delim = '<Bar>'
+    endif
+    exec 'inoremap <expr><silent> <Plug>delimitMate' . delim
+                \. ' <SID>TriggerAbb()."<C-R>=DelimitMate__QuoteDelim(\"\\\' . delim . '\")<CR>"'
+    exec 'silent! imap <unique> <buffer> ' . delim
+                \. ' <Plug>delimitMate' . delim
+  endfor
+
+  " Try to fix the use of apostrophes (kept for backward compatibility):
+  " inoremap <silent> <buffer> n't n't
+  for map in s:get('apostrophes_list', [])
+    exec "inoremap <silent> " . map . " " . map
+    exec 'silent! imap <unique> <buffer> ' . map . ' <Plug>delimitMate' . map
+  endfor
+endfunction "}}}
+
+function! s:ExtraMappings() "{{{
+  " If pair is empty, delete both delimiters:
+  inoremap <silent> <Plug>delimitMateBS <C-R>=DelimitMate__BS()<CR>
+  if !hasmapto('<Plug>delimitMateBS','i')
+    if empty(maparg('<BS>', 'i'))
+      silent! imap <unique> <buffer> <BS> <Plug>delimitMateBS
+    endif
+    if empty(maparg('<C-H>', 'i'))
+      silent! imap <unique> <buffer> <C-h> <Plug>delimitMateBS
+    endif
+  endif
+  " If pair is empty, delete closing delimiter:
+  inoremap <silent> <expr> <Plug>delimitMateS-BS DelimitMate__WithinEmptyPair() ? "\<Del>" : "\<S-BS>"
+  if !hasmapto('<Plug>delimitMateS-BS','i') && maparg('<S-BS>', 'i') == ''
+    silent! imap <unique> <buffer> <S-BS> <Plug>delimitMateS-BS
+  endif
+  " Expand return if inside an empty pair:
+  inoremap <expr><silent> <Plug>delimitMateCR <SID>TriggerAbb()."\<C-R>=DelimitMate__ExpandReturn()\<CR>"
+  if s:get('expand_cr', 0) && !hasmapto('<Plug>delimitMateCR', 'i') && maparg('<CR>', 'i') == ''
+    silent! imap <unique> <buffer> <CR> <Plug>delimitMateCR
+  endif
+  " Expand space if inside an empty pair:
+  inoremap <expr><silent> <Plug>delimitMateSpace <SID>TriggerAbb()."\<C-R>=DelimitMate__ExpandSpace()\<CR>"
+  if s:get('expand_space', 0) && !hasmapto('<Plug>delimitMateSpace', 'i') && maparg('<Space>', 'i') == ''
+    silent! imap <unique> <buffer> <Space> <Plug>delimitMateSpace
+  endif
+  " Jump over any delimiter:
+  inoremap <expr><silent> <Plug>delimitMateS-Tab <SID>TriggerAbb()."\<C-R>=DelimitMate__JumpAny()\<CR>"
+  if s:get('tab2exit', 0) && !hasmapto('<Plug>delimitMateS-Tab', 'i') && maparg('<S-Tab>', 'i') == ''
+    silent! imap <unique> <buffer> <S-Tab> <Plug>delimitMateS-Tab
+  endif
+  " Jump over next delimiters
+  inoremap <expr><buffer> <Plug>delimitMateJumpMany <SID>TriggerAbb()."\<C-R>=DelimitMate__JumpMany()\<CR>"
+  if !hasmapto('<Plug>delimitMateJumpMany', 'i') && maparg("<C-G>g", 'i') == ''
+    imap <silent> <buffer> <C-G>g <Plug>delimitMateJumpMany
+  endif
+endfunction "}}}
+
+"}}}
+
+" Commands: {{{
+
+" Let me refresh without re-loading the buffer:
+command! -bar DelimitMateReload call s:setup(1)
+" Quick test:
+command! -bar DelimitMateTest call s:test()
+" Switch On/Off:
+command! -bar DelimitMateSwitch call s:setup(2)
+" Enable mappings:
+command! -bar DelimitMateOn call s:setup(1)
+" Disable mappings:
+command! -bar DelimitMateOff call s:setup(0)
+
+"}}}
+
+" Autocommands: {{{
+
+augroup delimitMate
+  au!
+  " Run on file type change.
+  au FileType * call <SID>setup()
+  au FileType python let b:delimitMate_nesting_quotes = ['"', "'"]
+
+  " Run on new buffers.
+  au BufNewFile,BufRead,BufEnter,CmdwinEnter *
+        \ if !exists('b:delimitMate_was_here') |
+        \   call <SID>setup() |
+        \   let b:delimitMate_was_here = 1 |
+        \ endif
+augroup END
+
+"}}}
+
+" This is for the default buffer when it does not have a filetype.
+call s:setup()
+
+let &cpo = save_cpo
+" GetLatestVimScripts: 2754 1 :AutoInstall: delimitMate.vim
+" vim:foldmethod=marker:foldcolumn=4:ts=2:sw=2
 " }}}1
 
 
