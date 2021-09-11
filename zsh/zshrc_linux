@@ -21,7 +21,7 @@ plugins=(git)
 
 source $ZSH/oh-my-zsh.sh
 
-. "$HOME/config/zshrc/z/z.sh"
+. "$HOME/config/zsh/z/z.sh"
 
 bindkey "^U" backward-kill-line
 
