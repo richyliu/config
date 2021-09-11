@@ -21,6 +21,8 @@ plugins=(git)
 
 source $ZSH/oh-my-zsh.sh
 
+. "$HOME/config/zshrc/z/z.sh"
+
 bindkey "^U" backward-kill-line
 
 # Start tmux if connecting via SSH
