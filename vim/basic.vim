@@ -22,6 +22,7 @@ set display+=truncate
 set expandtab
 set foldmethod=marker
 set hidden
+set history=10000
 set hlsearch
 set ignorecase
 set incsearch
@@ -41,6 +42,7 @@ set sidescroll=5
 set sidescrolloff=10
 set shiftwidth=2
 set noshelltemp
+set shortmess-=S
 set showbreak=^
 set showcmd
 set smartcase
@@ -55,6 +57,7 @@ set timeoutlen=500
 set title
 set ttimeoutlen=10
 set updatetime=500
+set viminfo=
 set wildignore+=**/node_modules/**
 set wildignorecase
 set wildmenu

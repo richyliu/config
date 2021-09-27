@@ -161,6 +161,7 @@ set directory^=$HOME/.cache/nvim/swap//
 set display+=truncate
 set expandtab
 set hidden
+set history=10000
 set hlsearch
 set ignorecase
 set incsearch
@@ -181,6 +182,7 @@ set sidescroll=5
 set sidescrolloff=10
 set shiftwidth=2
 set noshelltemp
+set shortmess-=S
 set showbreak=↪
 set showcmd
 set smartcase
