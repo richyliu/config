@@ -6,6 +6,8 @@ Plug 'kshenoy/vim-signature'          " To display marks in the sidebar
 Plug 'airblade/vim-gitgutter'         " To display git changes in the sidebar
 Plug 'ap/vim-buftabline'              " Support for displaying buffers as tabs
 Plug 'rickhowe/diffchar.vim'          " Character wise diff
+Plug 'junegunn/fzf.vim'               " Fuzzy finder
+Plug '/opt/homebrew/opt/fzf'          " Needed for fzf vim plugin (M1 homebrew)
 
 Plug 'sirver/ultisnips'               " Snippet support
 Plug 'honza/vim-snippets'             " Provides the snippets
@@ -398,6 +400,17 @@ nmap <M-6> <Plug>BufTabLine.Go(6)
 nmap <M-7> <Plug>BufTabLine.Go(7)
 nmap <M-8> <Plug>BufTabLine.Go(8)
 nmap <M-9> <Plug>BufTabLine.Go(-1)
+
+" fzf mappings
+nnoremap <leader>ie :Files<cr>
+nnoremap <leader>id :Files %:p:h<cr>
+nnoremap <leader>ig :GFiles<cr>
+nnoremap <leader>ii :GFiles<cr>
+nnoremap <leader>ic :GFiles?<cr>
+nnoremap <leader>ib :Buffers<cr>
+nnoremap <leader>ia :Ag<cr>
+nnoremap <leader>il :Lines<cr>
+nnoremap <leader>is :BLines<cr>
 
 augroup filetype_vim
   autocmd!

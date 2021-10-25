@@ -45,3 +45,6 @@ if [ -f '/Users/richard/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/richard
 
 # The next line enables shell command completion for gcloud.
 if [ -f '/Users/richard/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/richard/google-cloud-sdk/completion.zsh.inc'; fi
+
+export HISTSIZE=100000
+export SAVEHIST=100000
