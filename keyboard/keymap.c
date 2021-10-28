@@ -59,7 +59,7 @@ enum planck_keycodes {
 // reference: https://beta.docs.qmk.fm/using-qmk/simple-keycodes/keycodes
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 [BASE] = LAYOUT_ortho_4x12(
-  KC_Q,    KC_W,    KC_F,    KC_P,    KC_B,    C(KC_S), C(KC_S), KC_J,    KC_L,    KC_U,    KC_Y,      KC_QUOT,
+  KC_Q,    KC_W,    KC_F,    KC_P,    KC_B,    C(KC_B), C(KC_B), KC_J,    KC_L,    KC_U,    KC_Y,      KC_QUOT,
   KC_A,    KC_R,    KC_S,    KC_T,    KC_G,    OS_ALT,  OS_ALT,  KC_M,    KC_N,    KC_E,    KC_I,      KC_O,
   GT(KC_Z),CT(KC_X),KC_C,    KC_D,    KC_V,    MO(MOU), MO(MOU), KC_K,    KC_H,    KC_COMM, CT(KC_DOT),GT(KC_SLSH),
   CMD_TAB, OS_ALT,  SFT_ESC, NAV_BSPC,NUM_TAB, OS_SFT,  OS_SFT,  SYM_ENT, KC_SPC,  S_ABSPC, XXXXXXX,   MO(FUN)
