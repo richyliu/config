@@ -49,3 +49,5 @@ export GPG_TTY
 export EDITOR=nvim
 
 export PATH="$PATH:$HOME/.local/bin"
+
+export PATH="$PATH:$HOME/.gem/ruby/2.7.0/bin"
