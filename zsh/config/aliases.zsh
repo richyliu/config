@@ -28,6 +28,7 @@ alias crt='cargo test'
 alias crtq='cargo test --quiet'
 
 alias wcl="wc -l"
+alias wcc="wc -c"
 alias gdb="gdb -q"
 
 # to make piping to less easier to type ("|_")
