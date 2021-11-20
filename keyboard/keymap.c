@@ -31,9 +31,8 @@ enum planck_keycodes {
 #define CT LCTL_T
 #define GT LGUI_T
 
-#define SFT_ESC SFT_T(KC_ESC)
+#define SFT_TAB SFT_T(KC_TAB)
 #define NAV_BSPC LT(NAV, KC_BSPC)
-#define NUM_TAB LT(NUM, KC_TAB)
 #define SYM_ENT LT(SYM, KC_ENT)
 
 #define ALT_LEFT LALT(KC_LEFT)
@@ -55,7 +54,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   KC_Q,    KC_W,    KC_F,    KC_P,    KC_B,    C(KC_B), C(KC_B), KC_J,    KC_L,    KC_U,    KC_Y,      KC_QUOT,
   KC_A,    KC_R,    KC_S,    KC_T,    KC_G,    OS_ALT,  OS_ALT,  KC_M,    KC_N,    KC_E,    KC_I,      KC_O,
   GT(KC_Z),CT(KC_X),KC_C,    KC_D,    KC_V,    OS_CTL,  OS_CTL,  KC_K,    KC_H,    KC_COMM, CT(KC_DOT),GT(KC_SLSH),
-  CMD_TAB, OS_GUI,  SFT_ESC, NAV_BSPC,NUM_TAB, OS_SFT,  OS_SFT,  SYM_ENT, KC_SPC,  S_ABSPC, XXXXXXX,   MO(FUN)
+  CMD_TAB, OS_GUI,  SFT_TAB, NAV_BSPC,OSL(NUM),OS_SFT,  OS_SFT,  SYM_ENT, KC_SPC,  S_ABSPC, XXXXXXX,   MO(FUN)
 ),
 [QWE] = LAYOUT_ortho_4x12(
   KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    XXXXXXX, XXXXXXX, KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,
@@ -71,7 +70,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 ),
 [NAV] = LAYOUT_ortho_4x12(
   U_UND,   U_CUT,   U_CPY,   U_PST,   U_RDO,    XXXXXXX,XXXXXXX, XXXXXXX, ALT_LEFT,XXXXXXX, XXXXXXX, ALT_RIGHT,
-  TAB_BAC, XXXXXXX, XXXXXXX, TAB_FWD, U_PSTFM,  XXXXXXX,XXXXXXX, MY_CAPS, KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT,
+  TAB_BAC, XXXXXXX, KC_ESC,  TAB_FWD, U_PSTFM,  XXXXXXX,XXXXXXX, MY_CAPS, KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT,
   KC_LGUI, KC_LCTL, KC_LALT, KC_LSFT, G(KC_GRV),XXXXXXX,XXXXXXX, XXXXXXX, KC_HOME, KC_PGDN, KC_PGUP, KC_END,
   XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,  XXXXXXX,XXXXXXX, KC_ENT,  KC_SPC,  KC_LSFT, XXXXXXX, XXXXXXX
 ),
@@ -82,16 +81,16 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   XXXXXXX, XXXXXXX, KC_LSFT, KC_DEL,  KC_TAB,  XXXXXXX, XXXXXXX, SCRSAVE, SCRCLIP, XXXXXXX, XXXXXXX, XXXXXXX
 ),
 [NUM] = LAYOUT_ortho_4x12(
-  HEX_ZRX, KC_A,    KC_B,    KC_C,    HEX_ZZ,  XXXXXXX, XXXXXXX, KC_LBRC, KC_7,    KC_8,    KC_9,    KC_RBRC,
-  HEX_SLX, KC_D,    KC_E,    KC_F,    KC_X,    XXXXXXX, XXXXXXX, KC_EQL,  KC_4,    KC_5,    KC_6,    KC_COLN,
-  KC_LGUI, KC_LCTL, KC_LALT, KC_LSFT, XXXXXXX, XXXXXXX, XXXXXXX, KC_BSLS, KC_1,    KC_2,    KC_3,    KC_GRV,
+  KC_BSPC, KC_A,    KC_B,    KC_C,    XXXXXXX, XXXXXXX, KC_LT,   KC_LBRC, KC_7,    KC_8,    KC_9,    KC_RBRC,
+  KC_SPC,  KC_D,    KC_E,    KC_F,    HEX_ZRX, XXXXXXX, KC_GT,   KC_EQL,  KC_4,    KC_5,    KC_6,    KC_SCLN,
+  KC_LGUI, KC_LCTL, KC_LALT, KC_LSFT, XXXXXXX, XXXXXXX, KC_SLSH, KC_BSLS, KC_1,    KC_2,    KC_3,    KC_GRV,
   XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_MINS, KC_0,    KC_DOT,  XXXXXXX, XXXXXXX
 ),
 [SYM] = LAYOUT_ortho_4x12(
-  KC_LCBR, KC_AMPR, KC_ASTR, KC_LPRN, KC_RCBR, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
-  KC_SCLN, KC_DLR,  KC_PERC, KC_CIRC, KC_PLUS, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
-  KC_TILD, KC_EXLM, KC_AT,   KC_HASH, KC_PIPE, XXXXXXX, XXXXXXX, XXXXXXX, KC_LSFT, KC_LALT, KC_LCTL, KC_LGUI,
-  XXXXXXX, XXXXXXX, KC_LSFT, KC_RPRN, KC_UNDS, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX
+  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
+  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
+  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
+  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX
 ),
 [PLVR] = LAYOUT_ortho_4x12(
   XXXXXXX, KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_LBRC,
@@ -125,16 +124,16 @@ bool is_cmd_tab_before_first = false;
 uint16_t cmd_tab_before_first_timer = 0;
 #define CMD_TAB_BEFORE_FIRST_TIMEOUT 3000
 
-bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-  // check for mod-tap alt-backspace separately to optimize the switch statement
-  if (keycode == S_ABSPC) {
-    if (!record->event.pressed && record->tap.count > 0) {
-      SEND_STRING(SS_LALT(SS_TAP(X_BSPC)));
-    }
-    return true;
-  }
+bool is_shift_down = false;
+bool is_num_layer = false;
 
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   switch (keycode) {
+    case S_ABSPC:
+      if (!record->event.pressed && record->tap.count > 0) {
+        SEND_STRING(SS_LALT(SS_TAP(X_BSPC)));
+      }
+      return true;
     case PLOVER:
       if (record->event.pressed) {
         layer_move(PLVR);
@@ -195,9 +194,28 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         tap_code_delay(KC_CAPS, 200);
       }
       return false;
+    case OSL(NUM):
+      is_num_layer = record->event.pressed;
+      break;
+    case KC_LSFT:
+      is_shift_down = record->event.pressed;
+      break;
+    case KC_DOT:
+      // press comma (,) when on num layer and pressing shift
+      if (!is_num_layer || !is_shift_down)
+        break;
+      if (record->event.pressed) {
+        unregister_code(KC_LSFT);
+        register_code(KC_COMM);
+      } else {
+        unregister_code(KC_COMM);
+        register_code(KC_LSFT);
+      }
+      return false;
   }
 
-  // reset cmd-tab if the cmd mod was released
+  /// NOTE: important to check this after checking for cmd-tab key
+  // reset cmd-tab if a command modifier was released
   if ((keycode >> 8) & MOD_LGUI && !record->event.pressed) {
     is_cmd_tab_active = false;
     is_cmd_tab_before_first = false;
