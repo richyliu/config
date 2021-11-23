@@ -17,7 +17,8 @@ enum planck_keycodes {
   HEX_SLX, // sends "\x"
   HEX_ZRX, // sends "0x"
   HEX_ZZ,  // sends "00"
-  MY_CAPS
+  MY_CAPS,
+  MY_C_B
 };
 
 // use an unused keycode because of mod-tap keycode restrictions:
@@ -51,7 +52,7 @@ enum planck_keycodes {
 // reference: https://beta.docs.qmk.fm/using-qmk/simple-keycodes/keycodes
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 [BASE] = LAYOUT_ortho_4x12(
-  KC_Q,    KC_W,    KC_F,    KC_P,    KC_B,    C(KC_B), C(KC_B), KC_J,    KC_L,    KC_U,    KC_Y,      KC_QUOT,
+  KC_Q,    KC_W,    KC_F,    KC_P,    KC_B,    MY_C_B,  MY_C_B,  KC_J,    KC_L,    KC_U,    KC_Y,      KC_QUOT,
   KC_A,    KC_R,    KC_S,    KC_T,    KC_G,    OS_ALT,  OS_ALT,  KC_M,    KC_N,    KC_E,    KC_I,      KC_O,
   GT(KC_Z),CT(KC_X),KC_C,    KC_D,    KC_V,    OS_CTL,  OS_CTL,  KC_K,    KC_H,    KC_COMM, CT(KC_DOT),GT(KC_SLSH),
   CMD_TAB, OS_GUI,  SFT_TAB, NAV_BSPC,OSL(NUM),OS_SFT,  OS_SFT,  SYM_ENT, KC_SPC,  S_ABSPC, XXXXXXX,   MO(FUN)
@@ -126,6 +127,9 @@ uint16_t cmd_tab_before_first_timer = 0;
 
 bool is_shift_down = false;
 bool is_num_layer = false;
+
+uint16_t ctrl_b_timer = 0;
+#define CTRL_B_TIMEOUT 300
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   switch (keycode) {
@@ -210,6 +214,13 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       } else {
         unregister_code(KC_COMM);
         register_code(KC_LSFT);
+      }
+      return false;
+    case MY_C_B:
+      // don't press ctrl-b twice if hit within a very short time frame
+      if (record->event.pressed && timer_elapsed(ctrl_b_timer) > CTRL_B_TIMEOUT) {
+        SEND_STRING(SS_LCTL("b"));
+        ctrl_b_timer = timer_read();
       }
       return false;
   }
