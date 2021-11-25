@@ -1,7 +1,7 @@
 #include QMK_KEYBOARD_H
 #include "pointing_device.h"
 
-enum layers { BASE, QWE, ARR, NAV, FUN, NUM, SYM, PLVR };
+enum layers { BASE, QWE, ARR, NAV, FUN, NUM, PLVR };
 
 #define U_RDO SCMD(KC_Z)
 #define U_PST LCMD(KC_V)
@@ -14,9 +14,7 @@ enum planck_keycodes {
   PLOVER = SAFE_RANGE,
   EXT_PLV,
   CMD_TAB,
-  HEX_SLX, // sends "\x"
   HEX_ZRX, // sends "0x"
-  HEX_ZZ,  // sends "00"
   MY_CAPS,
   MY_C_B
 };
@@ -34,7 +32,6 @@ enum planck_keycodes {
 
 #define SFT_TAB SFT_T(KC_TAB)
 #define NAV_BSPC LT(NAV, KC_BSPC)
-#define SYM_ENT LT(SYM, KC_ENT)
 
 #define ALT_LEFT LALT(KC_LEFT)
 #define ALT_RIGHT LALT(KC_RIGHT)
@@ -55,7 +52,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   KC_Q,    KC_W,    KC_F,    KC_P,    KC_B,    MY_C_B,  MY_C_B,  KC_J,    KC_L,    KC_U,    KC_Y,      KC_QUOT,
   KC_A,    KC_R,    KC_S,    KC_T,    KC_G,    OS_ALT,  OS_ALT,  KC_M,    KC_N,    KC_E,    KC_I,      KC_O,
   GT(KC_Z),CT(KC_X),KC_C,    KC_D,    KC_V,    OS_CTL,  OS_CTL,  KC_K,    KC_H,    KC_COMM, CT(KC_DOT),GT(KC_SLSH),
-  CMD_TAB, OS_GUI,  SFT_TAB, NAV_BSPC,OSL(NUM),OS_SFT,  OS_SFT,  SYM_ENT, KC_SPC,  S_ABSPC, XXXXXXX,   MO(FUN)
+  CMD_TAB, OS_GUI,  SFT_TAB, NAV_BSPC,OSL(NUM),OS_SFT,  OS_SFT,  KC_ENT,  KC_SPC,  S_ABSPC, XXXXXXX,   MO(FUN)
 ),
 [QWE] = LAYOUT_ortho_4x12(
   KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    XXXXXXX, XXXXXXX, KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,
@@ -86,12 +83,6 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   KC_SPC,  KC_D,    KC_E,    KC_F,    HEX_ZRX, XXXXXXX, KC_GT,   KC_EQL,  KC_4,    KC_5,    KC_6,    KC_SCLN,
   KC_LGUI, KC_LCTL, KC_LALT, KC_LSFT, XXXXXXX, XXXXXXX, KC_SLSH, KC_BSLS, KC_1,    KC_2,    KC_3,    KC_GRV,
   XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_MINS, KC_0,    KC_DOT,  XXXXXXX, XXXXXXX
-),
-[SYM] = LAYOUT_ortho_4x12(
-  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
-  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
-  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
-  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX
 ),
 [PLVR] = LAYOUT_ortho_4x12(
   XXXXXXX, KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_LBRC,
@@ -178,19 +169,9 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         }
       }
       return false;
-    case HEX_SLX:
-      if (record->event.pressed) {
-        SEND_STRING("\\x");
-      }
-      return false;
     case HEX_ZRX:
       if (record->event.pressed) {
         SEND_STRING("0x");
-      }
-      return false;
-    case HEX_ZZ:
-      if (record->event.pressed) {
-        SEND_STRING("00");
       }
       return false;
     case MY_CAPS:
