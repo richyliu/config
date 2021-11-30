@@ -1,1 +1,7 @@
 eco white
+e bin.cache=true
+e scr.color=3
+e scr.prompt.vi=true
+e scr.prompt.mode=true
+e scr.utf8.curvy=true
+e scr.highlight.grep=true
