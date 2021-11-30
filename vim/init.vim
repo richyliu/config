@@ -77,9 +77,23 @@ let s:p.tabline.right  = copy(s:p.normal.right)
 
 let g:lightline#colorscheme#one#palette = lightline#colorscheme#flatten(s:p)
 
+" In dark mode, this command will succeed (no error)
+silent !grep -q Dark <(defaults read -g AppleInterfaceStyle)
+let s:is_light_mode = v:shell_error
+
+" conditional color schemes based on light/dark mode
+if s:is_light_mode
+  let s:lightline_colorscheme = 'one'
+  colorscheme base16-one-light
+else
+  let s:lightline_colorscheme = 'Tomorrow_Night'
+  colorscheme base16-tomorrow-night
+endif
+
+
 " Lightline statusbar options
 let g:lightline = {
-      \ 'colorscheme': 'one',
+      \ 'colorscheme': s:lightline_colorscheme,
       \ 'active': {
       \   'left': [ [ 'mode', 'paste' ], [ 'readonly', 'filename', 'modified' ] ],
       \   'right': [ [ 'lineinfo' ], [ 'percent', 'wordcount' ], [ 'spell', 'filetype' ] ]
@@ -208,9 +222,6 @@ set wildignorecase
 set wildmenu
 set wildmode=longest:full,full
 set nowrapscan
-
-" Enable base16 color scheme
-colorscheme base16-one-light
 
 " Keymaps and Abbrev
 let mapleader = " "
