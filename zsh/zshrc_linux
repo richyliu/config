@@ -51,3 +51,6 @@ export EDITOR=nvim
 export PATH="$PATH:$HOME/.local/bin"
 
 export PATH="$PATH:$HOME/.gem/ruby/2.7.0/bin"
+
+# auto start ssh-agent for ssh keys
+eval $(ssh-agent)
