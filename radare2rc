@@ -5,3 +5,4 @@ e scr.prompt.vi=true
 e scr.prompt.mode=true
 e scr.utf8.curvy=true
 e scr.highlight.grep=true
+e dbg.forks=true
