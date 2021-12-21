@@ -176,6 +176,7 @@ set cursorline
 set directory^=$HOME/.cache/nvim/swap//
 set display+=truncate
 set expandtab
+set foldmethod=marker
 set hidden
 set history=10000
 set hlsearch
