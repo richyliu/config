@@ -182,6 +182,17 @@ nmap <leader>7 :<c-u>BufTabLineGo7<cr>
 nmap <leader>8 :<c-u>BufTabLineGo8<cr>
 nmap <leader>9 :<c-u>BufTabLineGo20<cr>
 
+" Buffer switching with alt-num
+nmap <M-1> :<c-u>BufTabLineGo1<cr>
+nmap <M-2> :<c-u>BufTabLineGo2<cr>
+nmap <M-3> :<c-u>BufTabLineGo3<cr>
+nmap <M-4> :<c-u>BufTabLineGo4<cr>
+nmap <M-5> :<c-u>BufTabLineGo5<cr>
+nmap <M-6> :<c-u>BufTabLineGo6<cr>
+nmap <M-7> :<c-u>BufTabLineGo7<cr>
+nmap <M-8> :<c-u>BufTabLineGo8<cr>
+nmap <M-9> :<c-u>BufTabLineGo20<cr>
+
 " }}}1
 
 " Editing GPG files {{{1

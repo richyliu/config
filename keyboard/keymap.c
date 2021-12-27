@@ -30,8 +30,9 @@ enum planck_keycodes {
 #define CT LCTL_T
 #define GT LGUI_T
 
-#define SFT_TAB SFT_T(KC_TAB)
+#define SFT_ESC SFT_T(KC_ESC)
 #define NAV_BSPC LT(NAV, KC_BSPC)
+#define NUM_TAB LT(NUM, KC_TAB)
 
 #define ALT_LEFT LALT(KC_LEFT)
 #define ALT_RIGHT LALT(KC_RIGHT)
@@ -52,7 +53,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   KC_Q,    KC_W,    KC_F,    KC_P,    KC_B,    MY_C_B,  MY_C_B,  KC_J,    KC_L,    KC_U,    KC_Y,      KC_QUOT,
   KC_A,    KC_R,    KC_S,    KC_T,    KC_G,    OS_ALT,  OS_ALT,  KC_M,    KC_N,    KC_E,    KC_I,      KC_O,
   GT(KC_Z),CT(KC_X),KC_C,    KC_D,    KC_V,    OS_CTL,  OS_CTL,  KC_K,    KC_H,    KC_COMM, CT(KC_DOT),GT(KC_SLSH),
-  CMD_TAB, OS_GUI,  SFT_TAB, NAV_BSPC,OSL(NUM),OS_SFT,  OS_SFT,  KC_ENT,  KC_SPC,  S_ABSPC, XXXXXXX,   MO(FUN)
+  CMD_TAB, OS_GUI,  SFT_ESC, NAV_BSPC,NUM_TAB, OS_SFT,  OS_SFT,  KC_ENT,  KC_SPC,  S_ABSPC, XXXXXXX,   MO(FUN)
 ),
 [QWE] = LAYOUT_ortho_4x12(
   KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    XXXXXXX, XXXXXXX, KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,
@@ -68,7 +69,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 ),
 [NAV] = LAYOUT_ortho_4x12(
   U_UND,   U_CUT,   U_CPY,   U_PST,   U_RDO,    XXXXXXX,XXXXXXX, XXXXXXX, ALT_LEFT,XXXXXXX, XXXXXXX, ALT_RIGHT,
-  TAB_BAC, XXXXXXX, KC_ESC,  TAB_FWD, U_PSTFM,  XXXXXXX,XXXXXXX, MY_CAPS, KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT,
+  TAB_BAC, XXXXXXX, XXXXXXX, TAB_FWD, U_PSTFM,  XXXXXXX,XXXXXXX, MY_CAPS, KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT,
   KC_LGUI, KC_LCTL, KC_LALT, KC_LSFT, G(KC_GRV),XXXXXXX,XXXXXXX, XXXXXXX, KC_HOME, KC_PGDN, KC_PGUP, KC_END,
   XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,  XXXXXXX,XXXXXXX, KC_ENT,  KC_SPC,  KC_LSFT, XXXXXXX, XXXXXXX
 ),
@@ -81,8 +82,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 [NUM] = LAYOUT_ortho_4x12(
   KC_BSPC, KC_A,    KC_B,    KC_C,    XXXXXXX, XXXXXXX, KC_LT,   KC_LBRC, KC_7,    KC_8,    KC_9,    KC_RBRC,
   KC_SPC,  KC_D,    KC_E,    KC_F,    HEX_ZRX, XXXXXXX, KC_GT,   KC_EQL,  KC_4,    KC_5,    KC_6,    KC_SCLN,
-  KC_LGUI, KC_LCTL, KC_LALT, KC_LSFT, XXXXXXX, XXXXXXX, KC_SLSH, KC_BSLS, KC_1,    KC_2,    KC_3,    KC_GRV,
-  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_MINS, KC_0,    KC_DOT,  XXXXXXX, XXXXXXX
+  KC_LGUI, KC_LCTL, KC_LALT, KC_LSFT, XXXXXXX, XXXXXXX, KC_SLSH, KC_BSLS, KC_1,    KC_2,    KC_3,    KC_QUOT,
+  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_GRV,  KC_MINS, KC_0,    KC_DOT,  XXXXXXX, XXXXXXX
 ),
 [PLVR] = LAYOUT_ortho_4x12(
   XXXXXXX, KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_LBRC,
@@ -179,7 +180,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         tap_code_delay(KC_CAPS, 200);
       }
       return false;
-    case OSL(NUM):
+    case NUM_TAB:
       is_num_layer = record->event.pressed;
       break;
     case KC_LSFT:

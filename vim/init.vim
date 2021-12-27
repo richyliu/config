@@ -304,8 +304,6 @@ cnoremap <c-a> <c-b>
 inoremap <c-u> <c-g>u<c-u>
 " Make shift tab go back in jumplist
 nnoremap <s-tab> <c-o>
-" Alternative way to exit insert mode
-inoremap jj <ESC>
 
 " Make { and } always work linewise
 onoremap { V{
@@ -372,13 +370,17 @@ augroup terminal_cursor
 augroup END
 
 " Hacky delay to get this to run after the colorscheme
-" Overrides the buffer tabline colors to be more visible
-call timer_start(100, { tid -> execute('highlight! TabLineSel guibg=#fafafa guifg=#50a14f ctermbg=10 ctermfg=02') })
-" Make select wild menu colors more readable
-call timer_start(100, { tid -> execute('highlight! WildMenu guibg=#383a42 guifg=#f0f0f1 ctermbg=07 ctermfg=10') })
-" Highlight non ascii
-call timer_start(100, { tid -> execute('syntax match nonascii "[^\x00-\x7F]"') })
-call timer_start(150, { tid -> execute('highlight! nonascii guibg=Red guifg=white ctermbg=5 ctermfg=15') })
+call timer_start(150, { tid -> execute('call s:AfterDelay()') })
+
+function! s:AfterDelay()
+  " Overrides the buffer tabline colors to be more visible
+  highlight! TabLineSel guibg=#fafafa guifg=#50a14f ctermbg=10 ctermfg=02
+  " Make select wild menu colors more readable
+  highlight! WildMenu guibg=#383a42 guifg=#f0f0f1 ctermbg=07 ctermfg=10
+  " Highlight non ascii
+  syntax match nonascii "[^\x00-\x7F]"
+  highlight! nonascii guibg=Red guifg=white ctermbg=5 ctermfg=15
+endfunction
 
 
 " LanguageClient mappings
