@@ -11,12 +11,12 @@ continue
 """
 
 def conn():
-    if args.LOCAL:
-        r = process({proc_args})
+    if args.REMOTE:
+        r = remote("addr", 1337)
     elif args.GDB:
         return gdb.debug({proc_args}, gdbscript=gdbscript)
     else:
-        r = remote("addr", 1337)
+        r = process({proc_args})
 
     return r
 
