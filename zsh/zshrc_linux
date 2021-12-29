@@ -47,13 +47,14 @@ export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || pr
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
 
 # Linux specific aliases
-alias sldl="node /home/richyliu/stuff/ldl/new/server.js"
 alias spo="sudo poweroff"
 alias pwninit="pwninit --template-path ${HOME}/config/pwn_template.py"
 
 # For GPG
 GPG_TTY=$(tty)
 export GPG_TTY
+
+eval $(thefuck --alias)
 
 # Use neovim as the default editor
 export EDITOR=nvim

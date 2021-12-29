@@ -42,3 +42,5 @@ test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell
 
 export HISTSIZE=100000
 export SAVEHIST=100000
+
+eval $(thefuck --alias)
