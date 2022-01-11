@@ -26,7 +26,6 @@ source $ZSH/oh-my-zsh.sh
 bindkey "^U" backward-kill-line
 
 # add `help` utility (similar to bash)
-unalias run-help
 autoload run-help
 HELPDIR=/usr/share/zsh/help
 alias help=run-help
