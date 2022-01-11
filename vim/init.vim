@@ -275,9 +275,6 @@ vnoremap <leader>y "+y
 nnoremap <leader>yA :<c-u>%y+<cr>
 " open quickfix window
 nnoremap <leader>q :<c-u>copen<cr>
-" move to adjacent buffers
-nnoremap <leader>] :<c-u>bnext<cr>
-nnoremap <leader>[ :<c-u>bprev<cr>
 " close buffer
 nnoremap <leader>d :<c-u>bdelete<cr>
 

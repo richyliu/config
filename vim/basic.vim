@@ -119,6 +119,8 @@ vnoremap <leader>g :g/
 " yank to system clipboard
 nnoremap <leader>y "+y
 vnoremap <leader>y "+y
+" close buffer
+nnoremap <leader>d :<c-u>bdelete<cr>
 " close all vim buffers
 nnoremap ZA :qa!<cr>
 
