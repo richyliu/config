@@ -577,6 +577,13 @@ augroup encrypted
   autocmd BufReadPost,FileReadPost *.gpg let g:gitgutter_enabled = 0
 augroup END
 
+" Temporarily highlight text that was just yanked
+" Only works with Neovim
+" Source: https://github.com/svban/YankAssassin.vim/blob/31b971f4c747d86bc5d0e6f5518c65950791df80/README.md?plain=1#L39-L42
+augroup highlight_yank
+  autocmd!
+  autocmd TextYankPost * silent! lua vim.highlight.on_yank{ higroup="IncSearch", timeout=500 }
+augroup END
 
 " Formats shell commands by intersting a backslack and a newline before
 " arugments (dashes) and pipes (vertical bars)

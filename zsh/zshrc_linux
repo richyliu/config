@@ -25,6 +25,13 @@ source $ZSH/oh-my-zsh.sh
 
 bindkey "^U" backward-kill-line
 
+# add `help` utility (similar to bash)
+unalias run-help
+autoload run-help
+HELPDIR=/usr/share/zsh/help
+alias help=run-help
+
+
 # save ssh key after entering password once
 # source: https://unix.stackexchange.com/a/217223
 if [ ! -S ~/.ssh/ssh_auth_sock ]; then
