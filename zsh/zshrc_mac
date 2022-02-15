@@ -23,8 +23,6 @@ source $ZSH/oh-my-zsh.sh
 
 bindkey "^U" backward-kill-line
 
-alias pjl="/Users/richard/code/plojo/target/release/lookup"
-
 # z folder fuzzy finder tool
 . $(brew --prefix)/etc/profile.d/z.sh
 
