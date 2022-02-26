@@ -24,9 +24,6 @@ export HOMEBREW_NO_AUTO_UPDATE=1
 # Load homebrew autocompletion
 FPATH=$(brew --prefix)/share/zsh/site-functions:$FPATH
 
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-
 # Add python bin to path
 export PATH="$PATH:$HOME/Library/Python/3.9/bin"
 

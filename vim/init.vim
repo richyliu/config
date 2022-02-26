@@ -21,7 +21,8 @@ Plug 'romainl/vim-cool'               " Automatically disable search highlightin
 Plug 'AndrewRadev/sideways.vim'       " Easily swap arguments
 
 Plug 'pangloss/vim-javascript'        " JS syntax
-Plug 'MaxMEllon/vim-jsx-pretty'       " JSX syntax
+Plug 'leafgarland/typescript-vim'     " Typescript syntax
+Plug 'peitalin/vim-jsx-typescript'    " JSX syntax
 Plug 'prettier/vim-prettier'          " Prettier (JS formatter)
 Plug 'mattn/emmet-vim'                " Emmet
 Plug 'alvan/vim-closetag'             " Automatically close html tags
@@ -32,6 +33,10 @@ Plug 'glench/vim-jinja2-syntax'       " Jinja2 template (closest to Tera) suppor
 Plug 'purescript-contrib/purescript-vim' " Purescript language suppot
 Plug 'evanleck/vim-svelte'            " Svelte language support
 Plug 'metakirby5/codi.vim'            " Python scratchpad
+Plug 'lervag/vimtex'                  " Latex support
+Plug 'richyliu/R-Vim-runtime'         " R language support (custom fork)
+
+Plug 'github/copilot.vim'             " Github Copilot
 
 call plug#end()
 
@@ -148,8 +153,16 @@ let g:LanguageClient_preferredMarkupKind = ['markdown']
 " Markdown code highlighting
 let g:markdown_fenced_languages = ['rust']
 
+" R markdown code highlighting
+" the "[\x3d]" is a hack to get a "=" in the regex for the language name
+let g:rmd_fenced_languages = ['r', 'mma', 'tex', 'latex=tex', 'python']
+
 " Ultisnip open edit window in horizontal split
-let g:UltiSnipsEditSplit="horizontal"
+let g:UltiSnipsEditSplit="vertical"
+" Set default Ultisnip edit directory
+let g:UltiSnipsSnippetStorageDirectoryForUltiSnipsEdit="~/.config/nvim/UltiSnips"
+" Set Ultisnip expand trigger
+let g:UltiSnipsExpandTrigger="<c-j>"
 
 " Configure python3 for codi
 let g:codi#interpreters = {
@@ -161,6 +174,13 @@ let g:codi#interpreters = {
 " delimitMate auto cloing options
 let delimitMate_expand_cr = 1
 let delimitMate_expand_space = 1
+
+" Vimtex config
+let g:vimtex_view_method = 'skim'
+
+" Hack for jsx to highlight properly (since it uses "xml")
+highlight def link xmlTagName htmlTagName
+highlight def link xmlEndTag htmlEndTag
 
 " Settings
 set autoindent
@@ -439,7 +459,8 @@ augroup END
 
 augroup filetype_snippets
   autocmd!
-  autocmd Filetype snippets setlocal expandtab
+  autocmd Filetype snippets setlocal noexpandtab
+  autocmd Filetype snippets setlocal shiftwidth=4
 augroup END
 
 augroup filetype_haskell
@@ -480,6 +501,12 @@ augroup filetype_tex
   autocmd Filetype tex setlocal spell
 augroup END
 
+augroup filetype_rmd
+  " wrap text at 80 column
+  autocmd Filetype rmd setlocal textwidth=80
+  autocmd Filetype rmd setlocal colorcolumn=80
+augroup END
+
 augroup filetype_sh
   autocmd!
   autocmd Filetype sh nnoremap <buffer> <localleader>c "+ci'
@@ -497,10 +524,14 @@ augroup END
 augroup filetype_js
   autocmd!
   " invoke prettier to format document
-  autocmd Filetype javascript,typescript,jsx,tsx nnoremap <buffer> <localleader>p :Prettier<cr>
-  autocmd Filetype javascript,typescript,jsx,tsx setlocal tabstop=2
+  autocmd Filetype typescriptreact,javascript,typescript,jsx,tsx nnoremap <buffer> <localleader>p :Prettier<cr>
+  autocmd Filetype typescriptreact,javascript,typescript,jsx,tsx setlocal tabstop=2
   " replace class with className (for React)
-  autocmd Filetype javascript,typescript,jsx,tsx nnoremap <buffer> <localleader>c :%s/class=/className=/ge<cr>:%s/fill-rule/fillRule/ge<cr>:%s/clip-rule/clipRule/ge<cr>
+  autocmd Filetype typescriptreact,javascript,typescript,jsx,tsx nnoremap <buffer> <localleader>c :%s/class=/className=/ge<cr>:%s/fill-rule/fillRule/ge<cr>:%s/clip-rule/clipRule/ge<cr>
+  " use correct snippets
+  autocmd Filetype typescriptreact,tsx UltiSnipsAddFiletypes tsx.jsx.javascript
+  autocmd Filetype typescript UltiSnipsAddFiletypes typescript.javascript
+  autocmd Filetype jsx UltiSnipsAddFiletypes jsx.javascript
 augroup END
 
 augroup filetype_svelte
@@ -517,8 +548,8 @@ augroup END
 
 augroup filetype_cpp
   autocmd!
-  autocmd Filetype cpp nnoremap <buffer> <localleader>p :py3file /usr/local/Cellar/clang-format/12.0.0/share/clang/clang-format.py<cr>
-  autocmd Filetype cpp inoremap <buffer> <localleader>p :py3file /usr/local/Cellar/clang-format/12.0.0/share/clang/clang-format.py<cr>
+  autocmd Filetype cpp nnoremap <buffer> <localleader>p :py3file /usr/local/Cellar/clang-format/13.0.1/share/clang/clang-format.py<cr>
+  autocmd Filetype cpp set shiftwidth=4
 augroup END
 
 augroup shorthand_transcription
