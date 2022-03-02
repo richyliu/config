@@ -41,13 +41,6 @@ fi
 export SSH_AUTH_SOCK=~/.ssh/ssh_auth_sock
 ssh-add -l > /dev/null || ssh-add
 
-# Start tmux if connecting via SSH
-if [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
-  if [ "$TMUX" = "" ]; then
-    tmux attach
-  fi
-fi
-
 # Load NVM (for NodeJS)
 export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
@@ -68,3 +61,10 @@ export EDITOR=nvim
 export PATH="$PATH:$HOME/.local/bin"
 
 export PATH="$PATH:$HOME/.gem/ruby/2.7.0/bin"
+
+# Start tmux if connecting via SSH
+if [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
+  if [ "$TMUX" = "" ]; then
+    exec tmux new -A -s main
+  fi
+fi
