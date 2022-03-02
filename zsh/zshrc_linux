@@ -53,8 +53,6 @@ alias pwninit="pwninit --template-path ${HOME}/config/pwn_template.py"
 GPG_TTY=$(tty)
 export GPG_TTY
 
-eval $(thefuck --alias)
-
 # Use neovim as the default editor
 export EDITOR=nvim
 
