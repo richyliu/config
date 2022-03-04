@@ -1,15 +1,3 @@
-snippet wdate "weekday, month day"
+snippet wday "weekday, month day"
 `date +"%A, %B %e"`
 endsnippet
-
-
-global !p
-def math():
-	return vim.eval('vimtex#syntax#in_mathzone()') == '1'
-endglobal
-
-context "math()"
-snippet sq "\sqrt{}" iA
-\sqrt{${1:${VISUAL}}} $0
-endsnippet
-

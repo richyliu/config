@@ -2692,6 +2692,8 @@
 	<false/>
 	<key>RightCommand</key>
 	<integer>2</integer>
+	<key>RightOption</key>
+	<integer>1</integer>
 	<key>ShowFullScreenTabBar</key>
 	<false/>
 	<key>SoundForEsc</key>
