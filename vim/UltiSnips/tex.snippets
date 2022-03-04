@@ -1,7 +1,56 @@
-snippet al "align* block"
+# trigger only in tex math mode
+global !p
+def math():
+	return vim.eval('vimtex#syntax#in_mathzone()') == '1'
+endglobal
+
+
+snippet al "align* block" w
 \begin{align*}
 	${0:${VISUAL}}
 \end{align*}
 endsnippet
 
+snippet . "cdot"
+\cdot 
+endsnippet
 
+snippet t "text"
+\\text{${1:${VISUAL:text}}}${0}
+endsnippet
+
+snippet tbf "textbf"
+\\textbf{${1:${VISUAL:text}}}${0}
+endsnippet
+
+snippet frac/ "fraction" Aw
+\frac{$1}{$2}
+endsnippet
+
+snippet // "\something{else}" Aw
+\\${1}{${2:${VISUAL:cmd}}}$0
+endsnippet
+
+snippet quad/ "quad" Aw
+\quad
+endsnippet
+
+
+context "math()"
+snippet sq "\sqrt{}" iA
+\sqrt{${1:${VISUAL}}} $0
+endsnippet
+
+
+# override default tex frac snippet
+priority 1
+
+snippet frac "fraction" w
+\frac{$1}{$2}
+endsnippet
+
+context "math()"
+snippet frac "frac" wA
+arst
+\frac{$1}{$2}$0
+endsnippet

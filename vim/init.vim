@@ -9,7 +9,7 @@ Plug 'rickhowe/diffchar.vim'          " Character wise diff
 Plug 'junegunn/fzf.vim'               " Fuzzy finder
 Plug '/opt/homebrew/opt/fzf'          " Needed for fzf vim plugin (M1 homebrew)
 
-Plug 'sirver/ultisnips'               " Snippet support
+Plug 'richyliu/ultisnips'             " Snippet support
 Plug 'honza/vim-snippets'             " Provides the snippets
 
 Plug 'tpope/vim-surround'             " For changing surroundings characters
@@ -151,7 +151,7 @@ let g:LanguageClient_serverCommands = {
 let g:LanguageClient_preferredMarkupKind = ['markdown']
 
 " Markdown code highlighting
-let g:markdown_fenced_languages = ['rust']
+let g:markdown_fenced_languages = ['rust', 'latex=tex', 'tex']
 
 " R markdown code highlighting
 " the "[\x3d]" is a hack to get a "=" in the regex for the language name
