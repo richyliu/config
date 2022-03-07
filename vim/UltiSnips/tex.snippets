@@ -1,9 +1,4 @@
-# trigger only in tex math mode
-global !p
-def math():
-	return vim.eval('vimtex#syntax#in_mathzone()') == '1'
-endglobal
-
+extends mathmodebase
 
 snippet al "align* block" w
 \begin{align*}
@@ -36,12 +31,6 @@ snippet quad/ "quad" Aw
 endsnippet
 
 
-context "math()"
-snippet sq "\sqrt{}" iA
-\sqrt{${1:${VISUAL}}} $0
-endsnippet
-
-
 # override default tex frac snippet
 priority 1
 
@@ -49,8 +38,13 @@ snippet frac "fraction" w
 \frac{$1}{$2}
 endsnippet
 
+# trigger only in tex math mode
+global !p
+def math():
+	return vim.eval('vimtex#syntax#in_mathzone()') == '1'
+endglobal
+
 context "math()"
 snippet frac "frac" wA
-arst
 \frac{$1}{$2}$0
 endsnippet

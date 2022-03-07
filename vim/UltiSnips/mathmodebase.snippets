@@ -1,0 +1,16 @@
+# math snippets for tex (only in proper context)
+global !p
+def math():
+	return vim.eval('vimtex#syntax#in_mathzone()') == '1'
+endglobal
+
+
+context "math()"
+snippet sq "\sqrt{}" iA
+\sqrt{${1:${VISUAL}}} $0
+endsnippet
+
+context "math()"
+snippet frac "frac" wA
+\frac{$1}{$2}$0
+endsnippet
