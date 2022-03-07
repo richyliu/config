@@ -154,7 +154,6 @@ let g:LanguageClient_preferredMarkupKind = ['markdown']
 let g:markdown_fenced_languages = ['rust', 'latex=tex', 'tex']
 
 " R markdown code highlighting
-" the "[\x3d]" is a hack to get a "=" in the regex for the language name
 let g:rmd_fenced_languages = ['r', 'mma', 'tex', 'latex=tex', 'python']
 
 " Ultisnip open edit window in horizontal split
@@ -191,6 +190,7 @@ set backupdir=~/.cache/nvim/backup//
 set breakindent
 set breakindentopt=min:20,sbr
 set clipboard=
+set cmdwinheight=10
 set completefunc=ListSnippets
 set cursorline
 set directory^=$HOME/.cache/nvim/swap//
@@ -376,6 +376,11 @@ augroup terminal_mode
   autocmd TermOpen * setlocal scrolloff=0
 augroup END
 
+augroup cmdline_editing
+  autocmd!
+  autocmd CmdWinEnter * setlocal nonumber
+augroup END
+
 " Highlighting overrides
 augroup terminal_cursor
   autocmd!
@@ -505,6 +510,8 @@ augroup filetype_rmd
   " wrap text at 80 column
   autocmd Filetype rmd setlocal textwidth=80
   autocmd Filetype rmd setlocal colorcolumn=80
+  " for vimtex to work inline
+  autocmd Filetype rmd call vimtex#init()
 augroup END
 
 augroup filetype_sh
