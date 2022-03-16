@@ -1,6 +1,6 @@
 extends mathmodebase
 
-snippet al "align* block" w
+snippet al "align* block" b
 \begin{align*}
 	${0:${VISUAL}}
 \end{align*}
@@ -30,6 +30,11 @@ snippet quad/ "quad" Aw
 \quad
 endsnippet
 
+snippet proof "proof block" b
+\begin{proof}
+	${0:${VISUAL}}
+\end{proof}
+endsnippet
 
 # override default tex frac snippet
 priority 1

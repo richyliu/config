@@ -556,7 +556,7 @@ augroup END
 augroup filetype_cpp
   autocmd!
   autocmd Filetype cpp nnoremap <buffer> <localleader>p :py3file /usr/local/Cellar/clang-format/13.0.1/share/clang/clang-format.py<cr>
-  autocmd Filetype cpp set shiftwidth=4
+  " autocmd Filetype cpp set shiftwidth=4
 augroup END
 
 augroup shorthand_transcription
