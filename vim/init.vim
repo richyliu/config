@@ -151,7 +151,7 @@ let g:LanguageClient_serverCommands = {
 let g:LanguageClient_preferredMarkupKind = ['markdown']
 
 " Markdown code highlighting
-let g:markdown_fenced_languages = ['rust', 'latex=tex', 'tex']
+let g:markdown_fenced_languages = ['rust', 'latex=tex', 'tex', 'bash']
 
 " R markdown code highlighting
 let g:rmd_fenced_languages = ['r', 'mma', 'tex', 'latex=tex', 'python']
@@ -161,7 +161,8 @@ let g:UltiSnipsEditSplit="vertical"
 " Set default Ultisnip edit directory
 let g:UltiSnipsSnippetStorageDirectoryForUltiSnipsEdit="~/.config/nvim/UltiSnips"
 " Set Ultisnip expand trigger
-let g:UltiSnipsExpandTrigger="<c-j>"
+let g:UltiSnipsExpandTrigger="<c-e>"
+let g:UltiSnipsJumpForwardTrigger="<c-e>"
 
 " Configure python3 for codi
 let g:codi#interpreters = {
@@ -399,8 +400,11 @@ function! s:AfterDelay()
   highlight! TabLineSel guibg=#fafafa guifg=#50a14f ctermbg=10 ctermfg=02
   " Make select wild menu colors more readable
   highlight! WildMenu guibg=#383a42 guifg=#f0f0f1 ctermbg=07 ctermfg=10
+  " Highlight if non ascii characters anywhere on line
+  syntax match nonascii_line "^.*[^\x00-\x7F].*$"
+  highlight! nonascii_line guibg=LightMagenta gui=undercurl ctermbg=5 ctermfg=15 cterm=undercurl
   " Highlight non ascii
-  syntax match nonascii "[^\x00-\x7F]"
+  syntax match nonascii "[^\x00-\x7F]" containedin=nonascii_line
   highlight! nonascii guibg=Red guifg=white ctermbg=5 ctermfg=15
 endfunction
 
@@ -553,10 +557,16 @@ augroup filetype_rs
   autocmd Filetype rust nnoremap <buffer> <localleader>p :RustFmt<cr>
 augroup END
 
+augroup filetype_c
+  autocmd!
+  autocmd Filetype c nnoremap <buffer> <localleader>p :py3file /usr/local/Cellar/clang-format/13.0.1/share/clang/clang-format.py<cr>
+  autocmd Filetype c set shiftwidth=4
+augroup END
+
 augroup filetype_cpp
   autocmd!
   autocmd Filetype cpp nnoremap <buffer> <localleader>p :py3file /usr/local/Cellar/clang-format/13.0.1/share/clang/clang-format.py<cr>
-  " autocmd Filetype cpp set shiftwidth=4
+  autocmd Filetype cpp set shiftwidth=4
 augroup END
 
 augroup shorthand_transcription
@@ -573,6 +583,12 @@ augroup END
 augroup purescript
   autocmd!
   autocmd Filetype purescript nmap <buffer> <localleader>p <Plug>(lcn-format)
+augroup END
+
+augroup filetype_go
+  autocmd!
+  autocmd Filetype go set shiftwidth=4
+  autocmd Filetype go set noexpandtab
 augroup END
 
 " Transparent editing of gpg encrypted files.
