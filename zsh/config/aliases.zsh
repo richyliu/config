@@ -1,6 +1,7 @@
 alias vim=nvim
 alias vimb="nvim -u ~/config/vim/basic.vim"
 alias vimbs="nvim -u ~/config/vim/basic.vim +syntax\ off"
+alias vimsec="nvim -c 'set shada=' -c 'set noswapfile noundofile nobackup nowritebackup'"
 alias ag="ag -f --color-line-number 1\;35"
 alias agq="ag -fQ --color-line-number 1\;35"
 alias agl="ag -f --nonumbers --pager less"

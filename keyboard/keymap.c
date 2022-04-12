@@ -3,11 +3,11 @@
 
 enum layers { BASE, NOM, ARR, NAV, FUN, NUM, PLVR };
 
-#define U_RDO SCMD(KC_Z)
+#define U_RDO SCMD(KC_Q)
 #define U_PST LCMD(KC_V)
-#define U_CPY LCMD(KC_C)
-#define U_CUT LCMD(KC_X)
-#define U_UND LCMD(KC_Z)
+#define U_CPY LCMD(KC_X)
+#define U_CUT LCMD(KC_Z)
+#define U_UND LCMD(KC_Q)
 #define U_PSTFM LCMD(LALT(LSFT(KC_V)))
 
 enum planck_keycodes {
@@ -43,16 +43,16 @@ enum planck_keycodes {
 #define SCRCLIP G(C(S(KC_4)))
 #define SCRSAVE G(S(KC_4))
 
-#define INSP_EL G(A(KC_I))
-#define SELC_EL G(S(KC_C))
+#define INSP_EL G(A(KC_L))
+#define SELC_EL G(S(KC_X))
 
 
 // reference: https://beta.docs.qmk.fm/using-qmk/simple-keycodes/keycodes
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 [BASE] = LAYOUT_ortho_4x12(
-  KC_Q,    KC_W,    KC_F,    KC_P,    KC_B,    MY_C_B,  MY_C_B,  KC_J,    KC_L,    KC_U,    KC_Y,      KC_QUOT,
-  KC_A,    KC_R,    KC_S,    KC_T,    KC_G,    OS_ALT,  OS_ALT,  KC_M,    KC_N,    KC_E,    KC_I,      KC_O,
-  GT(KC_Z),CT(KC_X),KC_C,    KC_D,    KC_V,    OS_CTL,  OS_CTL,  KC_K,    KC_H,    KC_COMM, CT(KC_DOT),GT(KC_SLSH),
+  KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    MY_C_B,  MY_C_B,  KC_Y,    KC_U,    KC_I,    KC_O,      KC_QUOT,
+  KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    OS_ALT,  OS_ALT,  KC_H,    KC_J,    KC_K,    KC_L,      KC_SCLN,
+  GT(KC_B),CT(KC_Z),KC_X,    KC_C,    KC_V,    OS_CTL,  OS_CTL,  KC_N,    KC_M,    KC_COMM, CT(KC_DOT),GT(KC_SLSH),
   CMD_TAB, OS_ALT,  SFT_ESC, NAV_BSPC,NUM_TAB, OS_SFT,  OS_SFT,  KC_ENT,  KC_SPC,  S_ABSPC, XXXXXXX,   MO(FUN)
 ),
 [NOM] = LAYOUT_ortho_4x12(
@@ -80,8 +80,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   XXXXXXX, XXXXXXX, KC_LSFT, KC_DEL,  KC_TAB,  XXXXXXX, XXXXXXX, SCRSAVE, SCRCLIP, XXXXXXX, XXXXXXX, XXXXXXX
 ),
 [NUM] = LAYOUT_ortho_4x12(
-  KC_BSPC, KC_A,    KC_B,    KC_C,    XXXXXXX, XXXXXXX, KC_LT,   KC_LBRC, KC_7,    KC_8,    KC_9,    KC_RBRC,
-  KC_SPC,  KC_D,    KC_E,    KC_F,    HEX_ZRX, XXXXXXX, KC_GT,   KC_EQL,  KC_4,    KC_5,    KC_6,    KC_SCLN,
+  KC_BSPC, KC_A,    KC_T,    KC_X,    XXXXXXX, XXXXXXX, KC_LT,   KC_LBRC, KC_7,    KC_8,    KC_9,    KC_RBRC,
+  KC_SPC,  KC_C,    KC_K,    KC_E,    HEX_ZRX, XXXXXXX, KC_GT,   KC_EQL,  KC_4,    KC_5,    KC_6,    KC_P,
   KC_LGUI, KC_LCTL, KC_LALT, KC_LSFT, XXXXXXX, XXXXXXX, KC_SLSH, KC_BSLS, KC_1,    KC_2,    KC_3,    KC_QUOT,
   XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_GRV,  KC_MINS, KC_0,    KC_DOT,  XXXXXXX, XXXXXXX
 ),
@@ -172,7 +172,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       return false;
     case HEX_ZRX:
       if (record->event.pressed) {
-        SEND_STRING("0x");
+        SEND_STRING("0z");
       }
       return false;
     case MY_CAPS:
@@ -201,7 +201,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     case MY_C_B:
       // don't press ctrl-b twice if hit within a very short time frame
       if (record->event.pressed && timer_elapsed(ctrl_b_timer) > CTRL_B_TIMEOUT) {
-        SEND_STRING(SS_LCTL("b"));
+        SEND_STRING(SS_LCTL("t")); // ctrl-t becomes ctrl-b in Colemak
         ctrl_b_timer = timer_read();
       }
       return false;
