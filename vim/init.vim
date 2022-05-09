@@ -34,7 +34,7 @@ Plug 'purescript-contrib/purescript-vim' " Purescript language suppot
 Plug 'evanleck/vim-svelte'            " Svelte language support
 Plug 'metakirby5/codi.vim'            " Python scratchpad
 Plug 'lervag/vimtex'                  " Latex support
-Plug 'richyliu/R-Vim-runtime'         " R language support (custom fork)
+Plug 'jalvesaq/R-Vim-runtime'         " R language support (custom fork)
 
 Plug 'github/copilot.vim'             " Github Copilot
 
@@ -151,7 +151,7 @@ let g:LanguageClient_serverCommands = {
 let g:LanguageClient_preferredMarkupKind = ['markdown']
 
 " Markdown code highlighting
-let g:markdown_fenced_languages = ['rust', 'latex=tex', 'tex', 'bash']
+let g:markdown_fenced_languages = ['rust', 'latex=tex', 'tex', 'bash', 'sh', 'c']
 
 " R markdown code highlighting
 let g:rmd_fenced_languages = ['r', 'mma', 'tex', 'latex=tex', 'python']
@@ -406,6 +406,13 @@ function! s:AfterDelay()
   " Highlight non ascii
   syntax match nonascii "[^\x00-\x7F]" containedin=nonascii_line
   highlight! nonascii guibg=Red guifg=white ctermbg=5 ctermfg=15
+  " hacky fix only for typescript files
+  let fts = ['typescript', 'typescriptreact', 'tsx']
+  if index(fts, &ft) != -1
+    " fix colorscheme by reloading file
+    " https://github.com/leafgarland/typescript-vim/pull/193#issuecomment-1104566764
+    edit
+  endif
 endfunction
 
 
