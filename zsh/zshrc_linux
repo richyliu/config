@@ -1,3 +1,10 @@
+# -*- mode: sh -*-
+
+# Run basic shell if ssh-ing from "dumb" terminal (i.e. emacs)
+if [[ $TERM == "dumb" ]]; then
+  exec /bin/sh
+fi
+
 # Path to your oh-my-zsh installation.
 export ZSH="${HOME}/.oh-my-zsh"
 

@@ -50,9 +50,9 @@ enum planck_keycodes {
 // reference: https://beta.docs.qmk.fm/using-qmk/simple-keycodes/keycodes
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 [BASE] = LAYOUT_ortho_4x12(
-  KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    MY_C_B,  MY_C_B,  KC_Y,    KC_U,    KC_I,    KC_O,      KC_QUOT,
+  KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    MY_C_B,  MY_C_B,  KC_Y,    KC_U,    KC_I,    KC_O,      KC_P,
   KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    OS_ALT,  OS_ALT,  KC_H,    KC_J,    KC_K,    KC_L,      KC_SCLN,
-  GT(KC_B),CT(KC_Z),KC_X,    KC_C,    KC_V,    OS_CTL,  OS_CTL,  KC_N,    KC_M,    KC_COMM, CT(KC_DOT),GT(KC_SLSH),
+  GT(KC_B),CT(KC_Z),KC_X,    KC_C,    KC_V,    KC_B,    OS_CTL,  KC_N,    KC_M,    KC_COMM, CT(KC_DOT),GT(KC_SLSH),
   CMD_TAB, OS_ALT,  SFT_ESC, NAV_BSPC,NUM_TAB, OS_SFT,  OS_SFT,  KC_ENT,  KC_SPC,  S_ABSPC, XXXXXXX,   MO(FUN)
 ),
 [NOM] = LAYOUT_ortho_4x12(
@@ -80,9 +80,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   XXXXXXX, XXXXXXX, KC_LSFT, KC_DEL,  KC_TAB,  XXXXXXX, XXXXXXX, SCRSAVE, SCRCLIP, XXXXXXX, XXXXXXX, XXXXXXX
 ),
 [NUM] = LAYOUT_ortho_4x12(
-  KC_BSPC, KC_A,    KC_T,    KC_X,    XXXXXXX, XXXXXXX, KC_LT,   KC_LBRC, KC_7,    KC_8,    KC_9,    KC_RBRC,
-  KC_SPC,  KC_C,    KC_K,    KC_E,    HEX_ZRX, XXXXXXX, KC_GT,   KC_EQL,  KC_4,    KC_5,    KC_6,    KC_P,
-  KC_LGUI, KC_LCTL, KC_LALT, KC_LSFT, XXXXXXX, XXXXXXX, KC_SLSH, KC_BSLS, KC_1,    KC_2,    KC_3,    KC_QUOT,
+  KC_BSPC, KC_A,    KC_T,    KC_X,    HEX_ZRX, XXXXXXX, KC_LT,   KC_EQL,  KC_7,    KC_8,    KC_9,    KC_QUOT,
+  KC_SPC,  KC_C,    KC_K,    KC_E,    KC_LT,   XXXXXXX, KC_GT,   KC_LBRC, KC_4,    KC_5,    KC_6,    KC_RBRC,
+  KC_LGUI, KC_LCTL, KC_LALT, KC_LSFT, KC_GT,   XXXXXXX, XXXXXXX, KC_BSLS, KC_1,    KC_2,    KC_3,    KC_SLSH,
   XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_GRV,  KC_MINS, KC_0,    KC_DOT,  XXXXXXX, XXXXXXX
 ),
 [PLVR] = LAYOUT_ortho_4x12(

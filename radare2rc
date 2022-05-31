@@ -1,4 +1,5 @@
 eco white
+# eco solarized
 e bin.cache=true
 e scr.color=2
 e scr.prompt.vi=true
