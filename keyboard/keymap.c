@@ -1,13 +1,16 @@
 #include QMK_KEYBOARD_H
 #include "pointing_device.h"
 
+#include <stdint.h>
+#include <stdbool.h>
+
 enum layers { BASE, NOM, ARR, NAV, FUN, NUM, PLVR };
 
-#define U_RDO SCMD(KC_Q)
+#define U_RDO SCMD(KC_B)
 #define U_PST LCMD(KC_V)
 #define U_CPY LCMD(KC_X)
-#define U_CUT LCMD(KC_Z)
-#define U_UND LCMD(KC_Q)
+#define U_CUT LCMD(KC_Q)
+#define U_UND LCMD(KC_B)
 #define U_PSTFM LCMD(LALT(LSFT(KC_V)))
 
 enum planck_keycodes {

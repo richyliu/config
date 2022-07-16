@@ -48,13 +48,13 @@
             <key code="14" output="f"/>
             <key code="46" output="h"/>
             <key code="5" output="g"/>
-            <key code="11" output="q"/>
+            <key code="11" output="z"/>
             <key code="6" output="x"/>
             <key code="7" output="c"/>
             <key code="9" output="v"/>
             <key code="10" output="§"/>
             <key code="17" output="b"/>
-            <key code="12" output="z"/>
+            <key code="12" output="q"/>
             <key code="13" output="w"/>
             <key code="40" action="15"/>
             <key code="1" output="r"/>
@@ -157,13 +157,13 @@
             <key code="14" output="F"/>
             <key code="46" output="H"/>
             <key code="5" output="G"/>
-            <key code="11" output="Q"/>
+            <key code="11" output="Z"/>
             <key code="6" output="X"/>
             <key code="7" output="C"/>
             <key code="9" output="V"/>
             <key code="10" output="±"/>
             <key code="17" output="B"/>
-            <key code="12" output="Z"/>
+            <key code="12" output="Q"/>
             <key code="13" output="W"/>
             <key code="40" action="7"/>
             <key code="1" output="R"/>
@@ -266,13 +266,13 @@
             <key code="14" output="F"/>
             <key code="46" output="H"/>
             <key code="5" output="G"/>
-            <key code="11" output="Q"/>
+            <key code="11" output="Z"/>
             <key code="6" output="X"/>
             <key code="7" output="C"/>
             <key code="9" output="V"/>
             <key code="10" output="§"/>
             <key code="17" output="B"/>
-            <key code="12" output="Z"/>
+            <key code="12" output="Q"/>
             <key code="13" output="W"/>
             <key code="40" action="7"/>
             <key code="1" output="R"/>
