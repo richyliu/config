@@ -54,6 +54,12 @@
 
 (package! nov)
 
-(package! processing-mode)
-
 (package! elcord)
+
+(unpin! anaconda-mode)
+(package! anaconda-mode
+  :recipe (:host github :repo "richyliu/anaconda-mode"))
+
+(unpin! irony)
+(package! irony
+  :recipe (:host github :repo "richyliu/irony-mode"))

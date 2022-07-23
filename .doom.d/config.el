@@ -164,3 +164,16 @@
                            (list (expand-file-name "~/code/neojetset-qemu/include")
                                  (expand-file-name "~/code/neojetset-qemu/build")
                                  ))))
+
+;; enable folding in text mode
+(add-hook 'text-mode-hook 'turn-on-auto-fill)
+
+(setq irony-disable-over-tramp t)
+
+;; always cache man-completion-table (even across calls) for faster speed on mac
+(advice-add 'Man-completion-table :before #'my--Man-completion-always-cache)
+(defvar my--Man-cache nil)
+(defun my--Man-completion-always-cache (_string _pred _action)
+  (if Man-completion-cache
+      (setq my--Man-cache Man-completion-cache)
+    (setq Man-completion-cache my--Man-cache)))

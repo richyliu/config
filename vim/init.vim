@@ -182,6 +182,9 @@ let g:vimtex_view_method = 'skim'
 highlight def link xmlTagName htmlTagName
 highlight def link xmlEndTag htmlEndTag
 
+" Copilot node path
+let g:copilot_node_command = '/usr/local/bin/node16'
+
 " Settings
 set autoindent
 set backspace=indent,eol,start
