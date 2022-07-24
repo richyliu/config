@@ -33,3 +33,6 @@
         - doesn't work, as it doesn't include all the man pages
     - another solution: use woman (doom emacs has a `+default/man-or-woman`)
         - doesn't work, as woman can't display Mac's custom man format
+    - solved by using advice-add to manually add caching to Man-completion-table
+- (centaur) tabs not grouping by projectile project
+    - created custom tab group function

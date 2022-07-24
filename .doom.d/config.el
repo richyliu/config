@@ -177,3 +177,42 @@
   (if Man-completion-cache
       (setq my--Man-cache Man-completion-cache)
     (setq Man-completion-cache my--Man-cache)))
+
+;; group tabs by project
+(setq centaur-tabs-buffer-groups-function #'my--projectile-groups)
+(defun my--projectile-groups ()
+  ;; only use default group ("-") if it's a *star buffer* but not vterm or eshell
+  ;; (we want to keep terminal buffers with its respective project)
+  (if-let ((buf-name (buffer-name))
+           (buf-name-first (substring buf-name 0 1))
+           (star-buffer-p (string-equal buf-name-first "*"))
+           (not-vterm-p (not (or (string-match-p "vterm" buf-name)
+                                 (string-match-p "eshell" buf-name)))))
+      (list "-")
+    (if-let ((projectile-name (projectile-project-name)))
+        (list projectile-name)
+      (if-let ((doom-proj-name (doom-project-name)))
+          doom-proj-name
+        (list "default")))))
+
+;; use meta-number (alt-number) to jump to tab
+(map!
+ :g "M-1" nil
+ :g "M-2" nil
+ :g "M-3" nil
+ :g "M-4" nil
+ :g "M-5" nil
+ :g "M-6" nil
+ :g "M-7" nil
+ :g "M-8" nil
+ :g "M-9" nil)
+(map!
+ :n "M-1" #'(lambda () (interactive) (+tabs:next-or-goto 1))
+ :n "M-2" #'(lambda () (interactive) (+tabs:next-or-goto 2))
+ :n "M-3" #'(lambda () (interactive) (+tabs:next-or-goto 3))
+ :n "M-4" #'(lambda () (interactive) (+tabs:next-or-goto 4))
+ :n "M-5" #'(lambda () (interactive) (+tabs:next-or-goto 5))
+ :n "M-6" #'(lambda () (interactive) (+tabs:next-or-goto 6))
+ :n "M-7" #'(lambda () (interactive) (+tabs:next-or-goto 7))
+ :n "M-8" #'(lambda () (interactive) (+tabs:next-or-goto 8))
+ :n "M-9" #'(lambda () (interactive) (+tabs:next-or-goto 9)))
