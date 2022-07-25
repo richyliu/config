@@ -16,6 +16,9 @@
 - "Node 12+ is required but found 0" when editing over tramp?
 - cannot complete filepath over tramp?
 
+- minibuffer history
+    - real edit mode (instead of just ctrl-f)
+
 ## Fixed
 - vterm closes immediately when in a TRAMP project
     - set `vterm-tramp-shells` to include `/bin/bash`

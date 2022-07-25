@@ -171,15 +171,14 @@
 (setq irony-disable-over-tramp t)
 
 ;; always cache man-completion-table (even across calls) for faster speed on mac
-(advice-add 'Man-completion-table :before #'my--Man-completion-always-cache)
 (defvar my--Man-cache nil)
 (defun my--Man-completion-always-cache (_string _pred _action)
   (if Man-completion-cache
       (setq my--Man-cache Man-completion-cache)
     (setq Man-completion-cache my--Man-cache)))
+(advice-add 'Man-completion-table :before #'my--Man-completion-always-cache)
 
 ;; group tabs by project
-(setq centaur-tabs-buffer-groups-function #'my--projectile-groups)
 (defun my--projectile-groups ()
   ;; only use default group ("-") if it's a *star buffer* but not vterm or eshell
   ;; (we want to keep terminal buffers with its respective project)
@@ -194,6 +193,7 @@
       (if-let ((doom-proj-name (doom-project-name)))
           doom-proj-name
         (list "default")))))
+(setq centaur-tabs-buffer-groups-function #'my--projectile-groups)
 
 ;; use meta-number (alt-number) to jump to tab
 (map!
@@ -205,14 +205,26 @@
  :g "M-6" nil
  :g "M-7" nil
  :g "M-8" nil
- :g "M-9" nil)
-(map!
- :n "M-1" #'(lambda () (interactive) (+tabs:next-or-goto 1))
- :n "M-2" #'(lambda () (interactive) (+tabs:next-or-goto 2))
- :n "M-3" #'(lambda () (interactive) (+tabs:next-or-goto 3))
- :n "M-4" #'(lambda () (interactive) (+tabs:next-or-goto 4))
- :n "M-5" #'(lambda () (interactive) (+tabs:next-or-goto 5))
- :n "M-6" #'(lambda () (interactive) (+tabs:next-or-goto 6))
- :n "M-7" #'(lambda () (interactive) (+tabs:next-or-goto 7))
- :n "M-8" #'(lambda () (interactive) (+tabs:next-or-goto 8))
- :n "M-9" #'(lambda () (interactive) (+tabs:next-or-goto 9)))
+ :g "M-9" nil
+
+ :n "M-1" (lambda () (interactive) (+tabs:next-or-goto 1))
+ :n "M-2" (lambda () (interactive) (+tabs:next-or-goto 2))
+ :n "M-3" (lambda () (interactive) (+tabs:next-or-goto 3))
+ :n "M-4" (lambda () (interactive) (+tabs:next-or-goto 4))
+ :n "M-5" (lambda () (interactive) (+tabs:next-or-goto 5))
+ :n "M-6" (lambda () (interactive) (+tabs:next-or-goto 6))
+ :n "M-7" (lambda () (interactive) (+tabs:next-or-goto 7))
+ :n "M-8" (lambda () (interactive) (+tabs:next-or-goto 8))
+ :n "M-9" (lambda () (interactive) (+tabs:next-or-goto 9))
+
+ :g "s-w" #'kill-current-buffer
+
+ (:leader
+  :desc "Open projectile vterm" "p v" #'projectile-run-vterm
+  :desc "Kill all buffers" "q a"
+  #'(lambda ()
+      (interactive)
+      (mapc #'kill-buffer (buffer-list)))))
+
+;; go to normal mode with C-f (like command line edit mode)
+(define-key minibuffer-local-map (kbd "C-f") #'evil-normal-state)
