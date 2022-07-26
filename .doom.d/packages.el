@@ -49,13 +49,17 @@
 ;; ...Or *all* packages (NOT RECOMMENDED; will likely break things)
 ;(unpin! t)
 
+;; enable agda-mode from the correct path
+(load-file (let ((coding-system-for-read 'utf-8))
+                (shell-command-to-string "agda-mode locate")))
+
 (package! copilot
   :recipe (:host github :repo "zerolfx/copilot.el" :files ("*.el" "dist")))
-
-(package! nov)
 
 (package! elcord)
 
 (unpin! irony)
 (package! irony
   :recipe (:host github :repo "richyliu/irony-mode"))
+
+(package! nov)

@@ -3,6 +3,10 @@
 ;; Place your private configuration here! Remember, you do not need to run 'doom
 ;; sync' after modifying this file!
 
+(setq initial-frame-alist
+      (append initial-frame-alist
+              '((width . 200)
+                (height . 70))))
 
 ;; Some functionality uses this to identify you, e.g. GPG configuration, email
 ;; clients, file templates and snippets. It is optional.
@@ -80,14 +84,25 @@
 ;; You can also try 'gd' (or 'C-c c d') to jump to their definition and see how
 ;; they are implemented.
 
-(setq which-key-idle-delay 0.5)
+
+;; PACKAGE SETTINGS
+
+(after! circe
+  (setq circe-network-options
+        '(("OFTC"
+           :tls t
+           :nick "richyliu2"
+           :channels ("#qemu-gsoc"))
+          ("Libera Chat"
+           :tls t
+           :nick "richyliu2"
+           :channels ("#emacs" "#emacs-beginners" "#emacs-til")))))
 
 ;; accept completion from copilot and fallback to company
 (defun my-tab ()
   (interactive)
   (or (copilot-accept-completion)
       (company-indent-or-complete-common nil)))
-
 (use-package! copilot
   :hook (prog-mode . copilot-mode)
   :bind (("C-TAB" . 'copilot-accept-completion-by-word)
@@ -98,65 +113,43 @@
          :map company-mode-map
          ("<tab>" . 'my-tab)
          ("TAB" . 'my-tab)))
+(after! copilot
+  (setq copilot-node-executable "/usr/local/bin/node16")
+  ;; to reduce memory use; can increase for debugging
+  (setq copilot-log-max 50))
 
-(setq copilot-node-executable "/usr/local/bin/node16")
+(use-package! elcord)
+(after! elcord
+  (setq elcord-editor-icon "emacs_icon")
+  (setq elcord-quiet t)
+  (elcord-mode))
 
-;; to reduce memory use; can increase for debugging
-(setq copilot-log-max 50)
+(after! irony
+  (setq irony-disable-over-tramp t))
 
-;; set alt-backspace to delete word
-(global-set-key (kbd "M-DEL") 'backward-kill-word)
+(after! nov
+  ;; use nov for epub
+  (add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode))
+  (setq nov-text-width 80)
+  ;; change font
+  (defun my-nov-font-setup ()
+    (face-remap-add-relative 'variable-pitch
+                             :family "Liberation Serif"
+                             :height 1.2))
+  (add-hook 'nov-mode-hook 'my-nov-font-setup))
 
-;; use nov for epub
-(add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode))
+(after! vterm
+  ;; fix shells
+  (setq vterm-tramp-shells '(("ssh" "/bin/zsh")))
+  (setq vterm-environment '("TMUX=none")))
 
-(setq nov-text-width 80)
 
-;; change font
-(defun my-nov-font-setup ()
-  (face-remap-add-relative 'variable-pitch :family "Liberation Serif"
-                                           :height 1.2))
-(add-hook 'nov-mode-hook 'my-nov-font-setup)
+;; OTHER PACKAGE SETTINGS
 
-;; set C mode for .cpc files
-(add-to-list 'auto-mode-alist '("\\.cpc\\'" . c-mode))
-
-(setq delete-by-moving-to-trash nil)
-
-(setq circe-network-options
-      '(("OFTC"
-         :tls t
-         :nick "richyliu2"
-         :channels ("#qemu-gsoc"))
-        ("Libera Chat"
-         :tls t
-         :nick "richyliu2"
-         :channels ("#emacs" "#emacs-beginners" "#emacs-til"))))
-
-(require 'elcord)
-(elcord-mode)
-(setq elcord-editor-icon "emacs_icon")
-;; (setq elcord-display-buffer-details 'nil)
-(setq elcord-quiet t)
-
-(add-hook 'html-mode-hook
-          (function (lambda ()
-                      (setq evil-shift-width 2))))
-(add-hook 'css-mode-hook
-          (function (lambda ()
-                      (setq evil-shift-width 2))))
-(add-hook 'js-mode-hook
-          (function (lambda ()
-                      (setq evil-shift-width 2))))
-
-;; fix shells
-(setq vterm-tramp-shells '(("ssh" "/bin/zsh")))
-(setq vterm-environment '("TMUX=none"))
-
-(load-file (let ((coding-system-for-read 'utf-8))
-                (shell-command-to-string "agda-mode locate")))
-
-(add-to-list 'auto-mode-alist '("\\.lagda.md\\'" . agda2-mode))
+(when (boundp 'agda2-mode)
+  ;; we also need doom emacs's adga for the keybindings
+  ;; enable agda for markdown files
+  (add-to-list 'auto-mode-alist '("\\.lagda.md\\'" . agda2-mode)))
 
 ;; add qemu include path for flycheck
 (add-hook 'c-mode-hook
@@ -165,18 +158,53 @@
                                  (expand-file-name "~/code/neojetset-qemu/build")
                                  ))))
 
-;; enable folding in text mode
-(add-hook 'text-mode-hook 'turn-on-auto-fill)
 
-(setq irony-disable-over-tramp t)
+;; KEYBINDINGS
 
-;; always cache man-completion-table (even across calls) for faster speed on mac
-(defvar my--Man-cache nil)
-(defun my--Man-completion-always-cache (_string _pred _action)
-  (if Man-completion-cache
-      (setq my--Man-cache Man-completion-cache)
-    (setq Man-completion-cache my--Man-cache)))
-(advice-add 'Man-completion-table :before #'my--Man-completion-always-cache)
+(map!
+ ;; use meta-number (alt-number) to jump to tab
+ (:when (featurep! :ui tabs)
+   :g "M-1" nil
+   :g "M-2" nil
+   :g "M-3" nil
+   :g "M-4" nil
+   :g "M-5" nil
+   :g "M-6" nil
+   :g "M-7" nil
+   :g "M-8" nil
+   :g "M-9" nil
+   :n "M-1" (lambda () (interactive) (+tabs:next-or-goto 1))
+   :n "M-2" (lambda () (interactive) (+tabs:next-or-goto 2))
+   :n "M-3" (lambda () (interactive) (+tabs:next-or-goto 3))
+   :n "M-4" (lambda () (interactive) (+tabs:next-or-goto 4))
+   :n "M-5" (lambda () (interactive) (+tabs:next-or-goto 5))
+   :n "M-6" (lambda () (interactive) (+tabs:next-or-goto 6))
+   :n "M-7" (lambda () (interactive) (+tabs:next-or-goto 7))
+   :n "M-8" (lambda () (interactive) (+tabs:next-or-goto 8))
+   :n "M-9" (lambda () (interactive) (+tabs:next-or-goto 9)))
+
+ ;; cmd-w to kill buffer instead of workspace
+ :g "s-w" #'kill-current-buffer
+
+ ;; disable evil-lion bindings that conflict with org mode
+ :n "gl" nil
+
+ (:leader
+  (:when (featurep! :term vterm)
+    :desc "Open projectile vterm" "p v" #'projectile-run-vterm)
+  :desc "Kill all buffers" "q a" #'(lambda () (interactive)
+                                     (mapc #'kill-buffer (buffer-list))))
+
+ (:map minibuffer-local-map
+       ;; go to normal mode with C-f (like command line edit mode)
+       :i "C-f" #'evil-normal-state))
+
+
+;; GENERAL EMACS SETTINGS
+
+(setq which-key-idle-delay 1.5)
+
+(setq delete-by-moving-to-trash nil)
 
 ;; group tabs by project
 (defun my--projectile-groups ()
@@ -195,36 +223,31 @@
         (list "default")))))
 (setq centaur-tabs-buffer-groups-function #'my--projectile-groups)
 
-;; use meta-number (alt-number) to jump to tab
-(map!
- :g "M-1" nil
- :g "M-2" nil
- :g "M-3" nil
- :g "M-4" nil
- :g "M-5" nil
- :g "M-6" nil
- :g "M-7" nil
- :g "M-8" nil
- :g "M-9" nil
 
- :n "M-1" (lambda () (interactive) (+tabs:next-or-goto 1))
- :n "M-2" (lambda () (interactive) (+tabs:next-or-goto 2))
- :n "M-3" (lambda () (interactive) (+tabs:next-or-goto 3))
- :n "M-4" (lambda () (interactive) (+tabs:next-or-goto 4))
- :n "M-5" (lambda () (interactive) (+tabs:next-or-goto 5))
- :n "M-6" (lambda () (interactive) (+tabs:next-or-goto 6))
- :n "M-7" (lambda () (interactive) (+tabs:next-or-goto 7))
- :n "M-8" (lambda () (interactive) (+tabs:next-or-goto 8))
- :n "M-9" (lambda () (interactive) (+tabs:next-or-goto 9))
+;; MODE LISTS
 
- :g "s-w" #'kill-current-buffer
+;; set C mode for .cpc files
+(add-to-list 'auto-mode-alist '("\\.cpc\\'" . c-mode))
 
- (:leader
-  :desc "Open projectile vterm" "p v" #'projectile-run-vterm
-  :desc "Kill all buffers" "q a"
-  #'(lambda ()
-      (interactive)
-      (mapc #'kill-buffer (buffer-list)))))
 
-;; go to normal mode with C-f (like command line edit mode)
-(define-key minibuffer-local-map (kbd "C-f") #'evil-normal-state)
+;; HOOKS
+
+(defun my--set-shift-2 ()
+  (setq evil-shift-width 2))
+(add-hook 'html-mode-hook #'my--set-shift-2)
+(add-hook 'css-mode-hook #'my--set-shift-2)
+(add-hook 'js-mode-hook #'my--set-shift-2)
+
+;; enable folding in text mode
+(add-hook 'text-mode-hook 'turn-on-auto-fill)
+
+
+;; ADVICE
+
+;; always cache man-completion-table (even across calls) for faster speed on mac
+(defvar my--Man-cache nil)
+(defun my--Man-completion-always-cache (_string _pred _action)
+  (if Man-completion-cache
+      (setq my--Man-cache Man-completion-cache)
+    (setq Man-completion-cache my--Man-cache)))
+(advice-add 'Man-completion-table :before #'my--Man-completion-always-cache)
