@@ -85,7 +85,7 @@
 ;; they are implemented.
 
 
-;; PACKAGE SETTINGS
+;;; Package settings
 
 (after! circe
   (setq circe-network-options
@@ -98,21 +98,11 @@
            :nick "richyliu2"
            :channels ("#emacs" "#emacs-beginners" "#emacs-til")))))
 
-;; accept completion from copilot and fallback to company
-(defun my-tab ()
-  (interactive)
-  (or (copilot-accept-completion)
-      (company-indent-or-complete-common nil)))
+;; use ctrl-tab to accept copilot completion
 (use-package! copilot
   :hook (prog-mode . copilot-mode)
-  :bind (("C-TAB" . 'copilot-accept-completion-by-word)
-         ("C-<tab>" . 'copilot-accept-completion-by-word)
-         :map company-active-map
-         ("<tab>" . 'my-tab)
-         ("TAB" . 'my-tab)
-         :map company-mode-map
-         ("<tab>" . 'my-tab)
-         ("TAB" . 'my-tab)))
+  :bind (("C-TAB" . 'copilot-accept-completion)
+         ("C-<tab>" . 'copilot-accept-completion)))
 (after! copilot
   (setq copilot-node-executable "/usr/local/bin/node16")
   ;; to reduce memory use; can increase for debugging
@@ -144,7 +134,7 @@
   (setq vterm-environment '("TMUX=none")))
 
 
-;; OTHER PACKAGE SETTINGS
+;;; Other package settings
 
 (when (boundp 'agda2-mode)
   ;; we also need doom emacs's adga for the keybindings
@@ -159,7 +149,7 @@
                                  ))))
 
 
-;; KEYBINDINGS
+;;; Keybindings
 
 (map!
  ;; use meta-number (alt-number) to jump to tab
@@ -189,6 +179,9 @@
  ;; disable evil-lion bindings that conflict with org mode
  :n "gl" nil
 
+ ;; disable aya-expand keymap (conflicts with copilot completion)
+ :i "C-<tab>" nil
+
  (:leader
   (:when (featurep! :term vterm)
     :desc "Open projectile vterm" "p v" #'projectile-run-vterm)
@@ -200,9 +193,9 @@
        :i "C-f" #'evil-normal-state))
 
 
-;; GENERAL EMACS SETTINGS
+;;; General emacs settings
 
-(setq which-key-idle-delay 1.5)
+(setq which-key-idle-delay 1.0)
 
 (setq delete-by-moving-to-trash nil)
 
@@ -224,13 +217,13 @@
 (setq centaur-tabs-buffer-groups-function #'my--projectile-groups)
 
 
-;; MODE LISTS
+;;; Mode lists
 
 ;; set C mode for .cpc files
 (add-to-list 'auto-mode-alist '("\\.cpc\\'" . c-mode))
 
 
-;; HOOKS
+;;; Hooks
 
 (defun my--set-shift-2 ()
   (setq evil-shift-width 2))
@@ -242,7 +235,7 @@
 (add-hook 'text-mode-hook 'turn-on-auto-fill)
 
 
-;; ADVICE
+;;; Advice
 
 ;; always cache man-completion-table (even across calls) for faster speed on mac
 (defvar my--Man-cache nil)
@@ -251,3 +244,20 @@
       (setq my--Man-cache Man-completion-cache)
     (setq Man-completion-cache my--Man-cache)))
 (advice-add 'Man-completion-table :before #'my--Man-completion-always-cache)
+
+;; fix yas snippet edit
+;; caused by vertico stripping text properties when completing
+;; copied fix from: https://github.com/doomemacs/doomemacs/issues/4127#issuecomment-1019731798
+(defun my--yas-snippet--completing-read-uuid (prompt all-snippets &rest args)
+  (let* ((snippet-data (cl-loop for (_ . tpl) in (mapcan #'yas--table-templates (if all-snippets
+                                                                                    (hash-table-values yas--tables)
+                                                                                  (yas--get-snippet-tables)))
+                                for txt = (format "%-25s%-30s%s"
+                                                  (yas--template-key tpl)
+                                                  (yas--template-name tpl)
+                                                  (abbreviate-file-name (yas--template-load-file tpl)))
+                                collect
+                                `(,txt . ,(yas--template-uuid tpl))))
+         (selected-value (apply #'completing-read prompt snippet-data args)))
+    (alist-get selected-value snippet-data nil nil 'equal)))
+(advice-add '+snippet--completing-read-uuid :override #'my--yas-snippet--completing-read-uuid)

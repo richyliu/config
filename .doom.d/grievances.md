@@ -6,6 +6,7 @@
 - use different prefix (not `C-c`) for vterm
 - paste without indent (`]p`)
 - git gutter does not work over TRAMP
+- disable tab for yas-expand
 
 - tramp auto save over network delay is slow
     - autosave locally?
