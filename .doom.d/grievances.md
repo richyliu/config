@@ -1,7 +1,5 @@
 # Grievances
 
-- add shortcut to send `C-x C-e` while in vterm
-- use different prefix (not `C-c`) for vterm
 - paste without indent (`]p`)
 - git gutter does not work over TRAMP
 - disable tab for yas-expand
@@ -43,3 +41,7 @@
     - added `SPC p v`
 - alt-backspace in vterm does not work
     - fixed by defining key map in vterm insert mode
+- add shortcut to send `C-x C-e` while in vterm
+    - added `C-x C-x`
+- use different prefix (not `C-c`) for vterm
+    - switched prefix to `C-x C-a`

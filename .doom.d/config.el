@@ -131,7 +131,34 @@
 (after! vterm
   ;; fix shells
   (setq vterm-tramp-shells '(("ssh" "/bin/zsh")))
-  (setq vterm-environment '("TMUX=none")))
+  (setq vterm-environment '("TMUX=none"))
+  (map!
+   (:map vterm-mode-map
+    ;; alt-backspace to delete word in vterm insert mode
+    :i "M-<backspace>" #'vterm-send-meta-backspace
+    ;; originally behind C-c, move them to vterm map
+    "C-g" #'vterm-send-C-g
+    "C-u" #'vterm-send-C-u
+    ;; sent C-l by default, also can send vterm-clear
+    "C-l" #'vterm-send-C-l
+    "C-c l" #'vterm-clear
+    ;; missing in original vterm-mode-map
+    "C-x" #'vterm-send-C-x
+    "C-y" #'vterm-send-C-y
+    ))
+  ;; make vterm keymaps more usage
+  ;; we only want these to take effect inside vterm buffers
+  (defun my-vterm-keymap-override-setup ()
+    ;; vterm map "leader" (to send all ctrl keys)
+    (define-key evil-normal-state-local-map (kbd "C-o") vterm-mode-map)
+    (define-key evil-insert-state-local-map (kbd "C-o") vterm-mode-map)
+    ;; use C-c to send actual C-c
+    (define-key evil-normal-state-local-map (kbd "C-c") #'vterm-send-C-c)
+    (define-key evil-insert-state-local-map (kbd "C-c") #'vterm-send-C-c)
+    ;; copy mode
+    (define-key evil-normal-state-local-map (kbd "C-x c") #'vterm-copy-mode)
+    (define-key evil-insert-state-local-map (kbd "C-x c") #'vterm-copy-mode))
+  (add-hook 'vterm-mode-hook #'my-vterm-keymap-override-setup))
 
 
 ;;; Other package settings
@@ -184,10 +211,8 @@
 
  (:when (featurep! :term vterm)
   (:leader
-   :desc "Open projectile vterm" "p v" #'projectile-run-vterm)
-  (:map vterm-mode-map
-   ;; alt-backspace to delete word in vterm insert mode
-   :i "M-<backspace>" #'vterm-send-meta-backspace))
+   :desc "Open projectile vterm" "p v" #'projectile-run-vterm
+   :desc "Open vterm buffer" "b v" #'vterm))
 
  (:leader
   :desc "Kill all buffers" "q a" #'(lambda () (interactive)
