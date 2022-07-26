@@ -154,24 +154,24 @@
 (map!
  ;; use meta-number (alt-number) to jump to tab
  (:when (featurep! :ui tabs)
-   :g "M-1" nil
-   :g "M-2" nil
-   :g "M-3" nil
-   :g "M-4" nil
-   :g "M-5" nil
-   :g "M-6" nil
-   :g "M-7" nil
-   :g "M-8" nil
-   :g "M-9" nil
-   :n "M-1" (lambda () (interactive) (+tabs:next-or-goto 1))
-   :n "M-2" (lambda () (interactive) (+tabs:next-or-goto 2))
-   :n "M-3" (lambda () (interactive) (+tabs:next-or-goto 3))
-   :n "M-4" (lambda () (interactive) (+tabs:next-or-goto 4))
-   :n "M-5" (lambda () (interactive) (+tabs:next-or-goto 5))
-   :n "M-6" (lambda () (interactive) (+tabs:next-or-goto 6))
-   :n "M-7" (lambda () (interactive) (+tabs:next-or-goto 7))
-   :n "M-8" (lambda () (interactive) (+tabs:next-or-goto 8))
-   :n "M-9" (lambda () (interactive) (+tabs:next-or-goto 9)))
+  :g "M-1" nil
+  :g "M-2" nil
+  :g "M-3" nil
+  :g "M-4" nil
+  :g "M-5" nil
+  :g "M-6" nil
+  :g "M-7" nil
+  :g "M-8" nil
+  :g "M-9" nil
+  :n "M-1" (lambda () (interactive) (+tabs:next-or-goto 1))
+  :n "M-2" (lambda () (interactive) (+tabs:next-or-goto 2))
+  :n "M-3" (lambda () (interactive) (+tabs:next-or-goto 3))
+  :n "M-4" (lambda () (interactive) (+tabs:next-or-goto 4))
+  :n "M-5" (lambda () (interactive) (+tabs:next-or-goto 5))
+  :n "M-6" (lambda () (interactive) (+tabs:next-or-goto 6))
+  :n "M-7" (lambda () (interactive) (+tabs:next-or-goto 7))
+  :n "M-8" (lambda () (interactive) (+tabs:next-or-goto 8))
+  :n "M-9" (lambda () (interactive) (+tabs:next-or-goto 9)))
 
  ;; cmd-w to kill buffer instead of workspace
  :g "s-w" #'kill-current-buffer
@@ -182,15 +182,20 @@
  ;; disable aya-expand keymap (conflicts with copilot completion)
  :i "C-<tab>" nil
 
+ (:when (featurep! :term vterm)
+  (:leader
+   :desc "Open projectile vterm" "p v" #'projectile-run-vterm)
+  (:map vterm-mode-map
+   ;; alt-backspace to delete word in vterm insert mode
+   :i "M-<backspace>" #'vterm-send-meta-backspace))
+
  (:leader
-  (:when (featurep! :term vterm)
-    :desc "Open projectile vterm" "p v" #'projectile-run-vterm)
   :desc "Kill all buffers" "q a" #'(lambda () (interactive)
                                      (mapc #'kill-buffer (buffer-list))))
 
  (:map minibuffer-local-map
-       ;; go to normal mode with C-f (like command line edit mode)
-       :i "C-f" #'evil-normal-state))
+  ;; go to normal mode with C-f (like command line edit mode)
+  "C-f" #'evil-normal-state))
 
 
 ;;; General emacs settings

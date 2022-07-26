@@ -1,12 +1,11 @@
 # Grievances
 
-- alt-backspace in vterm does not work
-- add shortcuts to open project's ibuffer/vterm
 - add shortcut to send `C-x C-e` while in vterm
 - use different prefix (not `C-c`) for vterm
 - paste without indent (`]p`)
 - git gutter does not work over TRAMP
 - disable tab for yas-expand
+- add shortcut to execute the current file
 
 - tramp auto save over network delay is slow
     - autosave locally?
@@ -40,3 +39,7 @@
     - solved by using advice-add to manually add caching to Man-completion-table
 - (centaur) tabs not grouping by projectile project
     - created custom tab group function
+- add shortcuts to open project's ibuffer/vterm
+    - added `SPC p v`
+- alt-backspace in vterm does not work
+    - fixed by defining key map in vterm insert mode
