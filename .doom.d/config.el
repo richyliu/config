@@ -132,6 +132,7 @@
   ;; fix shells
   (setq vterm-tramp-shells '(("ssh" "/bin/zsh")))
   (setq vterm-environment '("TMUX=none"))
+  (setq vterm-kill-buffer-on-exit nil)
   (map!
    (:map vterm-mode-map
     ;; alt-backspace to delete word in vterm insert mode
@@ -157,7 +158,9 @@
     (define-key evil-insert-state-local-map (kbd "C-c") #'vterm-send-C-c)
     ;; copy mode
     (define-key evil-normal-state-local-map (kbd "C-x c") #'vterm-copy-mode)
-    (define-key evil-insert-state-local-map (kbd "C-x c") #'vterm-copy-mode))
+    (define-key evil-insert-state-local-map (kbd "C-x c") #'vterm-copy-mode)
+    ;; toggle send esc
+    (define-key evil-insert-state-local-map (kbd "C-x C-z") #'evil-collection-vterm-toggle-send-escape))
   (add-hook 'vterm-mode-hook #'my-vterm-keymap-override-setup))
 
 
@@ -202,6 +205,8 @@
 
  ;; cmd-w to kill buffer instead of workspace
  :g "s-w" #'kill-current-buffer
+ ;; cmd-d to kill workspace
+ :g "s-d" #'+workspace/delete
 
  ;; disable evil-lion bindings that conflict with org mode
  :n "gl" nil
@@ -215,8 +220,15 @@
    :desc "Open vterm buffer" "b v" #'vterm))
 
  (:leader
-  :desc "Kill all buffers" "q a" #'(lambda () (interactive)
-                                     (mapc #'kill-buffer (buffer-list))))
+  :desc "Kill all buffers" "q a" #'(lambda ()
+                                     "Kill all buffers in buffer-list and cd back to home"
+                                     (interactive)
+                                     (mapc #'kill-buffer (buffer-list))
+                                     (cd "~/")))
+
+ (:map evil-window-map
+  ;; unmap SPC w C-h so it can run help instead
+  "C-h" nil)
 
  (:map minibuffer-local-map
   ;; go to normal mode with C-f (like command line edit mode)
@@ -231,13 +243,16 @@
 
 ;; group tabs by project
 (defun my--projectile-groups ()
-  ;; only use default group ("-") if it's a *star buffer* but not vterm or eshell
-  ;; (we want to keep terminal buffers with its respective project)
+  ;; only use default group ("-") if it's a *star buffer* or vterm shell
   (if-let ((buf-name (buffer-name))
            (buf-name-first (substring buf-name 0 1))
-           (star-buffer-p (string-equal buf-name-first "*"))
-           (not-vterm-p (not (or (string-match-p "vterm" buf-name)
-                                 (string-match-p "eshell" buf-name)))))
+           (vterm-or-star-buffer-p
+            (or (string-equal
+                 buf-name-first
+                 "*")
+                (string-equal
+                 (buffer-local-value 'major-mode (current-buffer))
+                 "vterm-mode"))))
       (list "-")
     (if-let ((projectile-name (projectile-project-name)))
         (list projectile-name)

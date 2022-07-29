@@ -1,9 +1,14 @@
 # Grievances
 
+- vterm windows killed when switching to other tab (more than 1 vterm window)
 - paste without indent (`]p`)
+    - https://github.com/emacs-evil/evil/issues/464
+    - https://github.com/doomemacs/doomemacs/blob/develop/modules/editor/evil/config.el#L413-L460
+    - https://github.com/tpope/vim-unimpaired/blob/efdc6475f7ea789346716dabf9900ac04ee8604a/doc/unimpaired.txt#L104-L109
 - git gutter does not work over TRAMP
 - disable tab for yas-expand
 - add shortcut to execute the current file
+- add shortcut to fuzzy find file from current directory
 
 - tramp auto save over network delay is slow
     - autosave locally?
