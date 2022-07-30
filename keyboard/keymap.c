@@ -4,44 +4,35 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-enum layers { BASE, NOM, ARR, NAV, FUN, NUM, PLVR };
+enum layers { BASE, ARR, NAV, FUN, NUM, PLVR };
 
-#define U_RDO SCMD(KC_B)
-#define U_PST LCMD(KC_V)
-#define U_CPY LCMD(KC_X)
-#define U_CUT LCMD(KC_Z)
-#define U_UND LCMD(KC_B)
 #define U_PSTFM LCMD(LALT(LSFT(KC_V)))
 
 enum planck_keycodes {
   PLOVER = SAFE_RANGE,
   EXT_PLV,
   CMD_TAB,
-  HEX_ZRX, // sends "0x"
-  MY_CAPS,
-  MY_C_B
+  HEX_0X, // sends "0x"
+  MY_CAPS
 };
 
-// use an unused keycode because of mod-tap keycode restrictions:
-// https://docs.qmk.fm/#/mod_tap?id=caveats
-#define S_ABSPC SFT_T(KC_PRIOR)
-
-#define OS_ALT OSM(MOD_LALT)
-#define OS_SFT OSM(MOD_LSFT)
-#define OS_CTL OSM(MOD_LCTL)
-#define OS_GUI OSM(MOD_LGUI)
-#define CT LCTL_T
-#define GT LGUI_T
-
-#define SFT_ESC SFT_T(KC_ESC)
-#define NAV_BSPC LT(NAV, KC_BSPC)
-#define NUM_TAB LT(NUM, KC_TAB)
+// correspond to the correct letters on colemak mod-dh
+#define HEX_A KC_A
+#define HEX_B KC_T
+#define HEX_C KC_X
+#define HEX_D KC_C
+#define HEX_E KC_K
+#define HEX_F KC_E
+#define HEX_X KC_Z // for sending "0x"
 
 #define ALT_LEFT LALT(KC_LEFT)
 #define ALT_RIGHT LALT(KC_RIGHT)
 
-#define TAB_BAC C(S(KC_TAB))
-#define TAB_FWD C(KC_TAB)
+#define ALT_ESC LALT_T(KC_ESC)
+#define SFT_QUOT LSFT_T(KC_QUOT)
+
+#define TAB_BAC G(S(KC_LBRC))
+#define TAB_FWD G(S(KC_RBRC))
 
 #define SCRCLIP G(C(S(KC_4)))
 #define SCRSAVE G(S(KC_4))
@@ -49,44 +40,42 @@ enum planck_keycodes {
 #define INSP_EL G(A(KC_L))
 #define SELC_EL G(S(KC_X))
 
+// TODO:
+// layer order/DF layer stacking?
+// add sound?
+// add lights?
 
-// reference: https://beta.docs.qmk.fm/using-qmk/simple-keycodes/keycodes
+// reference: https://docs.qmk.fm/#/keycodes
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 [BASE] = LAYOUT_ortho_4x12(
-  KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    MY_C_B,  MY_C_B,  KC_Y,    KC_U,    KC_I,    KC_O,      KC_P,
-  KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    OS_ALT,  OS_ALT,  KC_H,    KC_J,    KC_K,    KC_L,      KC_SCLN,
-  GT(KC_B),CT(KC_Z),KC_X,    KC_C,    KC_V,    KC_B,    OS_CTL,  KC_N,    KC_M,    KC_COMM, CT(KC_DOT),GT(KC_SLSH),
-  CMD_TAB, OS_ALT,  SFT_ESC, NAV_BSPC,NUM_TAB, OS_SFT,  OS_SFT,  KC_ENT,  KC_SPC,  S_ABSPC, XXXXXXX,   MO(FUN)
-),
-[NOM] = LAYOUT_ortho_4x12(
-  KC_Q,    KC_W,    KC_F,    KC_P,    KC_B,    KC_LGUI, KC_RGUI, KC_J,    KC_L,    KC_U,    KC_Y,      KC_QUOT,
-  KC_A,    KC_R,    KC_S,    KC_T,    KC_G,    KC_LCTL, KC_RCTL, KC_M,    KC_N,    KC_E,    KC_I,      KC_O,
-  KC_Z,    KC_X,    KC_C,    KC_D,    KC_V,    KC_LALT, KC_RALT, KC_K,    KC_H,    KC_COMM, KC_DOT,    KC_SLSH,
-  CMD_TAB, XXXXXXX, KC_ESC,  KC_BSPC, KC_TAB,  KC_LSFT, KC_RSFT, KC_ENT,  KC_SPC,  KC_DEL,  DF(BASE),  MO(FUN)
+  KC_TAB,  KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_BSPC,
+  KC_LCTL, KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, KC_ENT,
+  KC_LSFT, KC_B,    KC_Z,    KC_X,    KC_C,    KC_V,    KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, SFT_QUOT,
+  XXXXXXX, MO(NAV), CMD_TAB, ALT_ESC, KC_LCMD, MO(NUM), MO(NUM), KC_SPC,  MO(NAV), MO(FUN), DF(BASE),MO(FUN)
 ),
 [ARR] = LAYOUT_ortho_4x12(
-  XXXXXXX, XXXXXXX, KC_UP,   XXXXXXX, XXXXXXX,  XXXXXXX,XXXXXXX, XXXXXXX, ALT_LEFT,XXXXXXX, XXXXXXX, ALT_RIGHT,
-  XXXXXXX, KC_LEFT, KC_DOWN, KC_RGHT, XXXXXXX,  XXXXXXX,XXXXXXX, XXXXXXX, KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT,
-  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, G(KC_GRV),XXXXXXX,XXXXXXX, XXXXXXX, KC_HOME, KC_PGDN, KC_PGUP, KC_END,
-  XXXXXXX, XXXXXXX, XXXXXXX, KC_SPC,  XXXXXXX,  XXXXXXX,XXXXXXX, XXXXXXX, KC_SPC,  XXXXXXX, DF(BASE),XXXXXXX
+  XXXXXXX, XXXXXXX, XXXXXXX, KC_UP,   XXXXXXX, XXXXXXX, XXXXXXX, ALT_LEFT,XXXXXXX, XXXXXXX, ALT_RIGHT,XXXXXXX,
+  XXXXXXX, XXXXXXX, KC_LEFT, KC_DOWN, KC_RGHT, XXXXXXX, XXXXXXX, KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT, XXXXXXX,
+  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_HOME, KC_PGDN, KC_PGUP, KC_END,  XXXXXXX,
+  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_SPC,  XXXXXXX, XXXXXXX, KC_SPC,  XXXXXXX, XXXXXXX, _______, _______
 ),
 [NAV] = LAYOUT_ortho_4x12(
-  U_UND,   U_CUT,   U_CPY,   U_PST,   U_RDO,    XXXXXXX,XXXXXXX, XXXXXXX, ALT_LEFT,XXXXXXX, XXXXXXX, ALT_RIGHT,
-  TAB_BAC, XXXXXXX, XXXXXXX, TAB_FWD, U_PSTFM,  XXXXXXX,XXXXXXX, MY_CAPS, KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT,
-  KC_LGUI, KC_LCTL, KC_LALT, KC_LSFT, G(KC_GRV),XXXXXXX,XXXXXXX, XXXXXXX, KC_HOME, KC_PGDN, KC_PGUP, KC_END,
-  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,  XXXXXXX,XXXXXXX, KC_ENT,  KC_SPC,  KC_LSFT, XXXXXXX, XXXXXXX
+  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, ALT_LEFT,XXXXXXX, XXXXXXX, ALT_RIGHT,KC_DEL,
+  XXXXXXX, XXXXXXX, XXXXXXX, TAB_BAC, TAB_FWD, U_PSTFM, MY_CAPS, KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT, KC_ENT,
+  _______, KC_LGUI, KC_LALT, KC_LCTL, KC_LSFT, XXXXXXX, XXXXXXX, KC_HOME, KC_PGDN, KC_PGUP, KC_END,  KC_LSFT,
+  XXXXXXX, XXXXXXX, XXXXXXX, KC_LALT, _______, XXXXXXX, XXXXXXX, _______, XXXXXXX, XXXXXXX, _______, _______
 ),
 [FUN] = LAYOUT_ortho_4x12(
-  KC_F12,  KC_F7,   KC_F8,   KC_F9,   XXXXXXX, XXXXXXX, DM_REC2, DM_REC1, DM_RSTP, DF(NOM), PLOVER,  RESET,
-  KC_F11,  KC_F4,   KC_F5,   KC_F6,   KC_BRMU, XXXXXXX, DM_PLY2, DM_PLY1, SELC_EL, INSP_EL, XXXXXXX, DF(ARR),
-  KC_F10,  KC_F1,   KC_F2,   KC_F3,   KC_BRMD, XXXXXXX, XXXXXXX, XXXXXXX, KC_MUTE, KC_VOLD, KC_VOLU, XXXXXXX,
-  XXXXXXX, XXXXXXX, KC_LSFT, KC_DEL,  KC_TAB,  XXXXXXX, XXXXXXX, SCRSAVE, SCRCLIP, XXXXXXX, XXXXXXX, XXXXXXX
+  XXXXXXX, KC_F12,  KC_F7,   KC_F8,   KC_F9,   XXXXXXX, DM_REC2, DM_REC1, DM_RSTP, XXXXXXX, PLOVER,  RESET,
+  XXXXXXX, KC_F11,  KC_F4,   KC_F5,   KC_F6,   KC_BRMU, DM_PLY2, DM_PLY1, SELC_EL, INSP_EL, XXXXXXX, DF(ARR),
+  _______, KC_F10,  KC_F1,   KC_F2,   KC_F3,   KC_BRMD, XXXXXXX, XXXXXXX, KC_MUTE, KC_VOLD, KC_VOLU, KC_LSFT,
+  XXXXXXX, XXXXXXX, XXXXXXX, KC_LALT, _______, XXXXXXX, XXXXXXX, SCRSAVE, SCRCLIP, XXXXXXX, _______, _______
 ),
 [NUM] = LAYOUT_ortho_4x12(
-  KC_BSPC, KC_A,    KC_T,    KC_X,    HEX_ZRX, XXXXXXX, KC_LT,   KC_EQL,  KC_7,    KC_8,    KC_9,    KC_QUOT,
-  KC_SPC,  KC_C,    KC_K,    KC_E,    KC_LT,   XXXXXXX, KC_GT,   KC_LBRC, KC_4,    KC_5,    KC_6,    KC_RBRC,
-  KC_LGUI, KC_LCTL, KC_LALT, KC_LSFT, KC_GT,   XXXXXXX, XXXXXXX, KC_BSLS, KC_1,    KC_2,    KC_3,    KC_SLSH,
-  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_GRV,  KC_MINS, KC_0,    KC_DOT,  XXXXXXX, XXXXXXX
+  KC_GRV,  KC_1,    KC_2,    KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0,    KC_BSPC,
+  XXXXXXX, HEX_A,   HEX_B,   HEX_C,   HEX_D,   HEX_E,   HEX_F,   KC_MINS, KC_EQL,  KC_LBRC, KC_RBRC, KC_BSLS,
+  KC_LSFT, KC_LCMD, KC_LALT, KC_LCTL, KC_LSFT, HEX_0X,  XXXXXXX, KC_RSFT, KC_RCTL, KC_LALT, KC_RGUI, KC_RSFT,
+  XXXXXXX, XXXXXXX, XXXXXXX, _______, _______, XXXXXXX, XXXXXXX, _______, KC_COMM, XXXXXXX, _______, _______
 ),
 [PLVR] = LAYOUT_ortho_4x12(
   XXXXXXX, KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_LBRC,
@@ -96,6 +85,15 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 )
 
 };
+
+
+const key_override_t esc_key_override = ko_make_basic(MOD_MASK_CTRL, KC_BSPC, KC_ESC);
+
+const key_override_t **key_overrides = (const key_override_t *[]){
+    &esc_key_override,
+    NULL
+};
+
 
 /**
  * "cmd-tab" key, as adapted from "super alt tab":
@@ -128,11 +126,6 @@ uint16_t ctrl_b_timer = 0;
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   switch (keycode) {
-    case S_ABSPC:
-      if (!record->event.pressed && record->tap.count > 0) {
-        SEND_STRING(SS_LALT(SS_TAP(X_BSPC)));
-      }
-      return true;
     case PLOVER:
       if (record->event.pressed) {
         layer_move(PLVR);
@@ -173,9 +166,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         }
       }
       return false;
-    case HEX_ZRX:
+    case HEX_0X:
       if (record->event.pressed) {
-        SEND_STRING("0z");
+        tap_code(KC_0);
+        tap_code(HEX_X);
       }
       return false;
     case MY_CAPS:
@@ -183,7 +177,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         tap_code_delay(KC_CAPS, 200);
       }
       return false;
-    case NUM_TAB:
+    case KC_TAB:
       is_num_layer = record->event.pressed;
       break;
     case KC_LSFT:
@@ -199,13 +193,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       } else {
         unregister_code(KC_COMM);
         register_code(KC_LSFT);
-      }
-      return false;
-    case MY_C_B:
-      // don't press ctrl-b twice if hit within a very short time frame
-      if (record->event.pressed && timer_elapsed(ctrl_b_timer) > CTRL_B_TIMEOUT) {
-        SEND_STRING(SS_LCTL("t")); // ctrl-t becomes ctrl-b in Colemak
-        ctrl_b_timer = timer_read();
       }
       return false;
   }

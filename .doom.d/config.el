@@ -101,8 +101,8 @@
 ;; use ctrl-tab to accept copilot completion
 (use-package! copilot
   :hook (prog-mode . copilot-mode)
-  :bind (("C-TAB" . 'copilot-accept-completion)
-         ("C-<tab>" . 'copilot-accept-completion)))
+  :bind (("M-TAB" . 'copilot-accept-completion)
+         ("M-<tab>" . 'copilot-accept-completion)))
 (after! copilot
   (setq copilot-node-executable "/usr/local/bin/node16")
   ;; to reduce memory use; can increase for debugging
@@ -202,6 +202,10 @@
   :n "M-7" (lambda () (interactive) (+tabs:next-or-goto 7))
   :n "M-8" (lambda () (interactive) (+tabs:next-or-goto 8))
   :n "M-9" (lambda () (interactive) (+tabs:next-or-goto 9)))
+
+ ;; cmd-shift-[/] to switch workspace
+ :g "s-{" #'+workspace/switch-left
+ :g "s-}" #'+workspace/switch-right
 
  ;; cmd-w to kill buffer instead of workspace
  :g "s-w" #'kill-current-buffer
