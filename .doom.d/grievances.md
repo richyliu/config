@@ -1,6 +1,6 @@
 # Grievances
 
-- vterm windows killed when switching to other tab (more than 1 vterm window)
+- **vterm windows killed when switching to other tab (more than 1 vterm window)**
 - paste without indent (`]p`)
     - https://github.com/emacs-evil/evil/issues/464
     - https://github.com/doomemacs/doomemacs/blob/develop/modules/editor/evil/config.el#L413-L460

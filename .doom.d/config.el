@@ -160,7 +160,12 @@
     (define-key evil-normal-state-local-map (kbd "C-x c") #'vterm-copy-mode)
     (define-key evil-insert-state-local-map (kbd "C-x c") #'vterm-copy-mode)
     ;; toggle send esc
-    (define-key evil-insert-state-local-map (kbd "C-x C-z") #'evil-collection-vterm-toggle-send-escape))
+    (define-key evil-insert-state-local-map (kbd "C-x z") #'evil-collection-vterm-toggle-send-escape)
+    ;; clear scrollback
+    (define-key evil-normal-state-local-map (kbd "C-x l") #'vterm-clear-scrollback)
+    ;; send ctrl-p/n to vterm directly
+    (define-key evil-normal-state-local-map (kbd "C-p") #'vterm-send-C-p)
+    (define-key evil-normal-state-local-map (kbd "C-n") #'vterm-send-C-n))
   (add-hook 'vterm-mode-hook #'my-vterm-keymap-override-setup))
 
 
@@ -218,17 +223,18 @@
  ;; disable aya-expand keymap (conflicts with copilot completion)
  :i "C-<tab>" nil
 
- (:when (featurep! :term vterm)
-  (:leader
-   :desc "Open projectile vterm" "p v" #'projectile-run-vterm
-   :desc "Open vterm buffer" "b v" #'vterm))
-
  (:leader
   :desc "Kill all buffers" "q a" #'(lambda ()
                                      "Kill all buffers in buffer-list and cd back to home"
                                      (interactive)
                                      (mapc #'kill-buffer (buffer-list))
-                                     (cd "~/")))
+                                     (cd "~/"))
+  (:when (featurep! :ui nav-flash)
+   :desc "Blink current line" "b L" #'+nav-flash/blink-cursor)
+
+  (:when (featurep! :term vterm)
+   :desc "Open projectile vterm" "p v" #'projectile-run-vterm
+   :desc "Open vterm buffer" "b v" #'vterm))
 
  (:map evil-window-map
   ;; unmap SPC w C-h so it can run help instead
@@ -257,12 +263,10 @@
                 (string-equal
                  (buffer-local-value 'major-mode (current-buffer))
                  "vterm-mode"))))
-      (list "-")
+      (list "*")
     (if-let ((projectile-name (projectile-project-name)))
         (list projectile-name)
-      (if-let ((doom-proj-name (doom-project-name)))
-          doom-proj-name
-        (list "default")))))
+      (list "default"))))
 (setq centaur-tabs-buffer-groups-function #'my--projectile-groups)
 
 

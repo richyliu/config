@@ -41,9 +41,11 @@ enum planck_keycodes {
 #define SELC_EL G(S(KC_X))
 
 // TODO:
-// layer order/DF layer stacking?
+// no way to press cmd and alt at the same time
+// remove esc from alt_esc?
 // add sound?
 // add lights?
+// layer order/DF layer stacking?
 
 // reference: https://docs.qmk.fm/#/keycodes
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -69,13 +71,13 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   XXXXXXX, KC_F12,  KC_F7,   KC_F8,   KC_F9,   XXXXXXX, DM_REC2, DM_REC1, DM_RSTP, XXXXXXX, PLOVER,  RESET,
   XXXXXXX, KC_F11,  KC_F4,   KC_F5,   KC_F6,   KC_BRMU, DM_PLY2, DM_PLY1, SELC_EL, INSP_EL, XXXXXXX, DF(ARR),
   _______, KC_F10,  KC_F1,   KC_F2,   KC_F3,   KC_BRMD, XXXXXXX, XXXXXXX, KC_MUTE, KC_VOLD, KC_VOLU, KC_LSFT,
-  XXXXXXX, XXXXXXX, XXXXXXX, KC_LALT, _______, XXXXXXX, XXXXXXX, SCRSAVE, SCRCLIP, XXXXXXX, _______, _______
+  XXXXXXX, XXXXXXX, XXXXXXX, KC_LALT, _______, XXXXXXX, XXXXXXX, SCRSAVE, SCRCLIP, XXXXXXX, XXXXXXX, XXXXXXX
 ),
 [NUM] = LAYOUT_ortho_4x12(
   KC_GRV,  KC_1,    KC_2,    KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0,    KC_BSPC,
-  XXXXXXX, HEX_A,   HEX_B,   HEX_C,   HEX_D,   HEX_E,   HEX_F,   KC_MINS, KC_EQL,  KC_LBRC, KC_RBRC, KC_BSLS,
+  KC_SPC,  HEX_A,   HEX_B,   HEX_C,   HEX_D,   HEX_E,   HEX_F,   KC_MINS, KC_EQL,  KC_LBRC, KC_RBRC, KC_BSLS,
   KC_LSFT, KC_LCMD, KC_LALT, KC_LCTL, KC_LSFT, HEX_0X,  XXXXXXX, KC_RSFT, KC_RCTL, KC_LALT, KC_RGUI, KC_RSFT,
-  XXXXXXX, XXXXXXX, XXXXXXX, _______, _______, XXXXXXX, XXXXXXX, _______, KC_COMM, XXXXXXX, _______, _______
+  XXXXXXX, XXXXXXX, XXXXXXX, KC_LALT, _______, XXXXXXX, XXXXXXX, _______, KC_DOT,  XXXXXXX, XXXXXXX, XXXXXXX
 ),
 [PLVR] = LAYOUT_ortho_4x12(
   XXXXXXX, KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_LBRC,
@@ -88,9 +90,11 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 
 const key_override_t esc_key_override = ko_make_basic(MOD_MASK_CTRL, KC_BSPC, KC_ESC);
+const key_override_t comma_key_override = ko_make_with_layers(MOD_MASK_SHIFT, KC_DOT, KC_COMM, (1 << NUM));
 
 const key_override_t **key_overrides = (const key_override_t *[]){
     &esc_key_override,
+    &comma_key_override,
     NULL
 };
 
@@ -117,9 +121,6 @@ uint16_t cmd_tab_hold_timer = 0;
 bool is_cmd_tab_before_first = false;
 uint16_t cmd_tab_before_first_timer = 0;
 #define CMD_TAB_BEFORE_FIRST_TIMEOUT 3000
-
-bool is_shift_down = false;
-bool is_num_layer = false;
 
 uint16_t ctrl_b_timer = 0;
 #define CTRL_B_TIMEOUT 300
@@ -175,24 +176,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     case MY_CAPS:
       if (record->event.pressed) {
         tap_code_delay(KC_CAPS, 200);
-      }
-      return false;
-    case KC_TAB:
-      is_num_layer = record->event.pressed;
-      break;
-    case KC_LSFT:
-      is_shift_down = record->event.pressed;
-      break;
-    case KC_DOT:
-      // press comma (,) when on num layer and pressing shift
-      if (!is_num_layer || !is_shift_down)
-        break;
-      if (record->event.pressed) {
-        unregister_code(KC_LSFT);
-        register_code(KC_COMM);
-      } else {
-        unregister_code(KC_COMM);
-        register_code(KC_LSFT);
       }
       return false;
   }
