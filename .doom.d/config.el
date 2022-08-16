@@ -5,7 +5,7 @@
 
 (setq initial-frame-alist
       (append initial-frame-alist
-              '((width . 200)
+              '((width . 145)
                 (height . 70))))
 
 ;; Some functionality uses this to identify you, e.g. GPG configuration, email
@@ -128,6 +128,11 @@
                              :height 1.2))
   (add-hook 'nov-mode-hook 'my-nov-font-setup))
 
+(after! org
+  (defun my-disable-company-autocomplete ()
+    (setq-local company-idle-delay nil))
+  (add-hook 'org-mode-hook 'my-disable-company-autocomplete))
+
 (after! vterm
   ;; fix shells
   (setq vterm-tramp-shells '(("ssh" "/bin/zsh")))
@@ -160,21 +165,17 @@
     (define-key evil-normal-state-local-map (kbd "C-x c") #'vterm-copy-mode)
     (define-key evil-insert-state-local-map (kbd "C-x c") #'vterm-copy-mode)
     ;; toggle send esc
+    (define-key evil-normal-state-local-map (kbd "C-x z") #'evil-collection-vterm-toggle-send-escape)
     (define-key evil-insert-state-local-map (kbd "C-x z") #'evil-collection-vterm-toggle-send-escape)
     ;; clear scrollback
     (define-key evil-normal-state-local-map (kbd "C-x l") #'vterm-clear-scrollback)
+    (define-key evil-insert-state-local-map (kbd "C-x l") #'vterm-clear-scrollback)
     ;; send ctrl-p/n to vterm directly
     (define-key evil-normal-state-local-map (kbd "C-p") #'vterm-send-C-p)
     (define-key evil-normal-state-local-map (kbd "C-n") #'vterm-send-C-n))
   (add-hook 'vterm-mode-hook #'my-vterm-keymap-override-setup))
 
-
 ;;; Other package settings
-
-(when (boundp 'agda2-mode)
-  ;; we also need doom emacs's adga for the keybindings
-  ;; enable agda for markdown files
-  (add-to-list 'auto-mode-alist '("\\.lagda.md\\'" . agda2-mode)))
 
 ;; add qemu include path for flycheck
 (add-hook 'c-mode-hook
@@ -187,26 +188,29 @@
 ;;; Keybindings
 
 (map!
- ;; use meta-number (alt-number) to jump to tab
  (:when (featurep! :ui tabs)
-  :g "M-1" nil
-  :g "M-2" nil
-  :g "M-3" nil
-  :g "M-4" nil
-  :g "M-5" nil
-  :g "M-6" nil
-  :g "M-7" nil
-  :g "M-8" nil
-  :g "M-9" nil
-  :n "M-1" (lambda () (interactive) (+tabs:next-or-goto 1))
-  :n "M-2" (lambda () (interactive) (+tabs:next-or-goto 2))
-  :n "M-3" (lambda () (interactive) (+tabs:next-or-goto 3))
-  :n "M-4" (lambda () (interactive) (+tabs:next-or-goto 4))
-  :n "M-5" (lambda () (interactive) (+tabs:next-or-goto 5))
-  :n "M-6" (lambda () (interactive) (+tabs:next-or-goto 6))
-  :n "M-7" (lambda () (interactive) (+tabs:next-or-goto 7))
-  :n "M-8" (lambda () (interactive) (+tabs:next-or-goto 8))
-  :n "M-9" (lambda () (interactive) (+tabs:next-or-goto 9)))
+  ;; use meta-number (alt-number) to jump to tab
+  :g "M-1" (lambda () (interactive) (+tabs:next-or-goto 1))
+  :g "M-2" (lambda () (interactive) (+tabs:next-or-goto 2))
+  :g "M-3" (lambda () (interactive) (+tabs:next-or-goto 3))
+  :g "M-4" (lambda () (interactive) (+tabs:next-or-goto 4))
+  :g "M-5" (lambda () (interactive) (+tabs:next-or-goto 5))
+  :g "M-6" (lambda () (interactive) (+tabs:next-or-goto 6))
+  :g "M-7" (lambda () (interactive) (+tabs:next-or-goto 7))
+  :g "M-8" (lambda () (interactive) (+tabs:next-or-goto 8))
+  :g "M-9" (lambda () (interactive) (+tabs:next-or-goto 9))
+
+  ;; use SPC-number to jump to tab
+  (:leader
+   :desc "Buffer tab 1" :n "1" (lambda () (interactive) (+tabs:next-or-goto 1))
+   :desc "Buffer tab 2" :n "2" (lambda () (interactive) (+tabs:next-or-goto 2))
+   :desc "Buffer tab 3" :n "3" (lambda () (interactive) (+tabs:next-or-goto 3))
+   :desc "Buffer tab 4" :n "4" (lambda () (interactive) (+tabs:next-or-goto 4))
+   :desc "Buffer tab 5" :n "5" (lambda () (interactive) (+tabs:next-or-goto 5))
+   :desc "Buffer tab 6" :n "6" (lambda () (interactive) (+tabs:next-or-goto 6))
+   :desc "Buffer tab 7" :n "7" (lambda () (interactive) (+tabs:next-or-goto 7))
+   :desc "Buffer tab 8" :n "8" (lambda () (interactive) (+tabs:next-or-goto 8))
+   :desc "Buffer tab 9" :n "9" (lambda () (interactive) (+tabs:next-or-goto 9))))
 
  ;; cmd-shift-[/] to switch workspace
  :g "s-{" #'+workspace/switch-left
@@ -216,6 +220,10 @@
  :g "s-w" #'kill-current-buffer
  ;; cmd-d to kill workspace
  :g "s-d" #'+workspace/delete
+
+ (:mode org-mode
+  ;; cmd-k to link in org mode
+  :g "s-k" #'org-insert-link)
 
  ;; disable evil-lion bindings that conflict with org mode
  :n "gl" nil
@@ -247,26 +255,28 @@
 
 ;;; General emacs settings
 
-(setq which-key-idle-delay 1.0)
-
-(setq delete-by-moving-to-trash nil)
+(setq
+ delete-by-moving-to-trash nil
+ evil-emacs-state-cursor '("red" bar))
 
 ;; group tabs by project
 (defun my--projectile-groups ()
-  ;; only use default group ("-") if it's a *star buffer* or vterm shell
-  (if-let ((buf-name (buffer-name))
-           (buf-name-first (substring buf-name 0 1))
-           (vterm-or-star-buffer-p
-            (or (string-equal
-                 buf-name-first
-                 "*")
-                (string-equal
-                 (buffer-local-value 'major-mode (current-buffer))
-                 "vterm-mode"))))
-      (list "*")
-    (if-let ((projectile-name (projectile-project-name)))
-        (list projectile-name)
-      (list "default"))))
+  (let* ((buf (buffer-name))
+         (star-buffer-p (string-equal (substring buf 0 1) "*"))
+         (mode (buffer-local-value 'major-mode (current-buffer))))
+    (cond
+     ;; group org-agenda-mode buffers with org mode
+     ((string-equal mode "org-agenda-mode")
+      '("org"))
+     ;; use default group ("-") for vterm shells
+     ((string-equal mode "vterm-mode")
+      '("-"))
+     ;; use default group ("-") for *star* buffers
+     (star-buffer-p
+      '("-"))
+     ;; otherwise use whatever projectile-name says
+     (t
+      (list (projectile-project-name))))))
 (setq centaur-tabs-buffer-groups-function #'my--projectile-groups)
 
 
@@ -314,3 +324,7 @@
          (selected-value (apply #'completing-read prompt snippet-data args)))
     (alist-get selected-value snippet-data nil nil 'equal)))
 (advice-add '+snippet--completing-read-uuid :override #'my--yas-snippet--completing-read-uuid)
+
+;; flash the cursor after an org agenda jump to file
+(advice-add 'org-agenda-switch-to :after #'+nav-flash/blink-cursor)
+(advice-add 'org-agenda-goto :after #'+nav-flash/blink-cursor)

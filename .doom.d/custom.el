@@ -5,9 +5,12 @@
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
    '("1bddd01e6851f5c4336f7d16c56934513d41cc3d0233863760d1798e74809b4b" default))
+ '(org-agenda-files (list "~/Documents/org/agenda.org" "~/Documents/org/projects/"))
+ '(org-directory "~/Documents/org/")
  '(package-selected-packages '(processing-mode nov))
  '(warning-suppress-types
-   '((c++-mode-local-vars-hook)
+   '((auto-save)
+     (c++-mode-local-vars-hook)
      (c++-mode-local-vars-hook)
      (c++-mode-local-vars-hook)
      (before-save-hook)

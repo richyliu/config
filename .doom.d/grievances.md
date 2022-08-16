@@ -1,6 +1,7 @@
 # Grievances
 
 - **vterm windows killed when switching to other tab (more than 1 vterm window)**
+    - look into `SPC o t` and `SPC o T`
 - paste without indent (`]p`)
     - https://github.com/emacs-evil/evil/issues/464
     - https://github.com/doomemacs/doomemacs/blob/develop/modules/editor/evil/config.el#L413-L460
