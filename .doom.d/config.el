@@ -104,14 +104,16 @@
   :bind (("M-TAB" . 'copilot-accept-completion)
          ("M-<tab>" . 'copilot-accept-completion)))
 (after! copilot
-  (setq copilot-node-executable "/usr/local/bin/node16")
-  ;; to reduce memory use; can increase for debugging
-  (setq copilot-log-max 50))
+  (setq
+   copilot-node-executable "/usr/local/bin/node16"
+   ;; to reduce memory use; can increase for debugging
+   copilot-log-max 50))
 
 (use-package! elcord)
 (after! elcord
-  (setq elcord-editor-icon "emacs_icon")
-  (setq elcord-quiet t)
+  (setq
+   elcord-editor-icon "emacs_icon"
+   elcord-quiet t)
   (elcord-mode))
 
 (after! irony
@@ -129,9 +131,32 @@
   (add-hook 'nov-mode-hook 'my-nov-font-setup))
 
 (after! org
-  (defun my-disable-company-autocomplete ()
-    (setq-local company-idle-delay nil))
-  (add-hook 'org-mode-hook 'my-disable-company-autocomplete))
+  (with-no-warnings
+    (custom-declare-face '+org-todo-maybe '((t (:inherit (bold font-lock-comment-face org-todo)))) ""))
+  (setq
+   org-priority-default ?C
+   org-priority-start-cycle-with-default nil
+   org-log-into-drawer t
+   org-todo-keywords '((sequence "TODO(t)" "LOOP(r)" "NEXT(n)" "IDEA(i)" "MAYBE(m)" "|" "DONE(d@)" "KILL(k!)")
+                       (sequence "[ ](T)" "[-](S)" "[?](W)" "|" "[X](D)"))
+   org-todo-keyword-faces
+   '(("[-]"  . +org-todo-active)
+     ("STRT" . +org-todo-active)
+     ("[?]"  . +org-todo-onhold)
+     ("NEXT" . +org-todo-onhold)
+     ("IDEA" . +org-todo-project)
+     ("MAYBE" . +org-todo-maybe)
+     ("KILL" . +org-todo-cancel))
+   org-agenda-sorting-strategy '((agenda habit-down time-up scheduled-up priority-down todo-state-up category-keep)
+                                 (todo scheduled-up priority-down todo-state-up category-keep)
+                                 (tags priority-down category-keep)
+                                 (search category-keep)))
+  (defun my/org-mode-hook ()
+    (setq-local company-idle-delay nil)
+    (map!
+     ;; go to beginning of line (not including bullets) in org
+     :m "^" #'org-beginning-of-line))
+  (add-hook 'org-mode-hook #'my/org-mode-hook))
 
 (after! vterm
   ;; fix shells
@@ -187,6 +212,20 @@
 
 ;;; Keybindings
 
+(defun my/load-template ()
+  (when (and
+         (string-match
+          (concat "org/journaling/" (format-time-string "%Y%m%d") ".org")
+          (buffer-file-name))
+         (eq 1 (point-max)))
+    ;; insert date snippet if editing today's journal file
+    (insert "#+TITLE: " (format-time-string "%A, %B %e, %Y") ?\n)))
+(add-hook 'find-file-hooks #'my/load-template)
+
+(defun my/open-today-journal ()
+  (interactive)
+  (find-file (concat org-directory "/journaling/" (format-time-string "%Y%m%d") ".org")))
+
 (map!
  (:when (featurep! :ui tabs)
   ;; use meta-number (alt-number) to jump to tab
@@ -237,6 +276,9 @@
                                      (interactive)
                                      (mapc #'kill-buffer (buffer-list))
                                      (cd "~/"))
+  ;; open today's journal file
+  :desc "Open today's journal" "n j" #'my/open-today-journal
+
   (:when (featurep! :ui nav-flash)
    :desc "Blink current line" "b L" #'+nav-flash/blink-cursor)
 
@@ -250,7 +292,19 @@
 
  (:map minibuffer-local-map
   ;; go to normal mode with C-f (like command line edit mode)
-  "C-f" #'evil-normal-state))
+  "C-f" #'evil-normal-state)
+
+ ;; make { and } (paragraph motions) work linewise
+ :o "}" #'(lambda ()
+            (interactive)
+            (evil-visual-line)
+            (evil-forward-paragraph)
+            (evil-visual-line))
+ :o "{" #'(lambda ()
+            (interactive)
+            (evil-visual-line)
+            (evil-backward-paragraph)
+            (evil-visual-line)))
 
 
 ;;; General emacs settings
@@ -267,16 +321,16 @@
     (cond
      ;; group org-agenda-mode buffers with org mode
      ((string-equal mode "org-agenda-mode")
-      '("org"))
+      '("/Users/richard/Documents/org/"))
      ;; use default group ("-") for vterm shells
      ((string-equal mode "vterm-mode")
       '("-"))
      ;; use default group ("-") for *star* buffers
      (star-buffer-p
       '("-"))
-     ;; otherwise use whatever projectile-name says
+     ;; otherwise use projectile root (to separate projects with same name)
      (t
-      (list (projectile-project-name))))))
+      (list (projectile-project-root))))))
 (setq centaur-tabs-buffer-groups-function #'my--projectile-groups)
 
 
