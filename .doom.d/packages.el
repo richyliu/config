@@ -54,8 +54,4 @@
 
 (package! elcord)
 
-(unpin! irony)
-(package! irony
-  :recipe (:host github :repo "richyliu/irony-mode"))
-
 (package! nov)

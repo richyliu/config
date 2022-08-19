@@ -116,20 +116,41 @@
    elcord-quiet t)
   (elcord-mode))
 
+(after! evil-org
+  (remove-hook 'org-tab-first-hook #'+org-cycle-only-current-subtree-h))
+
+(defun my/disable-irony-mode-if-remote ()
+  "Disable irony-mode if the current buffer is on a remote host."
+  (when (and irony-mode
+             buffer-file-name
+             (file-remote-p buffer-file-name))
+    (irony-mode -1)))
 (after! irony
-  (setq irony-disable-over-tramp t))
+  (setq irony-disable-over-tramp t)
+  (add-hook 'irony-mode-hook #'my/disable-irony-mode-if-remote))
+
 
 (after! nov
   ;; use nov for epub
   (add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode))
   (setq nov-text-width 80)
   ;; change font
-  (defun my-nov-font-setup ()
+  (defun my/nov-font-setup ()
     (face-remap-add-relative 'variable-pitch
                              :family "Liberation Serif"
                              :height 1.2))
-  (add-hook 'nov-mode-hook 'my-nov-font-setup))
+  (add-hook 'nov-mode-hook #'my/nov-font-setup))
 
+(defun my/org-mode-hook ()
+  (setq-local
+   company-idle-delay nil
+   ;; use visual line numbers for folded org-mode
+   display-line-numbers 'visual)
+  (map!
+   ;; go to beginning of line (not including bullets) in org
+   :m "^" #'org-beginning-of-line
+   :n "C-j" #'org-next-visible-heading
+   :n "C-k" #'org-previous-visible-heading))
 (after! org
   (with-no-warnings
     (custom-declare-face '+org-todo-maybe '((t (:inherit (bold font-lock-comment-face org-todo)))) ""))
@@ -137,8 +158,10 @@
    org-priority-default ?C
    org-priority-start-cycle-with-default nil
    org-log-into-drawer t
-   org-todo-keywords '((sequence "TODO(t)" "LOOP(r)" "NEXT(n)" "IDEA(i)" "MAYBE(m)" "|" "DONE(d@)" "KILL(k!)")
-                       (sequence "[ ](T)" "[-](S)" "[?](W)" "|" "[X](D)"))
+   org-todo-keywords '((sequence "LOOP(r)" "EVENT(e)" "TODO(t)" "NEXT(n)" "IDEA(i)" "MAYBE(m)" "|"
+                                 "DONE(d@)" "KILL(k!)")
+                       (sequence "[ ](T)" "[-](S)" "[?](W)" "|"
+                                 "[X](D)"))
    org-todo-keyword-faces
    '(("[-]"  . +org-todo-active)
      ("STRT" . +org-todo-active)
@@ -151,13 +174,28 @@
                                  (todo scheduled-up priority-down todo-state-up category-keep)
                                  (tags priority-down category-keep)
                                  (search category-keep)))
-  (defun my/org-mode-hook ()
-    (setq-local company-idle-delay nil)
-    (map!
-     ;; go to beginning of line (not including bullets) in org
-     :m "^" #'org-beginning-of-line))
   (add-hook 'org-mode-hook #'my/org-mode-hook))
 
+(defun my/vterm-keymap-override-setup ()
+  "Make vterm keymaps more usable."
+  ;; vterm map "leader" (to send all ctrl keys)
+  (define-key evil-normal-state-local-map (kbd "C-o") vterm-mode-map)
+  (define-key evil-insert-state-local-map (kbd "C-o") vterm-mode-map)
+  ;; use C-c to send actual C-c
+  (define-key evil-normal-state-local-map (kbd "C-c") #'vterm-send-C-c)
+  (define-key evil-insert-state-local-map (kbd "C-c") #'vterm-send-C-c)
+  ;; copy mode
+  (define-key evil-normal-state-local-map (kbd "C-x c") #'vterm-copy-mode)
+  (define-key evil-insert-state-local-map (kbd "C-x c") #'vterm-copy-mode)
+  ;; toggle send esc
+  (define-key evil-normal-state-local-map (kbd "C-x z") #'evil-collection-vterm-toggle-send-escape)
+  (define-key evil-insert-state-local-map (kbd "C-x z") #'evil-collection-vterm-toggle-send-escape)
+  ;; clear scrollback
+  (define-key evil-normal-state-local-map (kbd "C-x l") #'vterm-clear-scrollback)
+  (define-key evil-insert-state-local-map (kbd "C-x l") #'vterm-clear-scrollback)
+  ;; send ctrl-p/n to vterm directly
+  (define-key evil-normal-state-local-map (kbd "C-p") #'vterm-send-C-p)
+  (define-key evil-normal-state-local-map (kbd "C-n") #'vterm-send-C-n))
 (after! vterm
   ;; fix shells
   (setq vterm-tramp-shells '(("ssh" "/bin/zsh")))
@@ -177,28 +215,7 @@
     "C-x" #'vterm-send-C-x
     "C-y" #'vterm-send-C-y
     ))
-  ;; make vterm keymaps more usage
-  ;; we only want these to take effect inside vterm buffers
-  (defun my-vterm-keymap-override-setup ()
-    ;; vterm map "leader" (to send all ctrl keys)
-    (define-key evil-normal-state-local-map (kbd "C-o") vterm-mode-map)
-    (define-key evil-insert-state-local-map (kbd "C-o") vterm-mode-map)
-    ;; use C-c to send actual C-c
-    (define-key evil-normal-state-local-map (kbd "C-c") #'vterm-send-C-c)
-    (define-key evil-insert-state-local-map (kbd "C-c") #'vterm-send-C-c)
-    ;; copy mode
-    (define-key evil-normal-state-local-map (kbd "C-x c") #'vterm-copy-mode)
-    (define-key evil-insert-state-local-map (kbd "C-x c") #'vterm-copy-mode)
-    ;; toggle send esc
-    (define-key evil-normal-state-local-map (kbd "C-x z") #'evil-collection-vterm-toggle-send-escape)
-    (define-key evil-insert-state-local-map (kbd "C-x z") #'evil-collection-vterm-toggle-send-escape)
-    ;; clear scrollback
-    (define-key evil-normal-state-local-map (kbd "C-x l") #'vterm-clear-scrollback)
-    (define-key evil-insert-state-local-map (kbd "C-x l") #'vterm-clear-scrollback)
-    ;; send ctrl-p/n to vterm directly
-    (define-key evil-normal-state-local-map (kbd "C-p") #'vterm-send-C-p)
-    (define-key evil-normal-state-local-map (kbd "C-n") #'vterm-send-C-n))
-  (add-hook 'vterm-mode-hook #'my-vterm-keymap-override-setup))
+  (add-hook 'vterm-mode-hook #'my/vterm-keymap-override-setup))
 
 ;;; Other package settings
 
@@ -220,7 +237,7 @@
          (eq 1 (point-max)))
     ;; insert date snippet if editing today's journal file
     (insert "#+TITLE: " (format-time-string "%A, %B %e, %Y") ?\n)))
-(add-hook 'find-file-hooks #'my/load-template)
+(add-hook 'find-file-hook #'my/load-template)
 
 (defun my/open-today-journal ()
   (interactive)
@@ -313,8 +330,8 @@
  delete-by-moving-to-trash nil
  evil-emacs-state-cursor '("red" bar))
 
-;; group tabs by project
-(defun my--projectile-groups ()
+(defun my/projectile-groups ()
+  "Group tabs by projectile project."
   (let* ((buf (buffer-name))
          (star-buffer-p (string-equal (substring buf 0 1) "*"))
          (mode (buffer-local-value 'major-mode (current-buffer))))
@@ -331,7 +348,7 @@
      ;; otherwise use projectile root (to separate projects with same name)
      (t
       (list (projectile-project-root))))))
-(setq centaur-tabs-buffer-groups-function #'my--projectile-groups)
+(setq centaur-tabs-buffer-groups-function #'my/projectile-groups)
 
 
 ;;; Mode lists
@@ -342,11 +359,11 @@
 
 ;;; Hooks
 
-(defun my--set-shift-2 ()
+(defun my/set-shift-2 ()
   (setq evil-shift-width 2))
-(add-hook 'html-mode-hook #'my--set-shift-2)
-(add-hook 'css-mode-hook #'my--set-shift-2)
-(add-hook 'js-mode-hook #'my--set-shift-2)
+(add-hook 'html-mode-hook #'my/set-shift-2)
+(add-hook 'css-mode-hook #'my/set-shift-2)
+(add-hook 'js-mode-hook #'my/set-shift-2)
 
 ;; enable folding in text mode
 (add-hook 'text-mode-hook 'turn-on-auto-fill)
@@ -354,18 +371,20 @@
 
 ;;; Advice
 
-;; always cache man-completion-table (even across calls) for faster speed on mac
-(defvar my--Man-cache nil)
-(defun my--Man-completion-always-cache (_string _pred _action)
+(defvar my/Man-cache nil
+  "Cache variable used for `my/Man-completion-always-cache'")
+(defun my/Man-completion-always-cache (_string _pred _action)
+  "Always cache the `Man-completion-cache' (even across calls) for faster speed on mac."
   (if Man-completion-cache
-      (setq my--Man-cache Man-completion-cache)
-    (setq Man-completion-cache my--Man-cache)))
-(advice-add 'Man-completion-table :before #'my--Man-completion-always-cache)
+      (setq my/Man-cache Man-completion-cache)
+    (setq Man-completion-cache my/Man-cache)))
+(advice-add 'Man-completion-table :before #'my/Man-completion-always-cache)
 
-;; fix yas snippet edit
-;; caused by vertico stripping text properties when completing
-;; copied fix from: https://github.com/doomemacs/doomemacs/issues/4127#issuecomment-1019731798
-(defun my--yas-snippet--completing-read-uuid (prompt all-snippets &rest args)
+(defun my/+snippet--completing-read-uuid (prompt all-snippets &rest args)
+  " Fix `+snippets/edit' error caused by vertico stripping text properties when completing.
+
+Overrides `+snippet--completing-read-uuid' to strip text properties.
+Copied fix from: https://github.com/doomemacs/doomemacs/issues/4127#issuecomment-1019731798"
   (let* ((snippet-data (cl-loop for (_ . tpl) in (mapcan #'yas--table-templates (if all-snippets
                                                                                     (hash-table-values yas--tables)
                                                                                   (yas--get-snippet-tables)))
@@ -377,7 +396,7 @@
                                 `(,txt . ,(yas--template-uuid tpl))))
          (selected-value (apply #'completing-read prompt snippet-data args)))
     (alist-get selected-value snippet-data nil nil 'equal)))
-(advice-add '+snippet--completing-read-uuid :override #'my--yas-snippet--completing-read-uuid)
+(advice-add '+snippet--completing-read-uuid :override #'my/+snippet--completing-read-uuid)
 
 ;; flash the cursor after an org agenda jump to file
 (advice-add 'org-agenda-switch-to :after #'+nav-flash/blink-cursor)
