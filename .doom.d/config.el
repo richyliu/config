@@ -119,15 +119,21 @@
 (after! evil-org
   (remove-hook 'org-tab-first-hook #'+org-cycle-only-current-subtree-h))
 
-(defun my/disable-irony-mode-if-remote ()
+(after! flycheck
+  ;; add qemu include path for flycheck
+  (add-hook 'c-mode-hook
+            (lambda () (setq flycheck-clang-include-path
+                             (list (expand-file-name "~/code/neojetset-qemu/include")
+                                   (expand-file-name "~/code/neojetset-qemu/build")
+                                   )))))
+
+;; override irony-mode to enable only for non-TRAMP files
+(defun my/disable-irony-mode-if-remote (oldfun &rest args)
   "Disable irony-mode if the current buffer is on a remote host."
-  (when (and irony-mode
-             buffer-file-name
-             (file-remote-p buffer-file-name))
-    (irony-mode -1)))
+  (unless (and buffer-file-name (file-remote-p buffer-file-name))
+    (apply oldfun args)))
 (after! irony
-  (setq irony-disable-over-tramp t)
-  (add-hook 'irony-mode-hook #'my/disable-irony-mode-if-remote))
+  (advice-add #'irony-mode :around #'my/disable-irony-mode-if-remote))
 
 
 (after! nov
@@ -158,10 +164,8 @@
    org-priority-default ?C
    org-priority-start-cycle-with-default nil
    org-log-into-drawer t
-   org-todo-keywords '((sequence "LOOP(r)" "EVENT(e)" "TODO(t)" "NEXT(n)" "IDEA(i)" "MAYBE(m)" "|"
-                                 "DONE(d@)" "KILL(k!)")
-                       (sequence "[ ](T)" "[-](S)" "[?](W)" "|"
-                                 "[X](D)"))
+   org-todo-keywords '((sequence "LOOP(r)" "EVENT(e)" "TODO(t)" "NEXT(n)" "IDEA(i)" "MAYBE(m)" "|" "DONE(d@)")
+                       (sequence "[ ](T)" "|" "[X](D)"))
    org-todo-keyword-faces
    '(("[-]"  . +org-todo-active)
      ("STRT" . +org-todo-active)
@@ -174,7 +178,10 @@
                                  (todo scheduled-up priority-down todo-state-up category-keep)
                                  (tags priority-down category-keep)
                                  (search category-keep)))
-  (add-hook 'org-mode-hook #'my/org-mode-hook))
+  (add-hook 'org-mode-hook #'my/org-mode-hook)
+  ;; flash the cursor after an org agenda jump to file
+  (advice-add 'org-agenda-switch-to :after #'+nav-flash/blink-cursor)
+  (advice-add 'org-agenda-goto :after #'+nav-flash/blink-cursor))
 
 (defun my/vterm-keymap-override-setup ()
   "Make vterm keymaps more usable."
@@ -217,15 +224,24 @@
     ))
   (add-hook 'vterm-mode-hook #'my/vterm-keymap-override-setup))
 
-;;; Other package settings
+(defun my/+snippet--completing-read-uuid (prompt all-snippets &rest args)
+    " Fix `+snippets/edit' error caused by vertico stripping text properties when completing.
 
-;; add qemu include path for flycheck
-(add-hook 'c-mode-hook
-          (lambda () (setq flycheck-clang-include-path
-                           (list (expand-file-name "~/code/neojetset-qemu/include")
-                                 (expand-file-name "~/code/neojetset-qemu/build")
-                                 ))))
-
+Overrides `+snippet--completing-read-uuid' to strip text properties.
+Copied fix from: https://github.com/doomemacs/doomemacs/issues/4127#issuecomment-1019731798"
+    (let* ((snippet-data (cl-loop for (_ . tpl) in (mapcan #'yas--table-templates (if all-snippets
+                                                                                      (hash-table-values yas--tables)
+                                                                                    (yas--get-snippet-tables)))
+                                  for txt = (format "%-25s%-30s%s"
+                                                    (yas--template-key tpl)
+                                                    (yas--template-name tpl)
+                                                    (abbreviate-file-name (yas--template-load-file tpl)))
+                                  collect
+                                  `(,txt . ,(yas--template-uuid tpl))))
+           (selected-value (apply #'completing-read prompt snippet-data args)))
+      (alist-get selected-value snippet-data nil nil 'equal)))
+(after! yasnippet
+  (advice-add '+snippet--completing-read-uuid :override #'my/+snippet--completing-read-uuid))
 
 ;;; Keybindings
 
@@ -243,8 +259,15 @@
   (interactive)
   (find-file (concat org-directory "/journaling/" (format-time-string "%Y%m%d") ".org")))
 
+(defun my/reset-doom ()
+  "Kill all buffers in buffer-list and cd back to home"
+  (interactive)
+  (mapc #'kill-buffer (buffer-list))
+  (cd "~/")
+  (delete-other-windows))
+
 (map!
- (:when (featurep! :ui tabs)
+ (:when (modulep! :ui tabs)
   ;; use meta-number (alt-number) to jump to tab
   :g "M-1" (lambda () (interactive) (+tabs:next-or-goto 1))
   :g "M-2" (lambda () (interactive) (+tabs:next-or-goto 2))
@@ -288,18 +311,14 @@
  :i "C-<tab>" nil
 
  (:leader
-  :desc "Kill all buffers" "q a" #'(lambda ()
-                                     "Kill all buffers in buffer-list and cd back to home"
-                                     (interactive)
-                                     (mapc #'kill-buffer (buffer-list))
-                                     (cd "~/"))
+  :desc "Kill all buffers" "q a" #'my/reset-doom
   ;; open today's journal file
   :desc "Open today's journal" "n j" #'my/open-today-journal
 
-  (:when (featurep! :ui nav-flash)
+  (:when (modulep! :ui nav-flash)
    :desc "Blink current line" "b L" #'+nav-flash/blink-cursor)
 
-  (:when (featurep! :term vterm)
+  (:when (modulep! :term vterm)
    :desc "Open projectile vterm" "p v" #'projectile-run-vterm
    :desc "Open vterm buffer" "b v" #'vterm))
 
@@ -351,13 +370,9 @@
 (setq centaur-tabs-buffer-groups-function #'my/projectile-groups)
 
 
-;;; Mode lists
-
 ;; set C mode for .cpc files
 (add-to-list 'auto-mode-alist '("\\.cpc\\'" . c-mode))
 
-
-;;; Hooks
 
 (defun my/set-shift-2 ()
   (setq evil-shift-width 2))
@@ -369,8 +384,6 @@
 (add-hook 'text-mode-hook 'turn-on-auto-fill)
 
 
-;;; Advice
-
 (defvar my/Man-cache nil
   "Cache variable used for `my/Man-completion-always-cache'")
 (defun my/Man-completion-always-cache (_string _pred _action)
@@ -379,25 +392,3 @@
       (setq my/Man-cache Man-completion-cache)
     (setq Man-completion-cache my/Man-cache)))
 (advice-add 'Man-completion-table :before #'my/Man-completion-always-cache)
-
-(defun my/+snippet--completing-read-uuid (prompt all-snippets &rest args)
-  " Fix `+snippets/edit' error caused by vertico stripping text properties when completing.
-
-Overrides `+snippet--completing-read-uuid' to strip text properties.
-Copied fix from: https://github.com/doomemacs/doomemacs/issues/4127#issuecomment-1019731798"
-  (let* ((snippet-data (cl-loop for (_ . tpl) in (mapcan #'yas--table-templates (if all-snippets
-                                                                                    (hash-table-values yas--tables)
-                                                                                  (yas--get-snippet-tables)))
-                                for txt = (format "%-25s%-30s%s"
-                                                  (yas--template-key tpl)
-                                                  (yas--template-name tpl)
-                                                  (abbreviate-file-name (yas--template-load-file tpl)))
-                                collect
-                                `(,txt . ,(yas--template-uuid tpl))))
-         (selected-value (apply #'completing-read prompt snippet-data args)))
-    (alist-get selected-value snippet-data nil nil 'equal)))
-(advice-add '+snippet--completing-read-uuid :override #'my/+snippet--completing-read-uuid)
-
-;; flash the cursor after an org agenda jump to file
-(advice-add 'org-agenda-switch-to :after #'+nav-flash/blink-cursor)
-(advice-add 'org-agenda-goto :after #'+nav-flash/blink-cursor)
