@@ -49,7 +49,7 @@
 
 ;; If you use `org' and don't want your org files in the default location below,
 ;; change `org-directory'. It must be set before org loads!
-(setq org-directory "~/org/")
+(setq org-directory "/Users/richard/Documents/org/")
 
 
 ;; Whenever you reconfigure a package, make sure to wrap your config in an
@@ -97,6 +97,31 @@
            :tls t
            :nick "richyliu2"
            :channels ("#emacs" "#emacs-beginners" "#emacs-til")))))
+
+(defun my/projectile-groups ()
+  "Group tabs by projectile project."
+  (cond
+   ;; group org-agenda-mode buffers with org mode
+   ((string-equal major-mode "org-agenda-mode")
+    (list org-directory))
+   ;; use default group ("-") for vterm shells
+   ((string-equal major-mode "vterm-mode")
+    '("-"))
+   ;; use default group ("-") for *star* buffers
+   ((string-equal (substring (buffer-name) 0 1) "*")
+    '("-"))
+   ;; hide certain org buffers
+   ((and (string-equal (projectile-project-root) org-directory)
+         (or (member (buffer-name) '("inbox.org" "notes.org" "journal.org"))
+             (string-match-p "_archive$" (buffer-name))))
+    (list (concat org-directory "--hidden")))
+   ;; otherwise use projectile root (to separate projects with same name)
+   (t
+    (list (projectile-project-root)))))
+(after! centaur-tabs
+  (setq centaur-tabs-buffer-groups-function #'my/projectile-groups))
+(centaur-tabs-mode 1)
+
 
 ;; use ctrl-tab to accept copilot completion
 (use-package! copilot
@@ -161,6 +186,7 @@
   (with-no-warnings
     (custom-declare-face '+org-todo-maybe '((t (:inherit (bold font-lock-comment-face org-todo)))) ""))
   (setq
+   org-agenda-files '("inbox.org" "agenda.org")
    org-priority-default ?C
    org-priority-start-cycle-with-default nil
    org-log-into-drawer t
@@ -174,10 +200,34 @@
      ("IDEA" . +org-todo-project)
      ("MAYBE" . +org-todo-maybe)
      ("KILL" . +org-todo-cancel))
-   org-agenda-sorting-strategy '((agenda habit-down time-up scheduled-up priority-down todo-state-up category-keep)
-                                 (todo scheduled-up priority-down todo-state-up category-keep)
-                                 (tags priority-down category-keep)
-                                 (search category-keep)))
+   org-agenda-sorting-strategy '((agenda time-up category-keep scheduled-up priority-down todo-state-up)
+                                 (todo category-keep todo-state-up scheduled-up priority-down)
+                                 (tags category-keep scheduled-up priority-down todo-state-up)
+                                 (search category-keep))
+   +org-capture-todo-file "inbox.org"
+   org-capture-templates '(("t" "Personal todo" entry
+                            (file +org-capture-todo-file)
+                            "* TODO %?\n%T\n%i\n%a")
+                           ("n" "Personal notes" entry
+                            (file+headline +org-capture-notes-file "Inbox")
+                            "* %u %?\n%i\n%a" :prepend t)
+                           ("j" "Journal" entry
+                            (file+olp+datetree +org-capture-journal-file)
+                            "* %U %?\n%i\n%a" :prepend t)
+                           ("p" "Templates for projects")
+                           ("pt" "Project-local todo" entry
+                            (file+headline +org-capture-project-todo-file "Inbox")
+                            "* TODO %?\n%i\n%a" :prepend t)
+                           ("pn" "Project-local notes" entry
+                            (file+headline +org-capture-project-notes-file "Inbox")
+                            "* %U %?\n%i\n%a" :prepend t)
+                           ("pc" "Project-local changelog" entry
+                            (file+headline +org-capture-project-changelog-file "Unreleased")
+                            "* %U %?\n%i\n%a" :prepend t)
+                           ("o" "Centralized templates for projects")
+                           ("ot" "Project todo" entry #'+org-capture-central-project-todo-file "* TODO %?\n %i\n %a" :heading "Tasks" :prepend nil)
+                           ("on" "Project notes" entry #'+org-capture-central-project-notes-file "* %U %?\n %i\n %a" :heading "Notes" :prepend t)
+                           ("oc" "Project changelog" entry #'+org-capture-central-project-changelog-file "* %U %?\n %i\n %a" :heading "Changelog" :prepend t)))
   (add-hook 'org-mode-hook #'my/org-mode-hook)
   ;; flash the cursor after an org agenda jump to file
   (advice-add 'org-agenda-switch-to :after #'+nav-flash/blink-cursor)
@@ -245,20 +295,6 @@ Copied fix from: https://github.com/doomemacs/doomemacs/issues/4127#issuecomment
 
 ;;; Keybindings
 
-(defun my/load-template ()
-  (when (and
-         (string-match
-          (concat "org/journaling/" (format-time-string "%Y%m%d") ".org")
-          (buffer-file-name))
-         (eq 1 (point-max)))
-    ;; insert date snippet if editing today's journal file
-    (insert "#+TITLE: " (format-time-string "%A, %B %e, %Y") ?\n)))
-(add-hook 'find-file-hook #'my/load-template)
-
-(defun my/open-today-journal ()
-  (interactive)
-  (find-file (concat org-directory "/journaling/" (format-time-string "%Y%m%d") ".org")))
-
 (defun my/reset-doom ()
   "Kill all buffers in buffer-list and cd back to home"
   (interactive)
@@ -266,30 +302,48 @@ Copied fix from: https://github.com/doomemacs/doomemacs/issues/4127#issuecomment
   (cd "~/")
   (delete-other-windows))
 
+(defmacro my/goto-tab-n (n)
+  `(lambda ()
+     "Goto tab N"
+     (interactive)
+     (+tabs:next-or-goto ,n)))
+
 (map!
  (:when (modulep! :ui tabs)
   ;; use meta-number (alt-number) to jump to tab
-  :g "M-1" (lambda () (interactive) (+tabs:next-or-goto 1))
-  :g "M-2" (lambda () (interactive) (+tabs:next-or-goto 2))
-  :g "M-3" (lambda () (interactive) (+tabs:next-or-goto 3))
-  :g "M-4" (lambda () (interactive) (+tabs:next-or-goto 4))
-  :g "M-5" (lambda () (interactive) (+tabs:next-or-goto 5))
-  :g "M-6" (lambda () (interactive) (+tabs:next-or-goto 6))
-  :g "M-7" (lambda () (interactive) (+tabs:next-or-goto 7))
-  :g "M-8" (lambda () (interactive) (+tabs:next-or-goto 8))
-  :g "M-9" (lambda () (interactive) (+tabs:next-or-goto 9))
+  :g "M-1" (my/goto-tab-n 1)
+  :g "M-2" (my/goto-tab-n 2)
+  :g "M-3" (my/goto-tab-n 3)
+  :g "M-4" (my/goto-tab-n 4)
+  :g "M-5" (my/goto-tab-n 5)
+  :g "M-6" (my/goto-tab-n 6)
+  :g "M-7" (my/goto-tab-n 7)
+  :g "M-8" (my/goto-tab-n 8)
+  :g "M-9" (my/goto-tab-n 9)
 
   ;; use SPC-number to jump to tab
   (:leader
-   :desc "Buffer tab 1" :n "1" (lambda () (interactive) (+tabs:next-or-goto 1))
-   :desc "Buffer tab 2" :n "2" (lambda () (interactive) (+tabs:next-or-goto 2))
-   :desc "Buffer tab 3" :n "3" (lambda () (interactive) (+tabs:next-or-goto 3))
-   :desc "Buffer tab 4" :n "4" (lambda () (interactive) (+tabs:next-or-goto 4))
-   :desc "Buffer tab 5" :n "5" (lambda () (interactive) (+tabs:next-or-goto 5))
-   :desc "Buffer tab 6" :n "6" (lambda () (interactive) (+tabs:next-or-goto 6))
-   :desc "Buffer tab 7" :n "7" (lambda () (interactive) (+tabs:next-or-goto 7))
-   :desc "Buffer tab 8" :n "8" (lambda () (interactive) (+tabs:next-or-goto 8))
-   :desc "Buffer tab 9" :n "9" (lambda () (interactive) (+tabs:next-or-goto 9))))
+   :desc "Buffer tab 1" :n "1" (my/goto-tab-n 1)
+   :desc "Buffer tab 2" :n "2" (my/goto-tab-n 2)
+   :desc "Buffer tab 3" :n "3" (my/goto-tab-n 3)
+   :desc "Buffer tab 4" :n "4" (my/goto-tab-n 4)
+   :desc "Buffer tab 5" :n "5" (my/goto-tab-n 5)
+   :desc "Buffer tab 6" :n "6" (my/goto-tab-n 6)
+   :desc "Buffer tab 7" :n "7" (my/goto-tab-n 7)
+   :desc "Buffer tab 8" :n "8" (my/goto-tab-n 8)
+   :desc "Buffer tab 9" :n "9" (my/goto-tab-n 9)))
+
+ (:when (modulep! :ui workspaces)
+  :g "s-1" #'+workspace/switch-to-0
+  :g "s-2" #'+workspace/switch-to-1
+  :g "s-3" #'+workspace/switch-to-2
+  :g "s-4" #'+workspace/switch-to-3
+  :g "s-5" #'+workspace/switch-to-4
+  :g "s-6" #'+workspace/switch-to-5
+  :g "s-7" #'+workspace/switch-to-6
+  :g "s-8" #'+workspace/switch-to-7
+  :g "s-9" #'+workspace/switch-to-final)
+
 
  ;; cmd-shift-[/] to switch workspace
  :g "s-{" #'+workspace/switch-left
@@ -312,8 +366,10 @@ Copied fix from: https://github.com/doomemacs/doomemacs/issues/4127#issuecomment
 
  (:leader
   :desc "Kill all buffers" "q a" #'my/reset-doom
-  ;; open today's journal file
-  :desc "Open today's journal" "n j" #'my/open-today-journal
+  :desc "Sync org with remote" "n r" (lambda ()
+                                       (interactive)
+                                       (call-process (concat org-directory "beorg_sync.sh"))
+                                       (message "Synced org with remote"))
 
   (:when (modulep! :ui nav-flash)
    :desc "Blink current line" "b L" #'+nav-flash/blink-cursor)
@@ -348,27 +404,6 @@ Copied fix from: https://github.com/doomemacs/doomemacs/issues/4127#issuecomment
 (setq
  delete-by-moving-to-trash nil
  evil-emacs-state-cursor '("red" bar))
-
-(defun my/projectile-groups ()
-  "Group tabs by projectile project."
-  (let* ((buf (buffer-name))
-         (star-buffer-p (string-equal (substring buf 0 1) "*"))
-         (mode (buffer-local-value 'major-mode (current-buffer))))
-    (cond
-     ;; group org-agenda-mode buffers with org mode
-     ((string-equal mode "org-agenda-mode")
-      '("/Users/richard/Documents/org/"))
-     ;; use default group ("-") for vterm shells
-     ((string-equal mode "vterm-mode")
-      '("-"))
-     ;; use default group ("-") for *star* buffers
-     (star-buffer-p
-      '("-"))
-     ;; otherwise use projectile root (to separate projects with same name)
-     (t
-      (list (projectile-project-root))))))
-(setq centaur-tabs-buffer-groups-function #'my/projectile-groups)
-
 
 ;; set C mode for .cpc files
 (add-to-list 'auto-mode-alist '("\\.cpc\\'" . c-mode))
