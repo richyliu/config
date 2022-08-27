@@ -5,7 +5,7 @@
 
 (setq initial-frame-alist
       (append initial-frame-alist
-              '((width . 145)
+              '((width . 155)
                 (height . 70))))
 
 ;; Some functionality uses this to identify you, e.g. GPG configuration, email
@@ -177,20 +177,38 @@
    company-idle-delay nil
    ;; use visual line numbers for folded org-mode
    display-line-numbers 'visual)
-  (map!
-   ;; go to beginning of line (not including bullets) in org
-   :m "^" #'org-beginning-of-line
-   :n "C-j" #'org-next-visible-heading
-   :n "C-k" #'org-previous-visible-heading))
+  ;; rebind ZZ and ZQ to save note
+  (if (string-equal (buffer-name) "*Org Note*")
+      (progn
+        (define-key evil-normal-state-local-map (kbd "Z Z")
+          #'(lambda ()
+              "Close and file note"
+              (interactive)
+              (funcall org-finish-function)))
+        (define-key evil-normal-state-local-map (kbd "Z Q")
+          #'(lambda ()
+              "Abort storing current note"
+              (interactive)
+              (let ((org-note-abort t))
+                (funcall org-finish-function))))))
+  ;; enable auto-revert-mode for inbox.org file only
+  (when (string-equal (buffer-name) "inbox.org")
+    (auto-revert-mode 1)))
 (after! org
   (with-no-warnings
     (custom-declare-face '+org-todo-maybe '((t (:inherit (bold font-lock-comment-face org-todo)))) ""))
   (setq
    org-agenda-files '("inbox.org" "agenda.org")
    org-priority-default ?C
+   org-priority-highest ?A
+   org-priority-lowest ?D
+   org-priority-faces '((?A . error)
+                        (?B . warning)
+                        (?C . success)
+                        (?D . font-lock-comment-face))
    org-priority-start-cycle-with-default nil
    org-log-into-drawer t
-   org-todo-keywords '((sequence "LOOP(r)" "EVENT(e)" "TODO(t)" "NEXT(n)" "IDEA(i)" "MAYBE(m)" "|" "DONE(d@)")
+   org-todo-keywords '((sequence "LOOP(r)" "EVENT(e)" "TODO(t)" "NEXT(n)" "IDEA(i)" "MAYBE(m)" "|" "DONE(d@)" "KILL(k@)")
                        (sequence "[ ](T)" "|" "[X](D)"))
    org-todo-keyword-faces
    '(("[-]"  . +org-todo-active)
@@ -200,14 +218,21 @@
      ("IDEA" . +org-todo-project)
      ("MAYBE" . +org-todo-maybe)
      ("KILL" . +org-todo-cancel))
-   org-agenda-sorting-strategy '((agenda time-up category-keep scheduled-up priority-down todo-state-up)
-                                 (todo category-keep todo-state-up scheduled-up priority-down)
+   org-agenda-sorting-strategy '((agenda time-up category-keep scheduled-up todo-state-up priority-down)
+                                 (todo category-keep todo-state-up priority-down ts-up)
                                  (tags category-keep scheduled-up priority-down todo-state-up)
                                  (search category-keep))
+   org-agenda-prefix-format '((agenda . " %i %?-12t% s")
+                              (todo . " %i %-8:c")
+                              (tags . " %i %-8:c")
+                              (search . " %i %-8:c"))
    +org-capture-todo-file "inbox.org"
    org-capture-templates '(("t" "Personal todo" entry
                             (file +org-capture-todo-file)
                             "* TODO %?\n%T\n%i\n%a")
+                           ("T" "Immediate todo" entry
+                            (file+headline "agenda.org" "General")
+                            "* TODO %?\nSCHEDULED: %t")
                            ("n" "Personal notes" entry
                             (file+headline +org-capture-notes-file "Inbox")
                             "* %u %?\n%i\n%a" :prepend t)
@@ -300,7 +325,9 @@ Copied fix from: https://github.com/doomemacs/doomemacs/issues/4127#issuecomment
   (interactive)
   (mapc #'kill-buffer (buffer-list))
   (cd "~/")
-  (delete-other-windows))
+  (delete-other-windows)
+  ;; delete all workspaces
+  (mapc #'+workspace/delete (+workspace-list-names)))
 
 (defmacro my/goto-tab-n (n)
   `(lambda ()
@@ -358,6 +385,20 @@ Copied fix from: https://github.com/doomemacs/doomemacs/issues/4127#issuecomment
   ;; cmd-k to link in org mode
   :g "s-k" #'org-insert-link)
 
+ (:map evil-org-mode-map
+  ;; go to beginning of line (not including bullets) in org
+  :m "^" #'org-beginning-of-line
+  :n "C-j" #'org-next-visible-heading
+  :n "C-k" #'org-previous-visible-heading)
+ (:map org-agenda-mode-map
+  "c s" #'org-agenda-schedule
+  "c d" #'org-agenda-deadline
+  "s-s" #'org-save-all-org-buffers
+  (:leader "f s" #'org-save-all-org-buffers))
+ (:map org-capture-mode-map
+  "Z Z" #'org-capture-finalize
+  "Z Q" #'org-capture-kill)
+
  ;; disable evil-lion bindings that conflict with org mode
  :n "gl" nil
 
@@ -376,7 +417,10 @@ Copied fix from: https://github.com/doomemacs/doomemacs/issues/4127#issuecomment
 
   (:when (modulep! :term vterm)
    :desc "Open projectile vterm" "p v" #'projectile-run-vterm
-   :desc "Open vterm buffer" "b v" #'vterm))
+   :desc "Open vterm buffer" "b v" #'vterm)
+
+  (:when (modulep! :tools magit)
+   :desc "Stage all" "g a" #'magit-stage-modified))
 
  (:map evil-window-map
   ;; unmap SPC w C-h so it can run help instead
@@ -385,6 +429,10 @@ Copied fix from: https://github.com/doomemacs/doomemacs/issues/4127#issuecomment
  (:map minibuffer-local-map
   ;; go to normal mode with C-f (like command line edit mode)
   "C-f" #'evil-normal-state)
+
+ (:map org-mode-map
+  :localleader
+  :desc "Add note" :n "N" #'org-add-note)
 
  ;; make { and } (paragraph motions) work linewise
  :o "}" #'(lambda ()
