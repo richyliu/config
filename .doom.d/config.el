@@ -33,7 +33,7 @@
 ;; refresh your font settings. If Emacs still can't find your font, it likely
 ;; wasn't installed correctly. Font issues are rarely Doom issues!
 (setq doom-font (font-spec
-                 :family "iosevka ss07"
+                 :family "iosevka term ss07"
                  :width 'expanded
                  :size 15
                  ))
@@ -142,6 +142,12 @@
   (elcord-mode))
 
 (after! evil-org
+  (map!
+   (:map evil-org-mode-map
+    ;; go to beginning of line (not including bullets) in org
+    :m "^" #'org-beginning-of-line
+    :n "C-j" #'org-next-visible-heading
+    :n "C-k" #'org-previous-visible-heading))
   (remove-hook 'org-tab-first-hook #'+org-cycle-only-current-subtree-h))
 
 (after! flycheck
@@ -160,6 +166,8 @@
 (after! irony
   (advice-add #'irony-mode :around #'my/disable-irony-mode-if-remote))
 
+(after! latex-preview-pane
+  (setq preview-orientation 'down))
 
 (after! nov
   ;; use nov for epub
@@ -208,7 +216,7 @@
                         (?D . font-lock-comment-face))
    org-priority-start-cycle-with-default nil
    org-log-into-drawer t
-   org-todo-keywords '((sequence "LOOP(r)" "EVENT(e)" "TODO(t)" "NEXT(n)" "IDEA(i)" "MAYBE(m)" "|" "DONE(d@)" "KILL(k@)")
+   org-todo-keywords '((sequence "LOOP(l)" "EVENT(e)" "TODO(t)" "NEXT(n)" "IDEA(i)" "MAYBE(m)" "|" "DONE(d@)" "KILL(k@)")
                        (sequence "[ ](T)" "|" "[X](D)"))
    org-todo-keyword-faces
    '(("[-]"  . +org-todo-active)
@@ -253,6 +261,15 @@
                            ("ot" "Project todo" entry #'+org-capture-central-project-todo-file "* TODO %?\n %i\n %a" :heading "Tasks" :prepend nil)
                            ("on" "Project notes" entry #'+org-capture-central-project-notes-file "* %U %?\n %i\n %a" :heading "Notes" :prepend t)
                            ("oc" "Project changelog" entry #'+org-capture-central-project-changelog-file "* %U %?\n %i\n %a" :heading "Changelog" :prepend t)))
+  (map!
+   (:map org-agenda-mode-map
+    "c s" #'org-agenda-schedule
+    "c d" #'org-agenda-deadline
+    "s-s" #'org-save-all-org-buffers
+    (:leader "f s" #'org-save-all-org-buffers))
+   (:map org-capture-mode-map
+    "Z Z" #'org-capture-finalize
+    "Z Q" #'org-capture-kill))
   (add-hook 'org-mode-hook #'my/org-mode-hook)
   ;; flash the cursor after an org agenda jump to file
   (advice-add 'org-agenda-switch-to :after #'+nav-flash/blink-cursor)
@@ -385,19 +402,8 @@ Copied fix from: https://github.com/doomemacs/doomemacs/issues/4127#issuecomment
   ;; cmd-k to link in org mode
   :g "s-k" #'org-insert-link)
 
- (:map evil-org-mode-map
-  ;; go to beginning of line (not including bullets) in org
-  :m "^" #'org-beginning-of-line
-  :n "C-j" #'org-next-visible-heading
-  :n "C-k" #'org-previous-visible-heading)
- (:map org-agenda-mode-map
-  "c s" #'org-agenda-schedule
-  "c d" #'org-agenda-deadline
-  "s-s" #'org-save-all-org-buffers
-  (:leader "f s" #'org-save-all-org-buffers))
- (:map org-capture-mode-map
-  "Z Z" #'org-capture-finalize
-  "Z Q" #'org-capture-kill)
+ (:map LaTeX-mode-map
+  :localleader :n "r" #'latex-preview-pane-mode)
 
  ;; disable evil-lion bindings that conflict with org mode
  :n "gl" nil
