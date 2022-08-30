@@ -216,16 +216,17 @@
                         (?D . font-lock-comment-face))
    org-priority-start-cycle-with-default nil
    org-log-into-drawer t
-   org-todo-keywords '((sequence "LOOP(l)" "EVENT(e)" "TODO(t)" "NEXT(n)" "IDEA(i)" "MAYBE(m)" "|" "DONE(d@)" "KILL(k@)")
+   org-todo-keywords '((sequence "EVENT(e)" "TODO(t)" "LOOP(l)" "NEXT(n)" "IDEA(i)" "MAYBE(m)" "LATER(a)" "|" "DONE(d@)" "KILL(k@)")
                        (sequence "[ ](T)" "|" "[X](D)"))
-   org-todo-keyword-faces
-   '(("[-]"  . +org-todo-active)
-     ("STRT" . +org-todo-active)
-     ("[?]"  . +org-todo-onhold)
-     ("NEXT" . +org-todo-onhold)
-     ("IDEA" . +org-todo-project)
-     ("MAYBE" . +org-todo-maybe)
-     ("KILL" . +org-todo-cancel))
+   org-todo-repeat-to-state "LOOP"
+   org-todo-keyword-faces '(("LOOP" . +org-todo-active)
+                            ("[?]"  . +org-todo-onhold)
+                            ("EVENT" . org-headline-todo)
+                            ("NEXT" . +org-todo-onhold)
+                            ("IDEA" . +org-todo-project)
+                            ("MAYBE" . +org-todo-maybe)
+                            ("LATER" . +org-todo-maybe)
+                            ("KILL" . +org-todo-cancel))
    org-agenda-sorting-strategy '((agenda time-up category-keep scheduled-up todo-state-up priority-down)
                                  (todo category-keep todo-state-up priority-down ts-up)
                                  (tags category-keep scheduled-up priority-down todo-state-up)
@@ -268,8 +269,10 @@
     "s-s" #'org-save-all-org-buffers
     (:leader "f s" #'org-save-all-org-buffers))
    (:map org-capture-mode-map
-    "Z Z" #'org-capture-finalize
-    "Z Q" #'org-capture-kill))
+    :n "Z Z" #'org-capture-finalize
+    :n "Z Q" #'org-capture-kill
+    "C-c C-c" nil
+    "C-c C-k" nil))
   (add-hook 'org-mode-hook #'my/org-mode-hook)
   ;; flash the cursor after an org agenda jump to file
   (advice-add 'org-agenda-switch-to :after #'+nav-flash/blink-cursor)
