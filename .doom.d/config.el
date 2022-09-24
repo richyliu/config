@@ -112,7 +112,7 @@
     '("-"))
    ;; hide certain org buffers
    ((and (string-equal (projectile-project-root) org-directory)
-         (or (member (buffer-name) '("inbox.org" "notes.org" "journal.org"))
+         (or (member (buffer-name) '("inbox.org" "journal.org"))
              (string-match-p "_archive$" (buffer-name))))
     (list (concat org-directory "--hidden")))
    ;; otherwise use projectile root (to separate projects with same name)
@@ -122,6 +122,9 @@
   (setq centaur-tabs-buffer-groups-function #'my/projectile-groups))
 (centaur-tabs-mode 1)
 
+
+(after! consult
+  (advice-add #'consult--jump-1 :after #'org-fold-reveal))
 
 ;; use ctrl-tab to accept copilot completion
 (use-package! copilot
@@ -138,7 +141,16 @@
 (after! elcord
   (setq
    elcord-editor-icon "emacs_icon"
-   elcord-quiet t)
+   elcord-quiet t
+   elcord-buffer-details-format-function #'(lambda ()
+                                    (let* ((raw-name (buffer-name))
+                                           ;; sanitize buffer name to remove project names
+                                           (buf-name
+                                            (cond
+                                             ;; strip project name from doom buffers
+                                             ((string-prefix-p "*doom" raw-name) "*doom*")
+                                             (t raw-name))))
+                                      (format "Editing %s" buf-name))))
   (elcord-mode))
 
 (after! evil-org
@@ -207,6 +219,7 @@
     (custom-declare-face '+org-todo-maybe '((t (:inherit (bold font-lock-comment-face org-todo)))) ""))
   (setq
    org-agenda-files '("inbox.org" "agenda.org")
+   org-modules '(org-habit)
    org-priority-default ?C
    org-priority-highest ?A
    org-priority-lowest ?D
@@ -227,7 +240,7 @@
                             ("MAYBE" . +org-todo-maybe)
                             ("LATER" . +org-todo-maybe)
                             ("KILL" . +org-todo-cancel))
-   org-agenda-sorting-strategy '((agenda time-up category-keep scheduled-up todo-state-up priority-down)
+   org-agenda-sorting-strategy '((agenda time-up category-keep habit-up scheduled-up todo-state-up priority-down tag-up)
                                  (todo category-keep todo-state-up priority-down ts-up)
                                  (tags category-keep scheduled-up priority-down todo-state-up)
                                  (search category-keep))
@@ -235,6 +248,10 @@
                               (todo . " %i %-8:c")
                               (tags . " %i %-8:c")
                               (search . " %i %-8:c"))
+   org-agenda-time-grid '((daily today require-timed remove-match)
+                          (800 1000 1200 1400 1600 1800 2000 2200)
+                          " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄")
+   org-deadline-warning-days 7
    +org-capture-todo-file "inbox.org"
    org-capture-templates '(("t" "Personal todo" entry
                             (file +org-capture-todo-file)
@@ -267,6 +284,7 @@
     "c s" #'org-agenda-schedule
     "c d" #'org-agenda-deadline
     "s-s" #'org-save-all-org-buffers
+    "s-r" #'org-agenda-redo
     (:leader "f s" #'org-save-all-org-buffers))
    (:map org-capture-mode-map
     :n "Z Z" #'org-capture-finalize
@@ -401,6 +419,14 @@ Copied fix from: https://github.com/doomemacs/doomemacs/issues/4127#issuecomment
  ;; cmd-d to kill workspace
  :g "s-d" #'+workspace/delete
 
+ ;; same shortcut as in System Preferences -> Keyboard -> Shortcuts -> Services
+ :g "C-s-l" (lambda ()
+              (interactive)
+              (start-process "Start Screen Saver"'
+                             nil
+                             "/usr/bin/automator"
+                             "/Users/richard/Library/Services/Start Screen Saver.workflow"))
+
  (:mode org-mode
   ;; cmd-k to link in org mode
   :g "s-k" #'org-insert-link)
@@ -420,6 +446,13 @@ Copied fix from: https://github.com/doomemacs/doomemacs/issues/4127#issuecomment
                                        (interactive)
                                        (call-process (concat org-directory "beorg_sync.sh"))
                                        (message "Synced org with remote"))
+  :desc "Agenda split view" "n SPC" (lambda ()
+                                      (interactive)
+                                      (delete-other-windows)
+                                      (evil-window-vsplit)
+                                      (org-agenda-list)
+                                      (other-window 1)
+                                      (find-file (concat org-directory "agenda.org")))
 
   (:when (modulep! :ui nav-flash)
    :desc "Blink current line" "b L" #'+nav-flash/blink-cursor)
@@ -441,7 +474,8 @@ Copied fix from: https://github.com/doomemacs/doomemacs/issues/4127#issuecomment
 
  (:map org-mode-map
   :localleader
-  :desc "Add note" :n "N" #'org-add-note)
+  :desc "Add note" :n "N" #'org-add-note
+  :desc "Preview latex fragment" :n "L" #'org-latex-preview)
 
  ;; make { and } (paragraph motions) work linewise
  :o "}" #'(lambda ()
