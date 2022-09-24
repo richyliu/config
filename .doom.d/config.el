@@ -367,6 +367,24 @@ Copied fix from: https://github.com/doomemacs/doomemacs/issues/4127#issuecomment
   ;; delete all workspaces
   (mapc #'+workspace/delete (+workspace-list-names)))
 
+(require 'projectile)
+(defun my/default-agenda-view ()
+  "Open my personal default agenda view"
+  (interactive)
+  (delete-other-windows)
+  ;; switch to org-directory project first to avoid projectile issues
+  (setq current-prefix-arg t)
+  (+workspaces-switch-to-project-h org-directory)
+  (find-file (concat org-directory "agenda.org"))
+  ;; for some reason, calling evil-window-vsplit breaks projectile's project detection
+  (org-agenda-list)
+  (org-agenda-next-item 1)
+  ;; goto item to open up split window
+  (org-agenda-goto)
+  (evil-window-next 1)
+  ;; go back to agenda and refresh it
+  (org-agenda-redo))
+
 (defmacro my/goto-tab-n (n)
   `(lambda ()
      "Goto tab N"
@@ -446,13 +464,7 @@ Copied fix from: https://github.com/doomemacs/doomemacs/issues/4127#issuecomment
                                        (interactive)
                                        (call-process (concat org-directory "beorg_sync.sh"))
                                        (message "Synced org with remote"))
-  :desc "Agenda split view" "n SPC" (lambda ()
-                                      (interactive)
-                                      (delete-other-windows)
-                                      (evil-window-vsplit)
-                                      (org-agenda-list)
-                                      (other-window 1)
-                                      (find-file (concat org-directory "agenda.org")))
+  :desc "Agenda split view" "n SPC" #'my/default-agenda-view
 
   (:when (modulep! :ui nav-flash)
    :desc "Blink current line" "b L" #'+nav-flash/blink-cursor)
