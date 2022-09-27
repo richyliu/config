@@ -124,7 +124,9 @@
 
 
 (after! consult
-  (advice-add #'consult--jump-1 :after #'org-fold-reveal))
+  (advice-add #'consult--jump-1 :after #'(lambda (&rest _)
+                                           (when (derived-mode-p 'org-mode)
+                                             (org-fold-reveal)))))
 
 ;; use ctrl-tab to accept copilot completion
 (use-package! copilot
@@ -214,6 +216,44 @@
   ;; enable auto-revert-mode for inbox.org file only
   (when (string-equal (buffer-name) "inbox.org")
     (auto-revert-mode 1)))
+(defun my/time-grid-override (func list ndays todayp)
+  "Show time grid items during scheduled blocks with org-scheduled face."
+  (let* ((scheduled-times (mapcan #'(lambda (el)
+                                      ;; get all scheduled items as pairs of (minutes since midnight, duration in minutes)
+                                      (if-let ((el-not-null-p el)
+                                               (time-num (get-text-property 0 'time-of-day el))
+                                               (duration (get-text-property 0 'duration el))
+                                               (text (get-text-property 0 'txt el))
+                                               (time-in-minutes (+ (* (/ time-num 100) 60) (mod time-num 100))))
+                                          (list (list time-in-minutes duration text))))
+                                  list))
+         (additional (mapcan #'(lambda (time)
+                                 (let ((time-in-minutes (+ (* (/ time 100) 60) (mod time 100))))
+                                   ;; check if this time-grid item is near a scheduled item
+                                   (if-let (cur-scheduled (cl-find-if #'(lambda (scheduled)
+                                                                          (let* ((sched-start (nth 0 scheduled))
+                                                                                 (sched-end (+ (nth 0 scheduled) (nth 1 scheduled))))
+                                                                            ;; only show during scheduled time
+                                                                            (and (> time-in-minutes sched-start) (< time-in-minutes sched-end))))
+                                                                      scheduled-times))
+                                       (let* ((rawtimestr (replace-regexp-in-string " " "0" (format "%04s" time)))
+                                              (timestr (concat (substring rawtimestr 0 -2) ":" (substring rawtimestr -2)))
+                                              ;; show a different char for the last time-grid item for a particular scheduled item
+                                              (indicator-char (if-let ((end (+ (nth 0 cur-scheduled) (nth 1 cur-scheduled)))
+                                                                       (end-diff (- end time-in-minutes))
+                                                                       (diff-in-range (and (>= end-diff 0) (<= end-diff 30))))
+                                                                  "┘"
+                                                                "│"))
+                                              (newel (org-agenda-format-item indicator-char (nth 3 org-agenda-time-grid) nil "" nil timestr)))
+                                         (put-text-property 2 (length newel) 'face 'org-scheduled newel)
+                                         (list newel)))))
+                             ;; needs to be the same text as time grid to get formatted correctly
+                             (nth 1 org-agenda-time-grid)))
+         (newlist (append additional list)))
+    ;; call the original function (org-agenda-add-time-grid-maybe)
+    (apply (cons func
+                 ;; only use the additional time grid if displaying today
+                 (list (if todayp newlist list) ndays todayp)))))
 (after! org
   (with-no-warnings
     (custom-declare-face '+org-todo-maybe '((t (:inherit (bold font-lock-comment-face org-todo)))) ""))
@@ -229,12 +269,11 @@
                         (?D . font-lock-comment-face))
    org-priority-start-cycle-with-default nil
    org-log-into-drawer t
-   org-todo-keywords '((sequence "EVENT(e)" "TODO(t)" "LOOP(l)" "NEXT(n)" "IDEA(i)" "MAYBE(m)" "LATER(a)" "|" "DONE(d@)" "KILL(k@)")
+   org-todo-keywords '((sequence "TODO(t)" "LOOP(l)" "NEXT(n)" "IDEA(i)" "MAYBE(m)" "LATER(a)" "|" "DONE(d@)" "KILL(k@)")
                        (sequence "[ ](T)" "|" "[X](D)"))
    org-todo-repeat-to-state "LOOP"
    org-todo-keyword-faces '(("LOOP" . +org-todo-active)
                             ("[?]"  . +org-todo-onhold)
-                            ("EVENT" . org-headline-todo)
                             ("NEXT" . +org-todo-onhold)
                             ("IDEA" . +org-todo-project)
                             ("MAYBE" . +org-todo-maybe)
@@ -249,8 +288,8 @@
                               (tags . " %i %-8:c")
                               (search . " %i %-8:c"))
    org-agenda-time-grid '((daily today require-timed remove-match)
-                          (800 1000 1200 1400 1600 1800 2000 2200)
-                          " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄")
+                          (1000 1030 1100 1130 1200 1230 1300 1330 1400 1430 1500 1530 1600 1630 1700 1730 1800 1830 1900 1930 2000 2030 2100 2130 2200 2230)
+                          " ┄┄┄┄┄ " "")
    org-deadline-warning-days 7
    +org-capture-todo-file "inbox.org"
    org-capture-templates '(("t" "Personal todo" entry
@@ -258,13 +297,13 @@
                             "* TODO %?\n%T\n%i\n%a")
                            ("T" "Immediate todo" entry
                             (file+headline "agenda.org" "General")
-                            "* TODO %?\nSCHEDULED: %t")
+                            "* TODO %?\nSCHEDULED: %t\n%i")
                            ("n" "Personal notes" entry
                             (file+headline +org-capture-notes-file "Inbox")
                             "* %u %?\n%i\n%a" :prepend t)
                            ("j" "Journal" entry
                             (file+olp+datetree +org-capture-journal-file)
-                            "* %U %?\n%i\n%a" :prepend t)
+                            "* %U %?\n%i" :prepend t)
                            ("p" "Templates for projects")
                            ("pt" "Project-local todo" entry
                             (file+headline +org-capture-project-todo-file "Inbox")
@@ -294,7 +333,8 @@
   (add-hook 'org-mode-hook #'my/org-mode-hook)
   ;; flash the cursor after an org agenda jump to file
   (advice-add 'org-agenda-switch-to :after #'+nav-flash/blink-cursor)
-  (advice-add 'org-agenda-goto :after #'+nav-flash/blink-cursor))
+  (advice-add 'org-agenda-goto :after #'+nav-flash/blink-cursor)
+  (advice-add 'org-agenda-add-time-grid-maybe :around #'my/time-grid-override))
 
 (defun my/vterm-keymap-override-setup ()
   "Make vterm keymaps more usable."
@@ -369,20 +409,22 @@ Copied fix from: https://github.com/doomemacs/doomemacs/issues/4127#issuecomment
 
 (require 'projectile)
 (defun my/default-agenda-view ()
-  "Open my personal default agenda view"
+  "Open my personal default agenda view
+
+Note: projectile is still broken, so you need to open the org project manually
+with SPC p p first"
   (interactive)
   (delete-other-windows)
-  ;; switch to org-directory project first to avoid projectile issues
+  ;; disable popup for file selection in project
   (setq current-prefix-arg t)
-  (+workspaces-switch-to-project-h org-directory)
+  ;; switch to org-directory project first to avoid projectile issues
+  (projectile-switch-project-by-name org-directory)
   (find-file (concat org-directory "agenda.org"))
-  ;; for some reason, calling evil-window-vsplit breaks projectile's project detection
+  ;; open up org-agenda and agenda.org side by side
+  (evil-window-vsplit)
   (org-agenda-list)
-  (org-agenda-next-item 1)
-  ;; goto item to open up split window
-  (org-agenda-goto)
-  (evil-window-next 1)
-  ;; go back to agenda and refresh it
+  ;; ugly hack to refresh org-agenda after inline links are rendered
+  (sleep-for 0.01)
   (org-agenda-redo))
 
 (defmacro my/goto-tab-n (n)
