@@ -1,0 +1,8 @@
+# -*- mode: snippet -*-
+# name: Org template
+# --
+#+title: ${1:`
+(calendar-date-string (calendar-current-date))
+`}
+
+$0
