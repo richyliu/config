@@ -31,33 +31,50 @@
 #+begin_src emacs-lisp
 (defun my/time-grid-override (func list ndays todayp)
   "Show time grid items during scheduled blocks with org-scheduled face."
-  (let* ((scheduled-times (mapcan #'(lambda (el)
-                                      ;; get all scheduled items as pairs of (minutes since midnight, duration in minutes)
+  (let* (
+         ;; How frequent in minutes to have time grid intervals. This must match
+         ;; the times in org-agenda-time-grid
+         (time-grid-interval 30.0)
+         (scheduled-times (mapcan #'(lambda (el)
+                                      ;; get all scheduled items as pairs of (start time, end time, text)
+                                      ;; end time is rounded to nearest time-grid-interval
+                                      ;; all times are in minutes since midnight
                                       (if-let ((el-not-null-p el)
                                                (time-num (get-text-property 0 'time-of-day el))
                                                (duration (get-text-property 0 'duration el))
                                                (text (get-text-property 0 'txt el))
-                                               (time-in-minutes (+ (* (/ time-num 100) 60) (mod time-num 100))))
-                                          (list (list time-in-minutes duration text))))
+                                               (time-in-minutes (+ (* (/ time-num 100) 60) (mod time-num 100)))
+                                               (time-end (+ time-in-minutes duration))
+                                               (round-up #'(lambda (num)
+                                                             "Like round, but always round up from 0.5"
+                                                             (if (< (- (abs (- num (round num))) 0.5) 0.000001)
+                                                                 (ceiling num)
+                                                               (round num))))
+                                               (time-end-rounded (* (funcall round-up (/ time-end time-grid-interval)) time-grid-interval)))
+                                          (list (list time-in-minutes time-end-rounded text))))
                                   list))
          (additional (mapcan #'(lambda (time)
                                  (let ((time-in-minutes (+ (* (/ time 100) 60) (mod time 100))))
                                    ;; check if this time-grid item is near a scheduled item
-                                   (if-let (cur-scheduled (cl-find-if #'(lambda (scheduled)
-                                                                          (let* ((sched-start (nth 0 scheduled))
-                                                                                 (sched-end (+ (nth 0 scheduled) (nth 1 scheduled))))
-                                                                            ;; only show during scheduled time
-                                                                            (and (> time-in-minutes sched-start) (< time-in-minutes sched-end))))
-                                                                      scheduled-times))
+                                   (if-let (cur-scheduled (cl-find-if
+                                                           #'(lambda (scheduled)
+                                                               (let* ((sched-start (nth 0 scheduled))
+                                                                      (sched-end (nth 1 scheduled)))
+                                                                 ;; only show during scheduled time
+                                                                 (and (> time-in-minutes sched-start)
+                                                                      (< time-in-minutes sched-end))))
+                                                           scheduled-times))
                                        (let* ((rawtimestr (replace-regexp-in-string " " "0" (format "%04s" time)))
                                               (timestr (concat (substring rawtimestr 0 -2) ":" (substring rawtimestr -2)))
                                               ;; show a different char for the last time-grid item for a particular scheduled item
-                                              (indicator-char (if-let ((end (+ (nth 0 cur-scheduled) (nth 1 cur-scheduled)))
+                                              (indicator-char (if-let ((end (nth 1 cur-scheduled))
                                                                        (end-diff (- end time-in-minutes))
-                                                                       (diff-in-range (and (>= end-diff 0) (<= end-diff 30))))
+                                                                       (diff-in-range (and (>= end-diff 0)
+                                                                                           (<= end-diff time-grid-interval))))
                                                                   "┘"
                                                                 "│"))
-                                              (newel (org-agenda-format-item indicator-char (nth 3 org-agenda-time-grid) nil "" nil timestr)))
+                                              (newel (org-agenda-format-item indicator-char (nth 3 org-agenda-time-grid)
+                                                                             nil "" nil timestr)))
                                          (put-text-property 2 (length newel) 'face 'org-scheduled newel)
                                          (list newel)))))
                              ;; needs to be the same text as time grid to get formatted correctly
@@ -182,7 +199,8 @@
    ((string-equal (substring (buffer-name) 0 1) "*")
     '("-"))
    ;; hide certain org buffers
-   ((and (string-equal (projectile-project-root) org-directory)
+   ((and (stringp (projectile-project-root))
+         (string-equal (projectile-project-root) org-directory)
          (or (member (buffer-name) '("inbox.org" "journal.org"))
              (string-match-p "_archive$" (buffer-name))))
     (list (concat org-directory "--hidden")))
@@ -292,7 +310,10 @@
   (define-key evil-insert-state-local-map (kbd "C-x l") #'vterm-clear-scrollback)
   ;; send ctrl-p/n to vterm directly
   (define-key evil-normal-state-local-map (kbd "C-p") #'vterm-send-C-p)
-  (define-key evil-normal-state-local-map (kbd "C-n") #'vterm-send-C-n))
+  (define-key evil-normal-state-local-map (kbd "C-n") #'vterm-send-C-n)
+  ;; make move with arrow keys word work correctly
+  (define-key evil-insert-state-local-map (kbd "M-<left>") #'vterm-send-M-b)
+  (define-key evil-insert-state-local-map (kbd "M-<right>") #'vterm-send-M-f))
 #+end_src
 *** Config
 #+begin_src emacs-lisp
@@ -490,7 +511,7 @@ with SPC p p first"
 #+begin_src emacs-lisp
 (setq initial-frame-alist
       (append initial-frame-alist
-              '((width . 155)
+              '((width . 158)
                 (height . 70))))
 #+end_src
 ** Font
