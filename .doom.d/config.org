@@ -153,10 +153,10 @@
                            ("oc" "Project changelog" entry #'+org-capture-central-project-changelog-file "* %U %?\n %i\n %a" :heading "Changelog" :prepend t)))
   (map!
    (:map org-agenda-mode-map
-    "c s" #'org-agenda-schedule
-    "c d" #'org-agenda-deadline
-    "s-s" #'org-save-all-org-buffers
-    "s-r" #'org-agenda-redo
+    :m "c s" #'org-agenda-schedule
+    :m "c d" #'org-agenda-deadline
+    :m "s-s" #'org-save-all-org-buffers
+    :m "s-r" #'org-agenda-redo
     (:leader "f s" #'org-save-all-org-buffers))
    (:map org-capture-mode-map
     :n "Z Z" #'org-capture-finalize
