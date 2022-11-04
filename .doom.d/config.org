@@ -288,6 +288,15 @@
 (after! latex-preview-pane
   (setq preview-orientation 'down))
 #+end_src
+** LSP
+#+begin_src emacs-lisp
+(after! lsp-mode
+  (lsp-register-client
+   (make-lsp-client :new-connection (lsp-tramp-connection "ccls")
+                    :major-modes '(c++-mode)
+                    :remote? t))
+  (setq lsp-log-io t))
+#+end_src
 ** Vterm
 *** Keymap override
 #+begin_src emacs-lisp
@@ -379,10 +388,10 @@ with SPC p p first"
   (interactive)
   (delete-other-windows)
   ;; disable popup for file selection in project
-  (setq current-prefix-arg t)
+  ;; (setq current-prefix-arg t)
   ;; switch to org-directory project first to avoid projectile issues
-  (projectile-switch-project-by-name org-directory)
-  (find-file (concat org-directory "agenda.org"))
+  ;; (projectile-switch-project-by-name org-directory)
+  ;; (find-file (concat org-directory "agenda.org"))
   ;; open up org-agenda and agenda.org side by side
   (evil-window-vsplit)
   (org-agenda-list)
@@ -479,7 +488,9 @@ with SPC p p first"
    :desc "Open vterm buffer" "b v" #'vterm)
 
   (:when (modulep! :tools magit)
-   :desc "Stage all" "g a" #'magit-stage-modified))
+   :desc "Stage all" "g a" #'magit-stage-modified)
+
+  :desc "Align" "c a" #'align)
 
  (:map evil-window-map
   ;; unmap SPC w C-h so it can run help instead
@@ -552,6 +563,17 @@ with SPC p p first"
 #+begin_src emacs-lisp
 ;; enable folding in text mode
 (add-hook 'text-mode-hook 'turn-on-auto-fill)
+#+end_src
+** Disable menu bar
+Get rid of as many menu bar items as possible to reduce clutter. We can't get
+rid of the whole thing because of a bug with MacOS that treats windows without a
+menu bar as non-application windows (and thus can't be focused) (see [[https://github.com/doomemacs/doomemacs/commit/3583e1f2e0249cddc2d8709238230c181b4bb3ef][doom
+patch]]). We clear the entire ~menu-bar~ map, but keep the ~tools~ because
+otherwise ispell will complain.
+#+begin_src emacs-lisp
+(let ((tools-bkup (lookup-key global-map [menu-bar tools])))
+  (define-key global-map [menu-bar] nil)
+  (define-key global-map [menu-bar tools] tools-bkup))
 #+end_src
 * Advice
 ** Custom cache
