@@ -102,16 +102,17 @@
                         (?D . font-lock-comment-face))
    org-priority-start-cycle-with-default nil
    org-log-into-drawer t
-   org-todo-keywords '((sequence "TODO(t)" "LOOP(l)" "NEXT(n)" "IDEA(i)" "MAYBE(m)" "LATER(a)" "|" "DONE(d@)" "KILL(k@)")
+   org-todo-keywords '((sequence "TODO(t)" "LOOP(l)" "NEXT(n)" "WAIT(w)" "IDEA(i)" "MAYBE(m)" "LATER(a)" "|" "DONE(d@)" "KILL(k@)")
                        (sequence "[ ](T)" "|" "[X](D)"))
    org-todo-repeat-to-state "LOOP"
    org-todo-keyword-faces '(("LOOP" . +org-todo-active)
                             ("[?]"  . +org-todo-onhold)
                             ("NEXT" . +org-todo-onhold)
+                            ("WAIT" . org-level-4)
                             ("IDEA" . +org-todo-project)
                             ("MAYBE" . +org-todo-maybe)
                             ("LATER" . +org-todo-maybe)
-                            ("KILL" . +org-todo-cancel))
+                            ("KILL" . org-agenda-dimmed-todo-face))
    org-agenda-sorting-strategy '((agenda time-up category-keep habit-up scheduled-up todo-state-up priority-down tag-up)
                                  (todo category-keep todo-state-up priority-down ts-up)
                                  (tags category-keep scheduled-up priority-down todo-state-up)
