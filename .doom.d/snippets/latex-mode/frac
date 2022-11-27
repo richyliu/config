@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: frac
+# key: frac
+# uuid: my-frac
+# binding: C-s f
+# --
+\frac{${1:`(or % "numerator")`}}{${2:denominator}}$0

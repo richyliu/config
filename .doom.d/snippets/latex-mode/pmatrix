@@ -1,0 +1,8 @@
+# -*- mode: snippet -*-
+# name: pmatrix
+# key: pmatrix
+# binding: C-s p
+# --
+\begin{pmatrix}
+`%`$0
+\end{pmatrix}

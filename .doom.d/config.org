@@ -89,7 +89,7 @@
 #+begin_src emacs-lisp
 (after! org
   (with-no-warnings
-    (custom-declare-face '+org-todo-maybe '((t (:inherit (bold font-lock-comment-face org-todo)))) ""))
+    (custom-declare-face '+org-todo-someday '((t (:inherit (bold font-lock-comment-face org-todo)))) ""))
   (setq
    org-agenda-files '("inbox.org" "agenda.org")
    org-modules '(org-habit)
@@ -102,19 +102,19 @@
                         (?D . font-lock-comment-face))
    org-priority-start-cycle-with-default nil
    org-log-into-drawer t
-   org-todo-keywords '((sequence "TODO(t)" "LOOP(l)" "NEXT(n)" "WAIT(w)" "IDEA(i)" "MAYBE(m)" "LATER(a)" "|" "DONE(d@)" "KILL(k@)")
-                       (sequence "[ ](T)" "|" "[X](D)"))
+   org-todo-keywords '((sequence "TODO(t)" "SCHD(s)" "LOOP(l)" "PROJ(p)" "NEXT(n)" "WAIT(w)" "IDEA(i)" "SOMEDAY(m)" "|" "DONE(d@)" "KILL(k@)"))
    org-todo-repeat-to-state "LOOP"
-   org-todo-keyword-faces '(("LOOP" . +org-todo-active)
-                            ("[?]"  . +org-todo-onhold)
+   org-todo-keyword-faces '(("TODO" . org-todo)
+                            ("SCHD" . +org-todo-cancel)
+                            ("LOOP" . +org-todo-active)
+                            ("PROJ" . org-level-1)
                             ("NEXT" . +org-todo-onhold)
                             ("WAIT" . org-level-4)
                             ("IDEA" . +org-todo-project)
-                            ("MAYBE" . +org-todo-maybe)
-                            ("LATER" . +org-todo-maybe)
+                            ("SOMEDAY" . +org-todo-someday)
                             ("KILL" . org-agenda-dimmed-todo-face))
-   org-agenda-sorting-strategy '((agenda time-up category-keep habit-up scheduled-up todo-state-up priority-down tag-up)
-                                 (todo category-keep todo-state-up priority-down ts-up)
+   org-agenda-sorting-strategy '((agenda time-up category-keep habit-up scheduled-up deadline-up todo-state-up priority-down tag-up)
+                                 (todo category-keep todo-state-up deadline-up priority-down ts-up)
                                  (tags category-keep scheduled-up priority-down todo-state-up)
                                  (search category-keep))
    org-agenda-prefix-format '((agenda . " %i %?-12t% s")
@@ -131,7 +131,10 @@
                             "* TODO %?\n%T\n%i\n%a")
                            ("T" "Immediate todo" entry
                             (file+headline "agenda.org" "General")
-                            "* TODO %?\nSCHEDULED: %t\n%i")
+                            "* TODO %?\n%i")
+                           ("S" "Scheduled todo" entry
+                            (file+headline "agenda.org" "General")
+                            "* SCHD %?\nSCHEDULED: %t\n%i")
                            ("n" "Personal notes" entry
                             (file+headline +org-capture-notes-file "Inbox")
                             "* %u %?\n%i\n%a" :prepend t)
@@ -151,7 +154,16 @@
                            ("o" "Centralized templates for projects")
                            ("ot" "Project todo" entry #'+org-capture-central-project-todo-file "* TODO %?\n %i\n %a" :heading "Tasks" :prepend nil)
                            ("on" "Project notes" entry #'+org-capture-central-project-notes-file "* %U %?\n %i\n %a" :heading "Notes" :prepend t)
-                           ("oc" "Project changelog" entry #'+org-capture-central-project-changelog-file "* %U %?\n %i\n %a" :heading "Changelog" :prepend t)))
+                           ("oc" "Project changelog" entry #'+org-capture-central-project-changelog-file "* %U %?\n %i\n %a" :heading "Changelog" :prepend t))
+   org-agenda-custom-commands '(("d" "Daily agenda and TODOs"
+                                 ((todo "TODO")
+                                  (agenda "" ((org-agenda-span 1)
+                                              (org-agenda-start-day "0d")
+                                              (org-agenda-time-grid nil)
+                                              (org-agenda-entry-types '(:deadline)) ;; this entry excludes :scheduled
+                                              (org-deadline-warning-days 14)))
+                                  (agenda "" ((org-agenda-span 1)
+                                              (org-agenda-start-day "0d")))))))
   (map!
    (:map org-agenda-mode-map
     :m "c s" #'org-agenda-schedule
@@ -205,6 +217,8 @@
          (or (member (buffer-name) '("inbox.org" "journal.org"))
              (string-match-p "_archive$" (buffer-name))))
     (list (concat org-directory "--hidden")))
+   ((not (stringp (projectile-project-root)))
+    '("**no-project**"))
    ;; otherwise use projectile root (to separate projects with same name)
    (t
     (list (projectile-project-root)))))
@@ -243,14 +257,9 @@
    elcord-editor-icon "emacs_icon"
    elcord-quiet t
    elcord-buffer-details-format-function #'(lambda ()
-                                    (let* ((raw-name (buffer-name))
-                                           ;; sanitize buffer name to remove project names
-                                           (buf-name
-                                            (cond
-                                             ;; strip project name from doom buffers
-                                             ((string-prefix-p "*doom" raw-name) "*doom*")
-                                             (t raw-name))))
-                                      (format "Editing %s" buf-name))))
+                                             (let ((filetype
+                                                    (replace-regexp-in-string "-mode" "" (symbol-name major-mode))))
+                                             (format "Editing %s" filetype))))
   (elcord-mode))
 #+end_src
 ** Evil-org
@@ -389,13 +398,13 @@ with SPC p p first"
   (interactive)
   (delete-other-windows)
   ;; disable popup for file selection in project
-  ;; (setq current-prefix-arg t)
+  (setq current-prefix-arg t)
   ;; switch to org-directory project first to avoid projectile issues
-  ;; (projectile-switch-project-by-name org-directory)
-  ;; (find-file (concat org-directory "agenda.org"))
+  (projectile-switch-project-by-name org-directory)
+  (find-file (concat org-directory "agenda.org"))
   ;; open up org-agenda and agenda.org side by side
   (evil-window-vsplit)
-  (org-agenda-list)
+  (org-agenda nil "d")
   ;; ugly hack to refresh org-agenda after inline links are rendered
   (sleep-for 0.01)
   (org-agenda-redo))
@@ -559,6 +568,7 @@ with SPC p p first"
 (add-hook 'html-mode-hook #'my/set-shift-2)
 (add-hook 'css-mode-hook #'my/set-shift-2)
 (add-hook 'js-mode-hook #'my/set-shift-2)
+(add-hook 'web-mode-hook #'my/set-shift-2)
 #+end_src
 ** Auto fold text
 #+begin_src emacs-lisp
@@ -575,6 +585,12 @@ otherwise ispell will complain.
 (let ((tools-bkup (lookup-key global-map [menu-bar tools])))
   (define-key global-map [menu-bar] nil)
   (define-key global-map [menu-bar tools] tools-bkup))
+#+end_src
+** Comments
+This is for MIPS style comments for Spimbot (CS 233)
+#+begin_src emacs-lisp
+(setq asm-comment-char ?#
+    comment-start "#")
 #+end_src
 * Advice
 ** Custom cache
