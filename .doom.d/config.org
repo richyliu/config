@@ -81,9 +81,7 @@
                              (nth 1 org-agenda-time-grid)))
          (newlist (append additional list)))
     ;; call the original function (org-agenda-add-time-grid-maybe)
-    (apply (cons func
-                 ;; only use the additional time grid if displaying today
-                 (list (if todayp newlist list) ndays todayp)))))
+    (apply (cons func (list newlist ndays todayp)))))
 #+end_src
 ** Config
 #+begin_src emacs-lisp
@@ -121,7 +119,7 @@
                               (todo . " %i %-8:c")
                               (tags . " %i %-8:c")
                               (search . " %i %-8:c"))
-   org-agenda-time-grid '((daily today require-timed remove-match)
+   org-agenda-time-grid '((daily today remove-match)
                           (1000 1030 1100 1130 1200 1230 1300 1330 1400 1430 1500 1530 1600 1630 1700 1730 1800 1830 1900 1930 2000 2030 2100 2130 2200 2230)
                           " ┄┄┄┄┄ " "")
    org-deadline-warning-days 7
@@ -158,12 +156,9 @@
    org-agenda-custom-commands '(("d" "Daily agenda and TODOs"
                                  ((todo "TODO")
                                   (agenda "" ((org-agenda-span 1)
-                                              (org-agenda-start-day "0d")
-                                              (org-agenda-time-grid nil)
-                                              (org-agenda-entry-types '(:deadline)) ;; this entry excludes :scheduled
-                                              (org-deadline-warning-days 14)))
+                                              (org-agenda-start-day "0d")))
                                   (agenda "" ((org-agenda-span 1)
-                                              (org-agenda-start-day "0d")))))))
+                                              (org-agenda-start-day "+1d")))))))
   (map!
    (:map org-agenda-mode-map
     :m "c s" #'org-agenda-schedule
