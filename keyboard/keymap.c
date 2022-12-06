@@ -11,7 +11,6 @@ enum layers { BASE, ARR, NAV, FUN, NUM, PLVR };
 enum planck_keycodes {
   PLOVER = SAFE_RANGE,
   EXT_PLV,
-  CMD_TAB,
   HEX_0X, // sends "0x"
   MY_CAPS
 };
@@ -53,7 +52,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   KC_TAB,  KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_BSPC,
   KC_LCTL, KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, KC_ENT,
   KC_LSFT, KC_B,    KC_Z,    KC_X,    KC_C,    KC_V,    KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, SFT_QUOT,
-  XXXXXXX, MO(NAV), CMD_TAB, ALT_ESC, KC_LCMD, MO(NUM), MO(NUM), KC_SPC,  KC_RALT, MO(FUN), DF(BASE),MO(FUN)
+  XXXXXXX, MO(NAV), XXXXXXX, ALT_ESC, KC_LCMD, MO(NUM), MO(NUM), KC_SPC,  KC_RALT, MO(FUN), DF(BASE),MO(FUN)
 ),
 [ARR] = LAYOUT_ortho_4x12(
   XXXXXXX, XXXXXXX, XXXXXXX, KC_UP,   XXXXXXX, XXXXXXX, XXXXXXX, ALT_LEFT,XXXXXXX, XXXXXXX, ALT_RIGHT,XXXXXXX,
@@ -98,30 +97,6 @@ const key_override_t **key_overrides = (const key_override_t *[]){
     NULL
 };
 
-
-/**
- * "cmd-tab" key, as adapted from "super alt tab":
- *    https://docs.qmk.fm/#/feature_macros?id=super-alt↯tab
- *
- * When the key is tapped, a single cmd-tab key is tapped, switching to the
- * most recently used application (timeout set by TAPPING_TERM). When the key
- * is held, it gives the user a set time to view the applications (as
- * determined by CMD_TAB_BEFORE_FIRST_TIMEOUT). The is_cmd_tab_hold bool is set
- * during the first hold and the is_cmd_tab_before_first is set after the hold
- * but before the first tap after the hold. Once a key is tapped,
- * is_cmd_tab_active will be set. Each key tap will go to the next application,
- * and after the timeout (CMD_TAB_TIMEOUT) it will stop at the current
- * application.
- */
-bool is_cmd_tab_active = false;
-uint16_t cmd_tab_timer = 0;
-#define CMD_TAB_TIMEOUT 500
-bool is_cmd_tab_hold = false;
-uint16_t cmd_tab_hold_timer = 0;
-bool is_cmd_tab_before_first = false;
-uint16_t cmd_tab_before_first_timer = 0;
-#define CMD_TAB_BEFORE_FIRST_TIMEOUT 3000
-
 uint16_t ctrl_b_timer = 0;
 #define CTRL_B_TIMEOUT 300
 
@@ -143,30 +118,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         SEND_STRING(SS_UP(X_E) SS_UP(X_R) SS_UP(X_F) SS_UP(X_V) SS_UP(X_Y) SS_UP(X_U));
       }
       return false;
-    case CMD_TAB:
-      if (record->event.pressed) {
-        if (!is_cmd_tab_active) {
-          is_cmd_tab_hold = true;
-          cmd_tab_hold_timer = timer_read();
-        } else {
-          is_cmd_tab_before_first = false;
-          cmd_tab_timer = timer_read();
-          register_code(KC_TAB);
-        }
-      } else {
-        if (is_cmd_tab_hold) {
-          if (timer_elapsed(cmd_tab_hold_timer) < TAPPING_TERM) {
-            register_code(KC_LGUI);
-            tap_code(KC_TAB);
-            unregister_code(KC_LGUI);
-            is_cmd_tab_hold = false;
-          }
-        }
-        if (is_cmd_tab_active) {
-          unregister_code(KC_TAB);
-        }
-      }
-      return false;
     case HEX_0X:
       if (record->event.pressed) {
         tap_code(KC_0);
@@ -180,39 +131,5 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       return false;
   }
 
-  /// NOTE: important to check this after checking for cmd-tab key
-  // reset cmd-tab if a command modifier was released
-  if ((keycode >> 8) & MOD_LGUI && !record->event.pressed) {
-    is_cmd_tab_active = false;
-    is_cmd_tab_before_first = false;
-  }
-
   return true;
-}
-
-void matrix_scan_user(void) {
-  if (is_cmd_tab_before_first) {
-    if (timer_elapsed(cmd_tab_before_first_timer) > CMD_TAB_BEFORE_FIRST_TIMEOUT) {
-      unregister_code(KC_LGUI);
-      is_cmd_tab_before_first = false;
-      is_cmd_tab_active = false;
-    }
-  } else {
-    if (is_cmd_tab_active) {
-      if (timer_elapsed(cmd_tab_timer) > CMD_TAB_TIMEOUT) {
-        unregister_code(KC_LGUI);
-        is_cmd_tab_active = false;
-      }
-    }
-  }
-  if (is_cmd_tab_hold) {
-    if (timer_elapsed(cmd_tab_hold_timer) > TAPPING_TERM) {
-      register_code(KC_LGUI);
-      tap_code(KC_TAB);
-      is_cmd_tab_hold = false;
-      is_cmd_tab_active = true;
-      is_cmd_tab_before_first = true;
-      cmd_tab_before_first_timer = timer_read();
-    }
-  }
 }
