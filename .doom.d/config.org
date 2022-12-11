@@ -410,6 +410,16 @@ with SPC p p first"
      (interactive)
      (+tabs:next-or-goto ,n)))
 
+(defun my/run-current-file ()
+  "Runs the file in the current buffer"
+  (interactive)
+  (compile (buffer-file-name)))
+
+(defun my/duplicate-by-one-day (N)
+  "Duplicates the subtree N times and increments by one day"
+  (interactive "p")
+  (org-clone-subtree-with-time-shift N "+1d"))
+
 (map!
  (:when (modulep! :ui tabs)
   ;; use meta-number (alt-number) to jump to tab
@@ -494,8 +504,8 @@ with SPC p p first"
 
   (:when (modulep! :tools magit)
    :desc "Stage all" "g a" #'magit-stage-modified)
-
-  :desc "Align" "c a" #'align)
+   :desc "Align" "c a" #'align
+   :desc "Run this file" "f ." #'my/run-current-file)
 
  (:map evil-window-map
   ;; unmap SPC w C-h so it can run help instead
@@ -508,7 +518,8 @@ with SPC p p first"
  (:map org-mode-map
   :localleader
   :desc "Add note" :n "N" #'org-add-note
-  :desc "Preview latex fragment" :n "L" #'org-latex-preview)
+  :desc "Preview latex fragment" :n "L" #'org-latex-preview
+  :desc "Duplicate by one day" :n "s C" #'my/duplicate-by-one-day)
 
  ;; make { and } (paragraph motions) work linewise
  :o "}" #'(lambda ()
