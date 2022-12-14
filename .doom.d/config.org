@@ -610,3 +610,30 @@ This is for MIPS style comments for Spimbot (CS 233)
     (setq Man-completion-cache my/Man-cache)))
 (advice-add 'Man-completion-table :before #'my/Man-completion-always-cache)
 #+end_src
+** Disable pipenv over remote
+Reducing startup time for editing python files over remote. Prevents pipenv from
+looking for =Pipfile= files.
+#+begin_src emacs-lisp
+(advice-add #'pipenv-project-p
+            :before-while
+            (lambda () (not (file-remote-p default-directory))))
+#+end_src
+** Projectile dirconfig cache
+#+begin_src emacs-lisp
+(defvar my/projectile-dirconfig-cache (make-hash-table :test 'equal)
+  "Hash table cache used for `my/projectile-parse-dirconfig-file'")
+
+(defun my/projectile-parse-dirconfig-file (orig-fun)
+  "Cache the 'projectile-parse-dirconfig-file' function.
+When the 'projectile-dirconfig-file' is the same, return the cached dirconfig if
+available. This is done to improve speed by reducing reads to the dirconfig,
+especially when editing over TRAMP."
+  (if-let* ((dirconfig-file (projectile-dirconfig-file))
+            (dirconfig-cache (gethash dirconfig-file my/projectile-dirconfig-cache)))
+      dirconfig-cache
+    (let ((dirconfig (funcall orig-fun)))
+      (puthash dirconfig-file dirconfig my/projectile-dirconfig-cache)
+      dirconfig)))
+
+(advice-add #'projectile-parse-dirconfig-file :around #'my/projectile-parse-dirconfig-file)
+#+end_src
