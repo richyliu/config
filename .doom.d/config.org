@@ -207,16 +207,15 @@
    ((string-equal (substring (buffer-name) 0 1) "*")
     '("-"))
    ;; hide certain org buffers
-   ((and (stringp (projectile-project-root))
-         (string-equal (projectile-project-root) org-directory)
+   ((and (string-equal default-directory org-directory)
          (or (member (buffer-name) '("inbox.org" "journal.org"))
              (string-match-p "_archive$" (buffer-name))))
     (list (concat org-directory "--hidden")))
-   ((not (stringp (projectile-project-root)))
-    '("**no-project**"))
-   ;; otherwise use projectile root (to separate projects with same name)
+   ;; otherwise put all buffers in current perspective (workspace) together
    (t
-    (list (projectile-project-root)))))
+    (if (persp-contain-buffer-p)
+        (list "**current**")
+      (list "**other**")))))
 #+end_src
 *** Config
 #+begin_src emacs-lisp
@@ -519,7 +518,8 @@ with SPC p p first"
   :localleader
   :desc "Add note" :n "N" #'org-add-note
   :desc "Preview latex fragment" :n "L" #'org-latex-preview
-  :desc "Duplicate by one day" :n "s C" #'my/duplicate-by-one-day)
+  :desc "Duplicate by one day" :n "s C" #'my/duplicate-by-one-day
+  :desc "Reveal fold" :n "s R" #'org-fold-reveal)
 
  ;; make { and } (paragraph motions) work linewise
  :o "}" #'(lambda ()
