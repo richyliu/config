@@ -154,7 +154,19 @@
                            ("on" "Project notes" entry #'+org-capture-central-project-notes-file "* %U %?\n %i\n %a" :heading "Notes" :prepend t)
                            ("oc" "Project changelog" entry #'+org-capture-central-project-changelog-file "* %U %?\n %i\n %a" :heading "Changelog" :prepend t))
    org-agenda-custom-commands '(("d" "Daily agenda and TODOs"
-                                 ((todo "TODO")
+                                 ((agenda "" ((org-agenda-span 1)
+                                              (org-agenda-start-day "0d")
+                                              (org-deadline-warning-days 60)
+                                              (org-agenda-use-time-grid 'nil)
+                                              (org-agenda-deadline-faces '((1.001 . error)
+                                                                           (1.0 . org-warning)
+                                                                           (0.0 . default)))
+                                              (org-agenda-entry-types '(:deadline))))
+                                  ; show separate agenda sections for TODOs without a deadline
+                                  (todo "TODO" ((org-agenda-before-sorting-filter-function
+                                                 #'(lambda (input)
+                                                     (unless (get-text-property 10 'ts-date input)
+                                                       input)))))
                                   (agenda "" ((org-agenda-span 1)
                                               (org-agenda-start-day "0d")))
                                   (agenda "" ((org-agenda-span 1)
