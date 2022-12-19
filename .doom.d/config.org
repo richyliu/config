@@ -3,6 +3,9 @@
 
 * Org mode
 ** Config hook
+- display visual line numbers
+- rebind ZZ and ZQ to save note and discard note, respectively
+
 #+begin_src emacs-lisp
 (defun my/org-mode-hook ()
   (setq-local
@@ -84,47 +87,61 @@
     (apply (cons func (list newlist ndays todayp)))))
 #+end_src
 ** Config
+*** Header
 #+begin_src emacs-lisp
 (after! org
-  (with-no-warnings
-    (custom-declare-face '+org-todo-someday '((t (:inherit (bold font-lock-comment-face org-todo)))) ""))
-  (setq
-   org-agenda-files '("inbox.org" "agenda.org")
-   org-modules '(org-habit)
-   org-priority-default ?C
-   org-priority-highest ?A
-   org-priority-lowest ?D
-   org-priority-faces '((?A . error)
-                        (?B . warning)
-                        (?C . success)
-                        (?D . font-lock-comment-face))
-   org-priority-start-cycle-with-default nil
-   org-log-into-drawer t
-   org-todo-keywords '((sequence "TODO(t)" "SCHD(s)" "LOOP(l)" "PROJ(p)" "NEXT(n)" "WAIT(w)" "IDEA(i)" "SOMEDAY(m)" "|" "DONE(d@)" "KILL(k@)"))
-   org-todo-repeat-to-state "LOOP"
-   org-todo-keyword-faces '(("TODO" . org-todo)
-                            ("SCHD" . +org-todo-cancel)
-                            ("LOOP" . +org-todo-active)
-                            ("PROJ" . org-level-1)
-                            ("NEXT" . +org-todo-onhold)
-                            ("WAIT" . org-level-4)
-                            ("IDEA" . +org-todo-project)
-                            ("SOMEDAY" . +org-todo-someday)
-                            ("KILL" . org-agenda-dimmed-todo-face))
-   org-agenda-sorting-strategy '((agenda time-up category-keep habit-up scheduled-up deadline-up todo-state-up priority-down tag-up)
-                                 (todo category-keep todo-state-up deadline-up priority-down ts-up)
-                                 (tags category-keep scheduled-up priority-down todo-state-up)
-                                 (search category-keep))
-   org-agenda-prefix-format '((agenda . " %i %?-12t% s")
-                              (todo . " %i %-8:c")
-                              (tags . " %i %-8:c")
-                              (search . " %i %-8:c"))
-   org-agenda-time-grid '((daily today remove-match)
-                          (1000 1030 1100 1130 1200 1230 1300 1330 1400 1430 1500 1530 1600 1630 1700 1730 1800 1830 1900 1930 2000 2030 2100 2130 2200 2230)
-                          " ┄┄┄┄┄ " "")
-   org-deadline-warning-days 7
-   +org-capture-todo-file "inbox.org"
-   org-capture-templates '(("t" "Personal todo" entry
+#+end_src
+*** Priority
+#+begin_src emacs-lisp
+(setq org-priority-default ?C)
+(setq org-priority-highest ?A)
+(setq org-priority-lowest ?D)
+(setq org-priority-faces '((?A . error)
+                           (?B . warning)
+                           (?C . success)
+                           (?D . font-lock-comment-face)))
+(setq org-priority-start-cycle-with-default nil)
+#+end_src
+*** Agenda
+#+begin_src emacs-lisp
+(setq org-agenda-files '("inbox.org" "agenda.org"))
+(setq org-agenda-sorting-strategy '((agenda time-up category-keep habit-up scheduled-up deadline-up todo-state-up priority-down tag-up)
+                                    (todo category-keep todo-state-up deadline-up priority-down ts-up)
+                                    (tags category-keep scheduled-up priority-down todo-state-up)
+                                    (search category-keep)))
+(setq org-agenda-prefix-format '((agenda . " %i %?-12t% s")
+                                 (todo . " %i %-8:c")
+                                 (tags . " %i %-8:c")
+                                 (search . " %i %-8:c")))
+(setq org-agenda-time-grid '((daily today remove-match)
+                             (1000 1030 1100 1130 1200 1230 1300 1330 1400 1430 1500 1530 1600 1630 1700 1730 1800 1830 1900 1930 2000 2030 2100 2130 2200 2230)
+                             " ┄┄┄┄┄ " ""))
+(setq org-deadline-warning-days 7)
+(setq org-modules '(org-habit))
+(setq org-agenda-custom-commands '(("d" "Daily agenda and TODOs"
+                                    ((agenda "" ((org-agenda-span 1)
+                                                 (org-agenda-start-day "0d")
+                                                 (org-deadline-warning-days 60)
+                                                 (org-agenda-use-time-grid 'nil)
+                                                 (org-agenda-deadline-faces '((1.001 . error)
+                                                                              (1.0 . org-warning)
+                                                                              (0.0 . default)))
+                                                 (org-agenda-entry-types '(:deadline))))
+                                        ; show separate agenda sections for TODOs without a deadline
+                                     (todo "TODO" ((org-agenda-before-sorting-filter-function
+                                                    #'(lambda (input)
+                                                        (unless (get-text-property 10 'ts-date input)
+                                                          input)))))
+                                     (agenda "" ((org-agenda-span 1)
+                                                 (org-agenda-start-day "0d")))
+                                     (agenda "" ((org-agenda-span 1)
+                                                 (org-agenda-start-day "+1d")))))))
+#+end_src
+*** Capture and archive
+#+begin_src emacs-lisp
+(setq org-log-into-drawer t)
+(setq +org-capture-todo-file "inbox.org")
+(setq org-capture-templates '(("t" "Personal todo" entry
                             (file +org-capture-todo-file)
                             "* TODO %?\n%T\n%i\n%a")
                            ("T" "Immediate todo" entry
@@ -152,42 +169,53 @@
                            ("o" "Centralized templates for projects")
                            ("ot" "Project todo" entry #'+org-capture-central-project-todo-file "* TODO %?\n %i\n %a" :heading "Tasks" :prepend nil)
                            ("on" "Project notes" entry #'+org-capture-central-project-notes-file "* %U %?\n %i\n %a" :heading "Notes" :prepend t)
-                           ("oc" "Project changelog" entry #'+org-capture-central-project-changelog-file "* %U %?\n %i\n %a" :heading "Changelog" :prepend t))
-   org-agenda-custom-commands '(("d" "Daily agenda and TODOs"
-                                 ((agenda "" ((org-agenda-span 1)
-                                              (org-agenda-start-day "0d")
-                                              (org-deadline-warning-days 60)
-                                              (org-agenda-use-time-grid 'nil)
-                                              (org-agenda-deadline-faces '((1.001 . error)
-                                                                           (1.0 . org-warning)
-                                                                           (0.0 . default)))
-                                              (org-agenda-entry-types '(:deadline))))
-                                  ; show separate agenda sections for TODOs without a deadline
-                                  (todo "TODO" ((org-agenda-before-sorting-filter-function
-                                                 #'(lambda (input)
-                                                     (unless (get-text-property 10 'ts-date input)
-                                                       input)))))
-                                  (agenda "" ((org-agenda-span 1)
-                                              (org-agenda-start-day "0d")))
-                                  (agenda "" ((org-agenda-span 1)
-                                              (org-agenda-start-day "+1d")))))))
-  (map!
-   (:map org-agenda-mode-map
-    :m "c s" #'org-agenda-schedule
-    :m "c d" #'org-agenda-deadline
-    :m "s-s" #'org-save-all-org-buffers
-    :m "s-r" #'org-agenda-redo
-    (:leader "f s" #'org-save-all-org-buffers))
-   (:map org-capture-mode-map
-    :n "Z Z" #'org-capture-finalize
-    :n "Z Q" #'org-capture-kill
-    "C-c C-c" nil
-    "C-c C-k" nil))
-  (add-hook 'org-mode-hook #'my/org-mode-hook)
-  ;; flash the cursor after an org agenda jump to file
-  (advice-add 'org-agenda-switch-to :after #'+nav-flash/blink-cursor)
-  (advice-add 'org-agenda-goto :after #'+nav-flash/blink-cursor)
-  (advice-add 'org-agenda-add-time-grid-maybe :around #'my/time-grid-override))
+                           ("oc" "Project changelog" entry #'+org-capture-central-project-changelog-file "* %U %?\n %i\n %a" :heading "Changelog" :prepend t)))
+#+end_src
+*** Todo
+#+begin_src emacs-lisp
+(with-no-warnings
+  (custom-declare-face '+org-todo-someday '((t (:inherit (bold font-lock-comment-face org-todo)))) "" ))
+(setq org-todo-keywords '((sequence "TODO(t)" "SCHD(s)" "LOOP(l)" "PROJ(p)" "NEXT(n)" "WAIT(w)" "IDEA(i)" "SOMEDAY(m)" "|" "DONE(d@)" "KILL(k@)")))
+(setq org-todo-repeat-to-state "LOOP")
+(setq org-todo-keyword-faces '(("TODO" . org-todo)
+                               ("SCHD" . +org-todo-cancel)
+                               ("LOOP" . +org-todo-active)
+                               ("PROJ" . org-level-1)
+                               ("NEXT" . +org-todo-onhold)
+                               ("WAIT" . org-level-4)
+                               ("IDEA" . +org-todo-project)
+                               ("SOMEDAY" . +org-todo-someday)
+                               ("KILL" . org-agenda-dimmed-todo-face)))
+#+end_src
+*** Rest
+#+begin_src emacs-lisp
+#+end_src
+*** Mappings
+#+begin_src emacs-lisp
+(map!
+ (:map org-agenda-mode-map
+  :m "c s" #'org-agenda-schedule
+  :m "c d" #'org-agenda-deadline
+  :m "s-s" #'org-save-all-org-buffers
+  :m "s-r" #'org-agenda-redo
+  (:leader "f s" #'org-save-all-org-buffers))
+ (:map org-capture-mode-map
+  :n "Z Z" #'org-capture-finalize
+  :n "Z Q" #'org-capture-kill
+  "C-c C-c" nil
+  "C-c C-k" nil))
+#+end_src
+*** Hooks and advice
+#+begin_src emacs-lisp
+(add-hook 'org-mode-hook #'my/org-mode-hook)
+;; flash the cursor after an org agenda jump to file
+(advice-add 'org-agenda-switch-to :after #'+nav-flash/blink-cursor)
+(advice-add 'org-agenda-goto :after #'+nav-flash/blink-cursor)
+(advice-add 'org-agenda-add-time-grid-maybe :around #'my/time-grid-override)
+#+end_src
+*** Footer
+#+begin_src emacs-lisp
+)
 #+end_src
 * Packages
 ** Circe
@@ -385,6 +413,9 @@ Copied fix from: https://github.com/doomemacs/doomemacs/issues/4127#issuecomment
   (advice-add '+snippet--completing-read-uuid :override #'my/+snippet--completing-read-uuid))
 #+end_src
 * Keymaps
+** Commands
+*** Kill all buffers and reset doom
+Function
 #+begin_src emacs-lisp
 (defun my/reset-doom ()
   "Kill all buffers in buffer-list and cd back to home"
@@ -394,13 +425,19 @@ Copied fix from: https://github.com/doomemacs/doomemacs/issues/4127#issuecomment
   (delete-other-windows)
   ;; delete all workspaces
   (mapc #'+workspace/delete (+workspace-list-names)))
+#+end_src
 
+Mapping
+#+begin_src emacs-lisp
+(map! (:leader
+       :desc "Kill all buffers" "q a" #'my/reset-doom))
+#+end_src
+*** Personal agenda view
+Function
+#+begin_src emacs-lisp
 (require 'projectile)
 (defun my/default-agenda-view ()
-  "Open my personal default agenda view
-
-Note: projectile is still broken, so you need to open the org project manually
-with SPC p p first"
+  "Open my personal split screen agenda view"
   (interactive)
   (delete-other-windows)
   ;; disable popup for file selection in project
@@ -414,23 +451,54 @@ with SPC p p first"
   ;; ugly hack to refresh org-agenda after inline links are rendered
   (sleep-for 0.01)
   (org-agenda-redo))
+#+end_src
 
+Mapping
+#+begin_src emacs-lisp
+(map! (:leader
+       :desc "Agenda split view" "n SPC" #'my/default-agenda-view))
+#+end_src
+*** Run current file
+Function
+#+begin_src emacs-lisp
+(defun my/run-current-file ()
+  "Runs the file in the current buffer"
+  (interactive)
+  (compile (buffer-file-name)))
+#+end_src
+
+Mapping
+#+begin_src emacs-lisp
+(map! (:leader
+       :desc "Run this file" "f ." #'my/run-current-file))
+#+end_src
+*** Sync org with remote
+Function
+#+begin_src emacs-lisp
+(defun my/sync-org-with-remote ()
+  "Sync personal org files with the cloud"
+  (interactive)
+  (call-process (concat org-directory "beorg_sync.sh"))
+  (message "Synced org with remote"))
+#+end_src
+
+Mapping
+#+begin_src emacs-lisp
+(map! (:leader
+       :desc "Sync org with remote" "n r" #'my/sync-org-with-remote))
+#+end_src
+** Tabs
+Helper macro
+#+begin_src emacs-lisp
 (defmacro my/goto-tab-n (n)
   `(lambda ()
      "Goto tab N"
      (interactive)
      (+tabs:next-or-goto ,n)))
+#+end_src
 
-(defun my/run-current-file ()
-  "Runs the file in the current buffer"
-  (interactive)
-  (compile (buffer-file-name)))
-
-(defun my/duplicate-by-one-day (N)
-  "Duplicates the subtree N times and increments by one day"
-  (interactive "p")
-  (org-clone-subtree-with-time-shift N "+1d"))
-
+Mappings
+#+begin_src emacs-lisp
 (map!
  (:when (modulep! :ui tabs)
   ;; use meta-number (alt-number) to jump to tab
@@ -454,96 +522,137 @@ with SPC p p first"
    :desc "Buffer tab 6" :n "6" (my/goto-tab-n 6)
    :desc "Buffer tab 7" :n "7" (my/goto-tab-n 7)
    :desc "Buffer tab 8" :n "8" (my/goto-tab-n 8)
-   :desc "Buffer tab 9" :n "9" (my/goto-tab-n 9)))
+   :desc "Buffer tab 9" :n "9" (my/goto-tab-n 9))))
+#+end_src
+** Workspaces
+#+begin_src emacs-lisp
+(map! (:when (modulep! :ui workspaces)
+        :g "s-1" #'+workspace/switch-to-0
+        :g "s-2" #'+workspace/switch-to-1
+        :g "s-3" #'+workspace/switch-to-2
+        :g "s-4" #'+workspace/switch-to-3
+        :g "s-5" #'+workspace/switch-to-4
+        :g "s-6" #'+workspace/switch-to-5
+        :g "s-7" #'+workspace/switch-to-6
+        :g "s-8" #'+workspace/switch-to-7
+        :g "s-9" #'+workspace/switch-to-final
 
- (:when (modulep! :ui workspaces)
-  :g "s-1" #'+workspace/switch-to-0
-  :g "s-2" #'+workspace/switch-to-1
-  :g "s-3" #'+workspace/switch-to-2
-  :g "s-4" #'+workspace/switch-to-3
-  :g "s-5" #'+workspace/switch-to-4
-  :g "s-6" #'+workspace/switch-to-5
-  :g "s-7" #'+workspace/switch-to-6
-  :g "s-8" #'+workspace/switch-to-7
-  :g "s-9" #'+workspace/switch-to-final)
+        ;; cmd-shift-[ and cmd-shift-] to switch workspace
+        :g "s-{" #'+workspace/switch-left
+        :g "s-}" #'+workspace/switch-right
 
+        ;; cmd-w to kill buffer instead of workspace
+        :g "s-w" #'kill-current-buffer
+        ;; cmd-d to kill workspace
+        :g "s-d" #'+workspace/delete))
+#+end_src
+** Latex mode
+#+begin_src emacs-lisp
+(map! (:map LaTeX-mode-map
+       :localleader :n "r" #'latex-preview-pane-mode))
+#+end_src
+** Nav flash
+#+begin_src emacs-lisp
+(map! (:when (modulep! :ui nav-flash)
+        :leader
+        :desc "Blink current line" "b L" #'+nav-flash/blink-cursor))
+#+end_src
+** Vterm
+#+begin_src emacs-lisp
+(map! (:when (modulep! :term vterm)
+        :leader
+        :desc "Open projectile vterm" "p v" #'projectile-run-vterm
+        :desc "Open vterm buffer" "b v" #'vterm))
+#+end_src
+** Magit
+#+begin_src emacs-lisp
+(map! (:when (modulep! :tools magit)
+        :leader
+        :desc "Stage all" "g a" #'magit-stage-modified))
+#+end_src
+** Emacs
+*** Minibuffer
+Go to normal mode with =C-f= (like command line edit mode in Vim)
+#+begin_src emacs-lisp
+(map! (:map minibuffer-local-map
+            "C-f" #'evil-normal-state))
+#+end_src
+*** Align
+#+begin_src emacs-lisp
+(map! (:leader
+       :desc "Align" "c a" #'align))
+#+end_src
+** Org-mode
+*** General
+#+begin_src emacs-lisp
+(map! (:map org-mode-map
+       :localleader
+       :desc "Add note" :n "N" #'org-add-note
+       :desc "Reveal fold" :n "s R" #'org-fold-reveal)
+      (:mode org-mode
+       ;; cmd-k to link in org mode
+       :g "s-k" #'org-insert-link))
+#+end_src
+*** Latex
+#+begin_src emacs-lisp
+(map! (:map org-mode-map
+       :localleader
+       :desc "Preview latex fragment" :n "L" #'org-latex-preview))
+#+end_src
+*** Duplicate subtree by one day
+#+begin_src emacs-lisp
+(defun my/duplicate-by-one-day (N)
+  "Duplicates the subtree N times and increments by one day"
+  (interactive "p")
+  (org-clone-subtree-with-time-shift N "+1d"))
 
- ;; cmd-shift-[/] to switch workspace
- :g "s-{" #'+workspace/switch-left
- :g "s-}" #'+workspace/switch-right
-
- ;; cmd-w to kill buffer instead of workspace
- :g "s-w" #'kill-current-buffer
- ;; cmd-d to kill workspace
- :g "s-d" #'+workspace/delete
-
- ;; same shortcut as in System Preferences -> Keyboard -> Shortcuts -> Services
- :g "C-s-l" (lambda ()
-              (interactive)
-              (start-process "Start Screen Saver"'
-                             nil
-                             "/usr/bin/automator"
-                             "/Users/richard/Library/Services/Start Screen Saver.workflow"))
-
- (:mode org-mode
-  ;; cmd-k to link in org mode
-  :g "s-k" #'org-insert-link)
-
- (:map LaTeX-mode-map
-  :localleader :n "r" #'latex-preview-pane-mode)
-
+(map! (:map org-mode-map
+       :localleader
+       :desc "Duplicate by one day" :n "s C" #'my/duplicate-by-one-day))
+#+end_src
+** Evil
+*** Linewise paragraph motions
+Make ={= and =}= (paragraph motions) work linewise
+#+begin_src emacs-lisp
+(map! :o "}" #'(lambda ()
+                 (interactive)
+                 (evil-visual-line)
+                 (evil-forward-paragraph)
+                 (evil-visual-line))
+      :o "{" #'(lambda ()
+                 (interactive)
+                 (evil-visual-line)
+                 (evil-backward-paragraph)
+                 (evil-visual-line)))
+#+end_src
+*** Unmap =SPC w C-h= to run help
+Unmap =SPC w C-h= so it can run help instead
+#+begin_src emacs-lisp
+(map! (:map evil-window-map
+            "C-h" nil))
+#+end_src
+*** Disable evil-lion conflicts
+** Disable conflicts
+#+begin_src emacs-lisp
+(map!
  ;; disable evil-lion bindings that conflict with org mode
  :n "gl" nil
-
  ;; disable aya-expand keymap (conflicts with copilot completion)
- :i "C-<tab>" nil
+ :i "C-<tab>" nil)
+#+end_src
+** Show screensaver
+Same shortcut as in System Preferences -> Keyboard -> Shortcuts -> Services
+#+begin_src emacs-lisp
+(defun +my/start-screen-saver ()
+  "Start screen saver by calling the automator workflow"
+  (interactive)
+  (start-process "Start Screen Saver"'
+                 nil
+                 "/usr/bin/automator"
+                 "/Users/richard/Library/Services/Start Screen Saver.workflow"))
 
- (:leader
-  :desc "Kill all buffers" "q a" #'my/reset-doom
-  :desc "Sync org with remote" "n r" (lambda ()
-                                       (interactive)
-                                       (call-process (concat org-directory "beorg_sync.sh"))
-                                       (message "Synced org with remote"))
-  :desc "Agenda split view" "n SPC" #'my/default-agenda-view
-
-  (:when (modulep! :ui nav-flash)
-   :desc "Blink current line" "b L" #'+nav-flash/blink-cursor)
-
-  (:when (modulep! :term vterm)
-   :desc "Open projectile vterm" "p v" #'projectile-run-vterm
-   :desc "Open vterm buffer" "b v" #'vterm)
-
-  (:when (modulep! :tools magit)
-   :desc "Stage all" "g a" #'magit-stage-modified)
-   :desc "Align" "c a" #'align
-   :desc "Run this file" "f ." #'my/run-current-file)
-
- (:map evil-window-map
-  ;; unmap SPC w C-h so it can run help instead
-  "C-h" nil)
-
- (:map minibuffer-local-map
-  ;; go to normal mode with C-f (like command line edit mode)
-  "C-f" #'evil-normal-state)
-
- (:map org-mode-map
-  :localleader
-  :desc "Add note" :n "N" #'org-add-note
-  :desc "Preview latex fragment" :n "L" #'org-latex-preview
-  :desc "Duplicate by one day" :n "s C" #'my/duplicate-by-one-day
-  :desc "Reveal fold" :n "s R" #'org-fold-reveal)
-
- ;; make { and } (paragraph motions) work linewise
- :o "}" #'(lambda ()
-            (interactive)
-            (evil-visual-line)
-            (evil-forward-paragraph)
-            (evil-visual-line))
- :o "{" #'(lambda ()
-            (interactive)
-            (evil-visual-line)
-            (evil-backward-paragraph)
-            (evil-visual-line)))
+(map!
+ :g "C-s-l" #'+my/start-screen-saver)
 #+end_src
 ** Paste with indent (=]p=)
 From [[https://github.com/emacs-evil/evil/issues/464#issuecomment-273753628][here]]
