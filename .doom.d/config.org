@@ -218,6 +218,11 @@
 )
 #+end_src
 * Packages
+** Anaconda
+#+begin_src emacs-lisp
+(after! anaconda-mode
+  (setq anaconda-mode-disable-rpc 'remote))
+#+end_src
 ** Circe
 #+begin_src emacs-lisp
 (after! circe

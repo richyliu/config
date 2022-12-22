@@ -53,3 +53,9 @@
   :recipe (:host github :repo "zerolfx/copilot.el" :files ("*.el" "dist")))
 
 (package! elcord)
+
+(package! anaconda-mode
+  :recipe (:host github
+           :repo "richyliu/anaconda-mode"
+           :branch "feat-disable-rpc-on-tramp")
+  :pin "ec93792c72cc36002c8351db80fdd3112cf49573")
