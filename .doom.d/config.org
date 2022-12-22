@@ -755,6 +755,11 @@ This is for MIPS style comments for Spimbot (CS 233)
 (setq asm-comment-char ?#
     comment-start "#")
 #+end_src
+** Disable hl-line mode
+Copied from [[https://github.com/doomemacs/doomemacs/issues/4206#issuecomment-734414502][here]]
+#+begin_src emacs-lisp
+(remove-hook 'doom-first-buffer-hook #'global-hl-line-mode)
+#+end_src
 * Advice
 ** Custom cache
 #+begin_src emacs-lisp
