@@ -103,12 +103,9 @@
 (setq org-priority-start-cycle-with-default nil)
 #+end_src
 *** Agenda
+**** Misc
 #+begin_src emacs-lisp
 (setq org-agenda-files '("inbox.org" "agenda.org"))
-(setq org-agenda-sorting-strategy '((agenda time-up category-keep habit-up scheduled-up deadline-up todo-state-up priority-down tag-up)
-                                    (todo category-keep todo-state-up deadline-up priority-down ts-up)
-                                    (tags category-keep scheduled-up priority-down todo-state-up)
-                                    (search category-keep)))
 (setq org-agenda-prefix-format '((agenda . " %i %?-12t% s")
                                  (todo . " %i %-8:c")
                                  (tags . " %i %-8:c")
@@ -118,6 +115,30 @@
                              " ┄┄┄┄┄ " ""))
 (setq org-deadline-warning-days 7)
 (setq org-modules '(org-habit))
+#+end_src
+**** Agenda sorting
+#+begin_src emacs-lisp
+(defun my/org-agenda-sort-time-last (a b)
+  "Like the `time-up' sorting strategy, but keep timestamps last.
+
+This is very similar to the `time-up' options for `org-agenda-sorting-strategy',
+but it always sorts agenda items without a timestamp first (before any items
+with a timestamp)."
+  (cond
+   ((and (org-get-time-of-day a) (org-get-time-of-day b)) (- (org-cmp-time a b)))
+   ((org-get-time-of-day a) -1)
+   ((org-get-time-of-day b) +1)
+   (t nil)))
+#+end_src
+
+#+begin_src emacs-lisp
+(setq org-agenda-sorting-strategy '((agenda user-defined-up category-keep habit-up scheduled-up deadline-up todo-state-up priority-down tag-up)
+                                    (todo category-keep todo-state-up deadline-up priority-down ts-up)
+                                    (tags category-keep scheduled-up priority-down todo-state-up)
+                                    (search category-keep)))
+#+end_src
+**** Custom commands
+#+begin_src emacs-lisp
 (setq org-agenda-custom-commands '(("d" "Daily agenda and TODOs"
                                     ((agenda "" ((org-agenda-span 1)
                                                  (org-agenda-start-day "0d")
@@ -132,6 +153,7 @@
                                                     #'(lambda (input)
                                                         (unless (get-text-property 10 'ts-date input)
                                                           input)))))
+                                     (todo "PROJ")
                                      (agenda "" ((org-agenda-span 1)
                                                  (org-agenda-start-day "0d")))
                                      (agenda "" ((org-agenda-span 1)
