@@ -336,13 +336,22 @@ with a timestamp)."
 #+end_src
 ** Flycheck
 #+begin_src emacs-lisp
+(defun my/flycheck-disable-over-remote (func buffer)
+  "Disable `flycheck--handle-idle-trigger' over TRAMP."
+  (let ((file (buffer-file-name buffer)))
+    (unless (file-remote-p default-directory)
+      (apply func (list buffer)))))
+#+end_src
+
+#+begin_src emacs-lisp
 (after! flycheck
   ;; add qemu include path for flycheck
   (add-hook 'c-mode-hook
             (lambda () (setq flycheck-clang-include-path
                              (list (expand-file-name "~/code/neojetset-qemu/include")
                                    (expand-file-name "~/code/neojetset-qemu/build")
-                                   )))))
+                                   ))))
+  (advice-add #'flycheck--handle-idle-trigger :around #'my/flycheck-disable-over-remote))
 #+end_src
 ** Irony
 #+begin_src emacs-lisp
@@ -367,6 +376,15 @@ with a timestamp)."
                     :major-modes '(c++-mode)
                     :remote? t))
   (setq lsp-log-io t))
+#+end_src
+** Projectile
+Set ~projectile-generic-command~ to a fixed string to allow it to work when
+editing projects over TRAMP.
+
+#+begin_src emacs-lisp
+(after! projectile
+  (setq projectile-sort-order 'recentf)
+  (setq projectile-generic-command "find . -type f | cut -c3- | tr '\\n' '\\0'"))
 #+end_src
 ** Vterm
 *** Keymap override
@@ -786,6 +804,12 @@ This is for MIPS style comments for Spimbot (CS 233)
 Copied from [[https://github.com/doomemacs/doomemacs/issues/4206#issuecomment-734414502][here]]
 #+begin_src emacs-lisp
 (remove-hook 'doom-first-buffer-hook #'global-hl-line-mode)
+#+end_src
+** Load python eagerly
+Load python at startup to prevent issues with loading it on a buffer over TRAMP,
+which is slow.
+#+begin_src emacs-lisp
+(require 'python)
 #+end_src
 * Advice
 ** Custom cache
