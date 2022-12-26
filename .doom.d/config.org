@@ -125,9 +125,9 @@ This is very similar to the `time-up' options for `org-agenda-sorting-strategy',
 but it always sorts agenda items without a timestamp first (before any items
 with a timestamp)."
   (cond
-   ((and (org-get-time-of-day a) (org-get-time-of-day b)) (- (org-cmp-time a b)))
-   ((org-get-time-of-day a) -1)
-   ((org-get-time-of-day b) +1)
+   ((and (org-get-time-of-day a) (org-get-time-of-day b)) (- (org-cmp-time b a)))
+   ((org-get-time-of-day a) +1)
+   ((org-get-time-of-day b) -1)
    (t nil)))
 #+end_src
 
@@ -136,6 +136,7 @@ with a timestamp)."
                                     (todo category-keep todo-state-up deadline-up priority-down ts-up)
                                     (tags category-keep scheduled-up priority-down todo-state-up)
                                     (search category-keep)))
+(setq org-agenda-cmp-user-defined #'my/org-agenda-sort-time-last)
 #+end_src
 **** Custom commands
 #+begin_src emacs-lisp
