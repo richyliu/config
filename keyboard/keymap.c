@@ -1,135 +1,135 @@
 #include QMK_KEYBOARD_H
-#include "pointing_device.h"
+#include "version.h"
+#include "keymap_german.h"
+#include "keymap_nordic.h"
+#include "keymap_french.h"
+#include "keymap_spanish.h"
+#include "keymap_hungarian.h"
+#include "keymap_swedish.h"
+#include "keymap_br_abnt2.h"
+#include "keymap_canadian_multilingual.h"
+#include "keymap_german_ch.h"
+#include "keymap_jp.h"
+#include "keymap_korean.h"
+#include "keymap_bepo.h"
+#include "keymap_italian.h"
+#include "keymap_slovenian.h"
+#include "keymap_lithuanian_azerty.h"
+#include "keymap_danish.h"
+#include "keymap_norwegian.h"
+#include "keymap_portuguese.h"
+#include "keymap_contributions.h"
+#include "keymap_czech.h"
+#include "keymap_romanian.h"
+#include "keymap_russian.h"
+#include "keymap_uk.h"
+#include "keymap_estonian.h"
+#include "keymap_belgian.h"
+#include "keymap_us_international.h"
+#include "keymap_croatian.h"
+#include "keymap_turkish_q.h"
+#include "keymap_slovak.h"
 
-#include <stdint.h>
-#include <stdbool.h>
+#define KC_MAC_UNDO LGUI(KC_Z)
+#define KC_MAC_CUT LGUI(KC_X)
+#define KC_MAC_COPY LGUI(KC_C)
+#define KC_MAC_PASTE LGUI(KC_V)
+#define KC_PC_UNDO LCTL(KC_Z)
+#define KC_PC_CUT LCTL(KC_X)
+#define KC_PC_COPY LCTL(KC_C)
+#define KC_PC_PASTE LCTL(KC_V)
+#define ES_LESS_MAC KC_GRAVE
+#define ES_GRTR_MAC LSFT(KC_GRAVE)
+#define ES_BSLS_MAC ALGR(KC_6)
+#define NO_PIPE_ALT KC_GRAVE
+#define NO_BSLS_ALT KC_EQUAL
+#define LSA_T(kc) MT(MOD_LSFT | MOD_LALT, kc)
+#define BP_NDSH_MAC ALGR(KC_8)
+#define SE_SECT_MAC ALGR(KC_6)
 
-enum layers { BASE, ARR, NAV, FUN, NUM, PLVR };
-
-#define U_PSTFM LCMD(LALT(LSFT(KC_V)))
-
-enum planck_keycodes {
-  PLOVER = SAFE_RANGE,
-  EXT_PLV,
-  HEX_0X, // sends "0x"
-  MY_CAPS
+enum custom_keycodes {
+  RGB_SLD = EZ_SAFE_RANGE,
 };
 
-// correspond to the correct letters on colemak mod-dh
-#define HEX_A KC_A
-#define HEX_B KC_T
-#define HEX_C KC_X
-#define HEX_D KC_C
-#define HEX_E KC_K
-#define HEX_F KC_E
-#define HEX_X KC_Z // for sending "0x"
 
-#define ALT_LEFT LALT(KC_LEFT)
-#define ALT_RIGHT LALT(KC_RIGHT)
-
-#define ALT_ESC LALT_T(KC_ESC)
-#define SFT_QUOT LSFT_T(KC_QUOT)
-
-#define TAB_BAC G(S(KC_LBRC))
-#define TAB_FWD G(S(KC_RBRC))
-
-#define SCRCLIP G(C(S(KC_4)))
-#define SCRSAVE G(S(KC_4))
-
-#define INSP_EL G(A(KC_L))
-#define SELC_EL G(S(KC_X))
-
-// TODO:
-// no way to press cmd and alt at the same time
-// remove esc from alt_esc?
-// add sound?
-// add lights?
-// layer order/DF layer stacking?
-
-// reference: https://docs.qmk.fm/#/keycodes
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-[BASE] = LAYOUT_ortho_4x12(
-  KC_TAB,  KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_BSPC,
-  KC_LCTL, KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, KC_ENT,
-  KC_LSFT, KC_B,    KC_Z,    KC_X,    KC_C,    KC_V,    KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, SFT_QUOT,
-  XXXXXXX, MO(NAV), XXXXXXX, ALT_ESC, KC_LCMD, MO(NUM), MO(NUM), KC_SPC,  KC_RALT, MO(FUN), DF(BASE),MO(FUN)
-),
-[ARR] = LAYOUT_ortho_4x12(
-  XXXXXXX, XXXXXXX, XXXXXXX, KC_UP,   XXXXXXX, XXXXXXX, XXXXXXX, ALT_LEFT,XXXXXXX, XXXXXXX, ALT_RIGHT,XXXXXXX,
-  XXXXXXX, XXXXXXX, KC_LEFT, KC_DOWN, KC_RGHT, XXXXXXX, XXXXXXX, KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT, XXXXXXX,
-  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_HOME, KC_PGDN, KC_PGUP, KC_END,  XXXXXXX,
-  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_SPC,  XXXXXXX, XXXXXXX, KC_SPC,  XXXXXXX, XXXXXXX, _______, _______
-),
-[NAV] = LAYOUT_ortho_4x12(
-  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, ALT_LEFT,XXXXXXX, XXXXXXX, ALT_RIGHT,KC_DEL,
-  XXXXXXX, XXXXXXX, XXXXXXX, TAB_BAC, TAB_FWD, U_PSTFM, MY_CAPS, KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT, KC_ENT,
-  _______, KC_LGUI, KC_LALT, KC_LCTL, KC_LSFT, XXXXXXX, XXXXXXX, KC_HOME, KC_PGDN, KC_PGUP, KC_END,  KC_LSFT,
-  XXXXXXX, XXXXXXX, XXXXXXX, KC_LALT, _______, XXXXXXX, XXXXXXX, _______, XXXXXXX, XXXXXXX, _______, _______
-),
-[FUN] = LAYOUT_ortho_4x12(
-  XXXXXXX, KC_F12,  KC_F7,   KC_F8,   KC_F9,   XXXXXXX, DM_REC2, DM_REC1, DM_RSTP, XXXXXXX, PLOVER,  RESET,
-  XXXXXXX, KC_F11,  KC_F4,   KC_F5,   KC_F6,   KC_BRMU, DM_PLY2, DM_PLY1, SELC_EL, INSP_EL, XXXXXXX, DF(ARR),
-  _______, KC_F10,  KC_F1,   KC_F2,   KC_F3,   KC_BRMD, XXXXXXX, XXXXXXX, KC_MUTE, KC_VOLD, KC_VOLU, KC_LSFT,
-  XXXXXXX, XXXXXXX, XXXXXXX, KC_LALT, _______, XXXXXXX, XXXXXXX, SCRSAVE, SCRCLIP, XXXXXXX, _______, XXXXXXX
-),
-[NUM] = LAYOUT_ortho_4x12(
-  KC_GRV,  KC_1,    KC_2,    KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0,    KC_BSPC,
-  KC_LCTL, HEX_A,   HEX_B,   HEX_C,   HEX_D,   HEX_E,   HEX_F,   KC_MINS, KC_EQL,  KC_LBRC, KC_RBRC, KC_BSLS,
-  KC_LSFT, KC_LCMD, KC_LALT, KC_LCTL, KC_LSFT, HEX_0X,  XXXXXXX, KC_RSFT, KC_RCTL, KC_LALT, KC_RGUI, KC_RSFT,
-  XXXXXXX, XXXXXXX, XXXXXXX, KC_LALT, _______, XXXXXXX, XXXXXXX, _______, KC_DOT,  XXXXXXX, _______, XXXXXXX
-),
-[PLVR] = LAYOUT_ortho_4x12(
-  XXXXXXX, KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_LBRC,
-  XXXXXXX, KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, KC_QUOT,
-  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
-  XXXXXXX, XXXXXXX, EXT_PLV, KC_1,    KC_C,    KC_V,    KC_N,    KC_M,    KC_1,    XXXXXXX, EXT_PLV, XXXXXXX
-)
-
+  [0] = LAYOUT_ergodox_pretty(
+    KC_GRAVE,       KC_1,           KC_2,           KC_3,           KC_4,           KC_5,           LSFT(KC_LALT),                                  LSFT(KC_LCTRL), KC_6,           KC_7,           KC_8,           KC_9,           KC_0,           KC_TRANSPARENT,
+    KC_TAB,         KC_Q,           KC_W,           KC_E,           KC_R,           KC_T,           TG(1),                                          TG(1),          KC_Y,           KC_U,           KC_I,           KC_O,           KC_P,           KC_BSPACE,
+    KC_LCTRL,       KC_A,           KC_S,           KC_D,           KC_F,           KC_G,                                                                           KC_H,           KC_J,           KC_K,           KC_L,           KC_SCOLON,      KC_ENTER,
+    KC_LSHIFT,      KC_B,           KC_Z,           KC_X,           KC_C,           KC_V,           LGUI(LSFT(KC_LBRACKET)),                                LGUI(LSFT(KC_RBRACKET)),KC_N,           KC_M,           KC_COMMA,       KC_DOT,         KC_SLASH,       MT(MOD_RSFT, KC_QUOTE),
+    KC_TRANSPARENT, LALT(KC_LCTRL), TG(2),          LGUI(KC_LALT),  MT(MOD_LALT, KC_ESCAPE),                                                                                                KC_LEFT,        KC_DOWN,        KC_UP,          KC_RIGHT,       MO(2),
+                                                                                                    KC_HOME,        KC_END,         KC_PGUP,        KC_PGDOWN,
+                                                                                                                    KC_TRANSPARENT, KC_RALT,
+                                                                                    KC_LGUI,        MO(1),          OSL(1),         OSL(1),         MO(1),          KC_SPACE
+  ),
+  [1] = LAYOUT_ergodox_pretty(
+    KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
+    KC_TRANSPARENT, KC_EXLM,        KC_AT,          KC_HASH,        KC_DLR,         KC_PERC,        KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_CIRC,        KC_AMPR,        KC_ASTR,        KC_LPRN,        KC_RPRN,        KC_TRANSPARENT,
+    KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_BSLASH,                                                                      KC_TRANSPARENT, KC_MINUS,       KC_EQUAL,       KC_LBRACKET,    KC_RBRACKET,    KC_TRANSPARENT,
+    KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_PIPE,        KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_UNDS,        KC_PLUS,        KC_LCBR,        KC_RCBR,        KC_TRANSPARENT,
+    KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                                                                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
+                                                                                                    KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
+                                                                                                                    KC_TRANSPARENT, KC_TRANSPARENT,
+                                                                                    KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT
+  ),
+  [2] = LAYOUT_ergodox_pretty(
+    KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, RESET,
+    KC_TRANSPARENT, KC_F12,         KC_F7,          KC_F8,          KC_F9,          KC_TRANSPARENT, KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_TRANSPARENT, LALT(LGUI(LSFT(KC_V))),KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, LED_LEVEL,
+    KC_TRANSPARENT, KC_F11,         KC_F4,          KC_F5,          KC_F6,          KC_TRANSPARENT,                                                                 KC_CAPSLOCK,    KC_BRIGHTNESS_UP,LGUI(LSFT(KC_X)),LALT(LGUI(KC_L)),KC_TRANSPARENT, KC_TRANSPARENT,
+    KC_TRANSPARENT, KC_F10,         KC_F1,          KC_F2,          KC_F3,          KC_TRANSPARENT, KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_BRIGHTNESS_DOWN,KC_AUDIO_MUTE,  KC_AUDIO_VOL_DOWN,KC_AUDIO_VOL_UP,KC_TRANSPARENT,
+    KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                                                                                 LGUI(LSFT(KC_4)),LGUI(LCTL(LSFT(KC_4))),KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
+                                                                                                    KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
+                                                                                                                    KC_TRANSPARENT, KC_TRANSPARENT,
+                                                                                    KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_WWW_BACK
+  ),
 };
 
 
-const key_override_t esc_key_override = ko_make_basic(MOD_MASK_CTRL, KC_BSPC, KC_ESC);
-const key_override_t comma_key_override = ko_make_with_layers(MOD_MASK_SHIFT, KC_DOT, KC_COMM, (1 << NUM));
-
-const key_override_t **key_overrides = (const key_override_t *[]){
-    &esc_key_override,
-    &comma_key_override,
-    NULL
-};
-
-uint16_t ctrl_b_timer = 0;
-#define CTRL_B_TIMEOUT 300
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   switch (keycode) {
-    case PLOVER:
-      if (record->event.pressed) {
-        layer_move(PLVR);
-        // start plover/plojo with ctrl-alt-shift-p
-        SEND_STRING(SS_LSFT(SS_TAP(X_F7)));
-      }
-      return false;
-    case EXT_PLV:
-      if (record->event.pressed) {
-        layer_move(BASE);
-        // exit plover/plojo with "PHR*OF" stroke (erfvyu keys)
-        // all the keys must be pressed down at the same time to simulate a steno chord
-        SEND_STRING(SS_DOWN(X_E) SS_DOWN(X_R) SS_DOWN(X_F) SS_DOWN(X_V) SS_DOWN(X_Y) SS_DOWN(X_U));
-        SEND_STRING(SS_UP(X_E) SS_UP(X_R) SS_UP(X_F) SS_UP(X_V) SS_UP(X_Y) SS_UP(X_U));
-      }
-      return false;
-    case HEX_0X:
-      if (record->event.pressed) {
-        tap_code(KC_0);
-        tap_code(HEX_X);
-      }
-      return false;
-    case MY_CAPS:
-      if (record->event.pressed) {
-        tap_code_delay(KC_CAPS, 200);
-      }
-      return false;
-  }
 
+  }
   return true;
 }
+
+uint8_t layer_state_set_user(uint8_t state) {
+    uint8_t layer = biton(state);
+  ergodox_board_led_off();
+  ergodox_right_led_1_off();
+  ergodox_right_led_2_off();
+  ergodox_right_led_3_off();
+  switch (layer) {
+    case 1:
+      ergodox_right_led_1_on();
+      break;
+    case 2:
+      ergodox_right_led_2_on();
+      break;
+    case 3:
+      ergodox_right_led_3_on();
+      break;
+    case 4:
+      ergodox_right_led_1_on();
+      ergodox_right_led_2_on();
+      break;
+    case 5:
+      ergodox_right_led_1_on();
+      ergodox_right_led_3_on();
+      break;
+    case 6:
+      ergodox_right_led_2_on();
+      ergodox_right_led_3_on();
+      break;
+    case 7:
+      ergodox_right_led_1_on();
+      ergodox_right_led_2_on();
+      ergodox_right_led_3_on();
+      break;
+    default:
+      break;
+  }
+  return state;
+};
+
