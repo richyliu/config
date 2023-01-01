@@ -51,37 +51,44 @@ enum custom_keycodes {
   RGB_SLD = EZ_SAFE_RANGE,
 };
 
+#define KC_PASTE_NO_FMT LALT(LGUI(LSFT(KC_V)))
+#define KC_SCRSHOT      LGUI(LSFT(KC_4))
+#define KC_SCRSHOT_CLIP LGUI(LCTL(LSFT(KC_4)))
+#define KC_SEL_EL       LGUI(LSFT(KC_X))
+#define KC_INSP_EL      LALT(LGUI(KC_L))
+#define KC_WEB_BACK     LGUI(KC_LBRACKET)
+#define KC_WEB_FWD      LGUI(KC_RBRACKET)
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   [0] = LAYOUT_ergodox_pretty(
     KC_GRAVE,       KC_1,           KC_2,           KC_3,           KC_4,           KC_5,           LSFT(KC_LALT),                                  LSFT(KC_LCTRL), KC_6,           KC_7,           KC_8,           KC_9,           KC_0,           KC_TRANSPARENT,
     KC_TAB,         KC_Q,           KC_W,           KC_E,           KC_R,           KC_T,           TG(1),                                          TG(1),          KC_Y,           KC_U,           KC_I,           KC_O,           KC_P,           KC_BSPACE,
     KC_LCTRL,       KC_A,           KC_S,           KC_D,           KC_F,           KC_G,                                                                           KC_H,           KC_J,           KC_K,           KC_L,           KC_SCOLON,      KC_ENTER,
-    KC_LSHIFT,      KC_B,           KC_Z,           KC_X,           KC_C,           KC_V,           LGUI(LSFT(KC_LBRACKET)),                                LGUI(LSFT(KC_RBRACKET)),KC_N,           KC_M,           KC_COMMA,       KC_DOT,         KC_SLASH,       MT(MOD_RSFT, KC_QUOTE),
-    KC_TRANSPARENT, LALT(KC_LCTRL), TG(2),          LGUI(KC_LALT),  MT(MOD_LALT, KC_ESCAPE),                                                                                                KC_LEFT,        KC_DOWN,        KC_UP,          KC_RIGHT,       MO(2),
-                                                                                                    KC_HOME,        KC_END,         KC_PGUP,        KC_PGDOWN,
-                                                                                                                    KC_TRANSPARENT, KC_RALT,
+    KC_LSHIFT,      KC_B,           KC_Z,           KC_X,           KC_C,           KC_V,           LGUI(LSFT(KC_LBRACKET)),                LGUI(LSFT(KC_RBRACKET)),KC_N,           KC_M,           KC_COMMA,       KC_DOT,         KC_SLASH,       MT(MOD_RSFT, KC_QUOTE),
+    KC_TRANSPARENT, LALT(KC_LCTRL), TG(2),          KC_ESC,         KC_LALT,                                                                                                        KC_LEFT,        KC_DOWN,        KC_UP,          KC_RIGHT,       MO(2),
+                                                                                                    LGUI(KC_LALT),  KC_HOME,        KC_PGUP,        KC_RALT,
+                                                                                                                    KC_END,         KC_PGDOWN,
                                                                                     KC_LGUI,        MO(1),          OSL(1),         OSL(1),         MO(1),          KC_SPACE
   ),
   [1] = LAYOUT_ergodox_pretty(
     KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
     KC_TRANSPARENT, KC_EXLM,        KC_AT,          KC_HASH,        KC_DLR,         KC_PERC,        KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_CIRC,        KC_AMPR,        KC_ASTR,        KC_LPRN,        KC_RPRN,        KC_TRANSPARENT,
     KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_BSLASH,                                                                      KC_TRANSPARENT, KC_MINUS,       KC_EQUAL,       KC_LBRACKET,    KC_RBRACKET,    KC_TRANSPARENT,
-    KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_PIPE,        KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_UNDS,        KC_PLUS,        KC_LCBR,        KC_RCBR,        KC_TRANSPARENT,
+    KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_PIPE,        KC_WEB_BACK,                                    KC_WEB_FWD,     KC_TRANSPARENT, KC_UNDS,        KC_PLUS,        KC_LCBR,        KC_RCBR,        KC_TRANSPARENT,
     KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                                                                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
                                                                                                     KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
                                                                                                                     KC_TRANSPARENT, KC_TRANSPARENT,
                                                                                     KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT
   ),
   [2] = LAYOUT_ergodox_pretty(
-    KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, RESET,
-    KC_TRANSPARENT, KC_F12,         KC_F7,          KC_F8,          KC_F9,          KC_TRANSPARENT, KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_TRANSPARENT, LALT(LGUI(LSFT(KC_V))),KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, LED_LEVEL,
-    KC_TRANSPARENT, KC_F11,         KC_F4,          KC_F5,          KC_F6,          KC_TRANSPARENT,                                                                 KC_CAPSLOCK,    KC_BRIGHTNESS_UP,LGUI(LSFT(KC_X)),LALT(LGUI(KC_L)),KC_TRANSPARENT, KC_TRANSPARENT,
-    KC_TRANSPARENT, KC_F10,         KC_F1,          KC_F2,          KC_F3,          KC_TRANSPARENT, KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_BRIGHTNESS_DOWN,KC_AUDIO_MUTE,  KC_AUDIO_VOL_DOWN,KC_AUDIO_VOL_UP,KC_TRANSPARENT,
-    KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                                                                                 LGUI(LSFT(KC_4)),LGUI(LCTL(LSFT(KC_4))),KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
+    KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,     KC_TRANSPARENT,  KC_TRANSPARENT,    KC_TRANSPARENT,  RESET,
+    KC_TRANSPARENT, KC_F12,         KC_F7,          KC_F8,          KC_F9,          KC_TRANSPARENT, KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_PASTE_NO_FMT,    KC_TRANSPARENT,  KC_TRANSPARENT,    KC_TRANSPARENT,  LED_LEVEL,
+    KC_TRANSPARENT, KC_F11,         KC_F4,          KC_F5,          KC_F6,          KC_TRANSPARENT,                                                                 KC_CAPSLOCK,    KC_BRIGHTNESS_UP,   KC_SEL_EL,       KC_INSP_EL,        KC_TRANSPARENT,  KC_TRANSPARENT,
+    KC_TRANSPARENT, KC_F10,         KC_F1,          KC_F2,          KC_F3,          KC_TRANSPARENT, KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_BRIGHTNESS_DOWN, KC_AUDIO_MUTE,   KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_TRANSPARENT,
+    KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                                                                                 KC_SCRSHOT,         KC_SCRSHOT_CLIP, KC_TRANSPARENT,    KC_TRANSPARENT,  KC_TRANSPARENT,
                                                                                                     KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
                                                                                                                     KC_TRANSPARENT, KC_TRANSPARENT,
-                                                                                    KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_WWW_BACK
+                                                                                    KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT
   ),
 };
 
@@ -89,7 +96,19 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   switch (keycode) {
-
+    case KC_BSPACE:
+      // send esc on ctrl-backspace
+      if (get_mods() & MOD_BIT(KC_LCTRL)) {
+        if (record->event.pressed) {
+          // don't want ctrl to be sent along with esc
+          unregister_code(KC_LCTRL);
+          tap_code(KC_ESC);
+          wait_ms(10); // wait for the key to be processed
+          register_code(KC_LCTRL);
+        }
+        // don't send the original keycode
+        return false;
+      }
   }
   return true;
 }
