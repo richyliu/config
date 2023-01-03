@@ -603,13 +603,6 @@ Mappings
         :leader
         :desc "Blink current line" "b L" #'+nav-flash/blink-cursor))
 #+end_src
-** Vterm
-#+begin_src emacs-lisp
-(map! (:when (modulep! :term vterm)
-        :leader
-        :desc "Open projectile vterm" "p v" #'projectile-run-vterm
-        :desc "Open vterm buffer" "b v" #'vterm))
-#+end_src
 ** Magit
 #+begin_src emacs-lisp
 (map! (:when (modulep! :tools magit)
