@@ -124,11 +124,12 @@
 This is very similar to the `time-up' options for `org-agenda-sorting-strategy',
 but it always sorts agenda items without a timestamp first (before any items
 with a timestamp)."
-  (cond
-   ((and (org-get-time-of-day a) (org-get-time-of-day b)) (- (org-cmp-time b a)))
-   ((org-get-time-of-day a) +1)
-   ((org-get-time-of-day b) -1)
-   (t nil)))
+  (let ((a-timep (get-text-property 1 'time-of-day a))
+        (b-timep (get-text-property 1 'time-of-day b)))
+    (cond
+     ((and a-timep b-timep) (org-cmp-time a b))
+     (a-timep +1)
+     (b-timep -1))))
 #+end_src
 
 #+begin_src emacs-lisp
