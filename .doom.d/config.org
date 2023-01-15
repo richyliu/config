@@ -134,7 +134,7 @@ with a timestamp)."
 
 #+begin_src emacs-lisp
 (setq org-agenda-sorting-strategy '((agenda user-defined-up category-keep habit-up scheduled-up deadline-up todo-state-up priority-down tag-up)
-                                    (todo category-keep todo-state-up deadline-up priority-down ts-up)
+                                    (todo category-keep todo-state-up priority-down deadline-up ts-up)
                                     (tags category-keep scheduled-up priority-down todo-state-up)
                                     (search category-keep)))
 (setq org-agenda-cmp-user-defined #'my/org-agenda-sort-time-last)
@@ -142,19 +142,7 @@ with a timestamp)."
 **** Custom commands
 #+begin_src emacs-lisp
 (setq org-agenda-custom-commands '(("d" "Daily agenda and TODOs"
-                                    ((agenda "" ((org-agenda-span 1)
-                                                 (org-agenda-start-day "0d")
-                                                 (org-deadline-warning-days 60)
-                                                 (org-agenda-use-time-grid 'nil)
-                                                 (org-agenda-deadline-faces '((1.001 . error)
-                                                                              (1.0 . org-warning)
-                                                                              (0.0 . default)))
-                                                 (org-agenda-entry-types '(:deadline))))
-                                        ; show separate agenda sections for TODOs without a deadline
-                                     (todo "TODO" ((org-agenda-before-sorting-filter-function
-                                                    #'(lambda (input)
-                                                        (unless (get-text-property 10 'ts-date input)
-                                                          input)))))
+                                    ((todo "TODO")
                                      (todo "PROJ")
                                      (agenda "" ((org-agenda-span 1)
                                                  (org-agenda-start-day "0d")))
