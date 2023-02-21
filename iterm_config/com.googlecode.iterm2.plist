@@ -2699,7 +2699,7 @@
 	<key>SoundForEsc</key>
 	<false/>
 	<key>TabStyleWithAutomaticOption</key>
-	<integer>5</integer>
+	<integer>4</integer>
 	<key>TabTransform</key>
 	<integer>0</integer>
 	<key>UseMetal</key>

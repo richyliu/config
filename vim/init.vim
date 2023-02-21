@@ -347,6 +347,9 @@ xmap ac <Plug>(GitGutterTextObjectOuterVisual)
 nnoremap <c-h> :<c-u>SidewaysLeft<cr>
 nnoremap <c-k> :<c-u>SidewaysRight<cr>
 
+" Copilot
+imap <silent><script><expr> <M-Tab> copilot#Accept("\<CR>")
+
 " Search for selected text and automatically escape characters
 " Source: https://vim.fandom.com/wiki/Search_for_visually_selected_text
 vnoremap <silent> * :<C-U>

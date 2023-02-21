@@ -111,9 +111,9 @@
                                  (tags . " %i %-8:c")
                                  (search . " %i %-8:c")))
 (setq org-agenda-time-grid '((daily today remove-match)
-                             (1000 1030 1100 1130 1200 1230 1300 1330 1400 1430 1500 1530 1600 1630 1700 1730 1800 1830 1900 1930 2000 2030 2100 2130 2200 2230)
+                             (900 930 1000 1030 1100 1130 1200 1230 1300 1330 1400 1430 1500 1530 1600 1630 1700 1730 1800 1830 1900 1930 2000 2030 2100 2130 2200 2230)
                              " ┄┄┄┄┄ " ""))
-(setq org-deadline-warning-days 7)
+(setq org-deadline-warning-days 14)
 (setq org-modules '(org-habit))
 #+end_src
 **** Agenda sorting
@@ -147,7 +147,16 @@ with a timestamp)."
                                      (agenda "" ((org-agenda-span 1)
                                                  (org-agenda-start-day "0d")))
                                      (agenda "" ((org-agenda-span 1)
-                                                 (org-agenda-start-day "+1d")))))))
+                                                 (org-agenda-start-day "+1d")))))
+                                   ("w" "Week-long daily agenda"
+                                    ((agenda "" ((org-agenda-span 1) (org-agenda-start-day "0d")))
+                                     (agenda "" ((org-agenda-span 1) (org-agenda-start-day "+1d")))
+                                     (agenda "" ((org-agenda-span 1) (org-agenda-start-day "+2d")))
+                                     (agenda "" ((org-agenda-span 1) (org-agenda-start-day "+3d")))
+                                     (agenda "" ((org-agenda-span 1) (org-agenda-start-day "+4d")))
+                                     (agenda "" ((org-agenda-span 1) (org-agenda-start-day "+5d")))
+                                     (agenda "" ((org-agenda-span 1) (org-agenda-start-day "+6d")))
+                                     (agenda "" ((org-agenda-span 1) (org-agenda-start-day "+7d")))))))
 #+end_src
 *** Capture and archive
 #+begin_src emacs-lisp
@@ -198,9 +207,6 @@ with a timestamp)."
                                ("IDEA" . +org-todo-project)
                                ("SOMEDAY" . +org-todo-someday)
                                ("KILL" . org-agenda-dimmed-todo-face)))
-#+end_src
-*** Rest
-#+begin_src emacs-lisp
 #+end_src
 *** Mappings
 #+begin_src emacs-lisp
@@ -513,7 +519,7 @@ Function
 (defun my/sync-org-with-remote ()
   "Sync personal org files with the cloud"
   (interactive)
-  (call-process (concat org-directory "beorg_sync.sh"))
+  (call-process (concat org-directory "sync/beorg_sync.sh"))
   (message "Synced org with remote"))
 #+end_src
 
@@ -735,8 +741,12 @@ indentation.  The return value is the yanked text."
                  ))
 #+end_src
 ** Theme
+Set different theme based on light or dark mode
 #+begin_src emacs-lisp
-(setq doom-theme 'doom-one-light)
+(if (equal "Dark\n"
+           (shell-command-to-string "defaults read -g AppleInterfaceStyle"))
+    (setq doom-theme 'doom-one)
+  (setq doom-theme 'doom-one-light))
 #+end_src
 ** Line numbers
 #+begin_src emacs-lisp
