@@ -246,6 +246,12 @@ with a timestamp)."
 (after! anaconda-mode
   (setq anaconda-mode-disable-rpc 'remote))
 #+end_src
+** Browse at remote
+#+begin_src emacs-lisp :tangle yes
+(after! browse-at-remote
+    (add-to-list #'browse-at-remote-remote-type-regexps
+                (list :host "^gitlab\\.engr\\.illinois\\.edu" :type "gitlab")))
+#+end_src
 ** Circe
 #+begin_src emacs-lisp :tangle yes
 (after! circe
@@ -369,6 +375,13 @@ with a timestamp)."
                                    (expand-file-name "~/code/neojetset-qemu/build")
                                    ))))
   (advice-add #'flycheck--handle-idle-trigger :around #'my/flycheck-disable-over-remote))
+#+end_src
+** Forge core
+For detecting git forges (github, gitlab, etc)
+#+begin_src emacs-lisp :tangle yes
+(after! forge-core
+  (add-to-list #'forge-alist
+               (list "gitlab.engr.illinois.edu" "gitlab.engr.illinois.edu/api/v4" "gitlab.engr.illinois.edu" 'forge-gitlab-repository)))
 #+end_src
 ** Irony
 #+begin_src emacs-lisp :tangle yes
@@ -886,4 +899,16 @@ especially when editing over TRAMP."
       dirconfig)))
 
 (advice-add #'projectile-parse-dirconfig-file :around #'my/projectile-parse-dirconfig-file)
+#+end_src
+** Images type override for svgs
+Override image.el function ~image-type-available-p~ to not accept SVGs (which
+are not supported on Mac)
+#+begin_src emacs-lisp :tangle yes
+(defun my/image-type-available-p (orig-fun type)
+  "Override for `image-type-available-p'. Returns nil for type svg"
+  (if (eq 'svg type)
+      nil
+    (funcall orig-fun type)))
+
+(advice-add #'image-type-available-p :around #'my/image-type-available-p)
 #+end_src
