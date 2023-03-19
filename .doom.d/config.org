@@ -324,6 +324,22 @@ with a timestamp)."
                                              (format "Editing %s" filetype))))
   (elcord-mode))
 #+end_src
+** Eshell
+#+begin_src emacs-lisp :tangle yes
+(defun my/eshell-keymap-override-setup ()
+  (define-key evil-normal-state-local-map (kbd "C-p") #'eshell-previous-input)
+  (define-key evil-insert-state-local-map (kbd "C-p") #'eshell-previous-input)
+  (define-key evil-normal-state-local-map (kbd "C-n") #'eshell-next-input)
+  (define-key evil-insert-state-local-map (kbd "C-n") #'eshell-next-input)
+  (define-key evil-normal-state-local-map (kbd "C-c") #'evil-collection-eshell-interrupt-process)
+  (define-key evil-insert-state-local-map (kbd "C-c") #'evil-collection-eshell-interrupt-process)
+  (define-key evil-normal-state-local-map (kbd "<return>") #'eshell-send-input))
+#+end_src
+
+#+begin_src emacs-lisp :tangle yes
+(after! eshell
+  (add-hook 'eshell-mode-hook #'my/eshell-keymap-override-setup))
+#+end_src
 ** Evil-org
 #+begin_src emacs-lisp :tangle yes
 (after! evil-org
@@ -396,8 +412,8 @@ editing projects over TRAMP.
   (define-key evil-normal-state-local-map (kbd "C-o") vterm-mode-map)
   (define-key evil-insert-state-local-map (kbd "C-o") vterm-mode-map)
   ;; use C-c to send actual C-c
-  (define-key evil-normal-state-local-map (kbd "C-c") #'vterm-send-C-c)
-  (define-key evil-insert-state-local-map (kbd "C-c") #'vterm-send-C-c)
+  (define-key evil-normal-state-local-map (kbd "C-c") #'(lambda () (interactive) (vterm-send "C-C")))
+  (define-key evil-insert-state-local-map (kbd "C-c") #'(lambda () (interactive) (vterm-send "C-C")))
   ;; copy mode
   (define-key evil-normal-state-local-map (kbd "C-x c") #'vterm-copy-mode)
   (define-key evil-insert-state-local-map (kbd "C-x c") #'vterm-copy-mode)
@@ -408,11 +424,11 @@ editing projects over TRAMP.
   (define-key evil-normal-state-local-map (kbd "C-x l") #'vterm-clear-scrollback)
   (define-key evil-insert-state-local-map (kbd "C-x l") #'vterm-clear-scrollback)
   ;; send ctrl-p/n to vterm directly
-  (define-key evil-normal-state-local-map (kbd "C-p") #'vterm-send-C-p)
-  (define-key evil-normal-state-local-map (kbd "C-n") #'vterm-send-C-n)
+  (define-key evil-normal-state-local-map (kbd "C-p") #'(lambda () (interactive) (vterm-send "C-p")))
+  (define-key evil-normal-state-local-map (kbd "C-n") #'(lambda () (interactive) (vterm-send "C-n")))
   ;; make move with arrow keys word work correctly
-  (define-key evil-insert-state-local-map (kbd "M-<left>") #'vterm-send-M-b)
-  (define-key evil-insert-state-local-map (kbd "M-<right>") #'vterm-send-M-f))
+  (define-key evil-insert-state-local-map (kbd "M-<left>") #'(lambda () (interactive) (vterm-send "M-b")))
+  (define-key evil-insert-state-local-map (kbd "M-<right>") #'(lambda () (interactive) (vterm-send "M-f"))))
 #+end_src
 *** Config
 #+begin_src emacs-lisp :tangle yes
@@ -424,16 +440,16 @@ editing projects over TRAMP.
   (map!
    (:map vterm-mode-map
     ;; alt-backspace to delete word in vterm insert mode
-    :i "M-<backspace>" #'vterm-send-meta-backspace
+    :i "M-<backspace>" #'(lambda () (interactive) (vterm-send "M-<backspace>"))
     ;; originally behind C-c, move them to vterm map
-    "C-g" #'vterm-send-C-g
-    "C-u" #'vterm-send-C-u
+    "C-g" #'(lambda () (interactive) (vterm-send "C-g"))
+    "C-u" #'(lambda () (interactive) (vterm-send "C-u"))
     ;; sent C-l by default, also can send vterm-clear
-    "C-l" #'vterm-send-C-l
+    "C-l" #'(lambda () (interactive) (vterm-send "C-l"))
     "C-c l" #'vterm-clear
     ;; missing in original vterm-mode-map
-    "C-x" #'vterm-send-C-x
-    "C-y" #'vterm-send-C-y
+    "C-x" #'(lambda () (interactive) (vterm-send "C-x"))
+    "C-y" #'(lambda () (interactive) (vterm-send "C-y"))
     ))
   (add-hook 'vterm-mode-hook #'my/vterm-keymap-override-setup))
 #+end_src
