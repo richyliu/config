@@ -113,7 +113,7 @@
 (setq org-agenda-time-grid '((daily today remove-match)
                              (900 930 1000 1030 1100 1130 1200 1230 1300 1330 1400 1430 1500 1530 1600 1630 1700 1730 1800 1830 1900 1930 2000 2030 2100 2130 2200 2230)
                              " ┄┄┄┄┄ " ""))
-(setq org-deadline-warning-days 14)
+(setq org-deadline-warning-days 7)
 (setq org-modules '(org-habit))
 #+end_src
 **** Agenda sorting
@@ -142,12 +142,16 @@ with a timestamp)."
 **** Custom commands
 #+begin_src emacs-lisp :tangle yes
 (setq org-agenda-custom-commands '(("d" "Daily agenda and TODOs"
-                                    ((todo "TODO")
-                                     (todo "PROJ")
+                                    ((todo "TODO" ((org-agenda-dim-blocked-tasks 'invisible)
+                                                   (org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))
+                                                   (org-agenda-overriding-header "Unscheduled TODOs")))
+                                     (todo "PROJ" ((org-agenda-dim-blocked-tasks nil)))
                                      (agenda "" ((org-agenda-span 1)
-                                                 (org-agenda-start-day "0d")))
+                                                 (org-agenda-start-day "0d")
+                                                 (org-agenda-dim-blocked-tasks nil)))
                                      (agenda "" ((org-agenda-span 1)
-                                                 (org-agenda-start-day "+1d")))))
+                                                 (org-agenda-start-day "+1d")))
+                                     (todo "PROJIDEA" ((org-agenda-dim-blocked-tasks 'invisible)))))
                                    ("w" "Week-long daily agenda"
                                     ((agenda "" ((org-agenda-span 1) (org-agenda-start-day "0d")))
                                      (agenda "" ((org-agenda-span 1) (org-agenda-start-day "+1d")))
@@ -167,7 +171,7 @@ with a timestamp)."
                             "* TODO %?\n%T\n%i\n%a")
                            ("T" "Immediate todo" entry
                             (file+headline "agenda.org" "General")
-                            "* TODO %?\n%i")
+                            "* TODO [#A] %?\n%i")
                            ("S" "Scheduled todo" entry
                             (file+headline "agenda.org" "General")
                             "* SCHD %?\nSCHEDULED: %t\n%i")
@@ -196,11 +200,12 @@ with a timestamp)."
 #+begin_src emacs-lisp :tangle yes
 (with-no-warnings
   (custom-declare-face '+org-todo-someday '((t (:inherit (bold font-lock-comment-face org-todo)))) "" ))
-(setq org-todo-keywords '((sequence "TODO(t)" "SCHD(s)" "LOOP(l)" "PROJ(p)" "NEXT(n)" "WAIT(w)" "IDEA(i)" "SOMEDAY(m)" "|" "DONE(d@)" "KILL(k@)")))
+(setq org-todo-keywords '((sequence "TODO(t)" "SCHD(s)" "LOOP(l)" "PROJIDEA(r)" "PROJ(p)" "NEXT(n)" "WAIT(w)" "IDEA(i)" "SOMEDAY(m)" "|" "DONE(d@)" "KILL(k@)")))
 (setq org-todo-repeat-to-state "LOOP")
 (setq org-todo-keyword-faces '(("TODO" . org-todo)
                                ("SCHD" . +org-todo-cancel)
                                ("LOOP" . +org-todo-active)
+                               ("PROJIDEA" . org-level-2)
                                ("PROJ" . org-level-1)
                                ("NEXT" . +org-todo-onhold)
                                ("WAIT" . org-level-4)
@@ -485,6 +490,7 @@ Function
   (setq current-prefix-arg t)
   ;; switch to org-directory project first to avoid projectile issues
   (projectile-switch-project-by-name org-directory)
+  (find-file (concat org-directory "inbox.org"))
   (find-file (concat org-directory "agenda.org"))
   ;; open up org-agenda and agenda.org side by side
   (evil-window-vsplit)
