@@ -403,6 +403,11 @@ editing projects over TRAMP.
   (setq projectile-sort-order 'recentf)
   (setq projectile-generic-command "find . -type f | cut -c3- | tr '\\n' '\\0'"))
 #+end_src
+** Rustic
+#+begin_src emacs-lisp :tangle yes
+(after! rustic-cargo
+  (setq rustic-cargo-check-arguments ""))
+#+end_src
 ** Vterm
 *** Keymap override
 #+begin_src emacs-lisp :tangle yes
@@ -452,6 +457,17 @@ editing projects over TRAMP.
     "C-y" #'(lambda () (interactive) (vterm-send "C-y"))
     ))
   (add-hook 'vterm-mode-hook #'my/vterm-keymap-override-setup))
+#+end_src
+** Woman
+#+begin_src emacs-lisp :tangle yes
+(after! woman
+  ;; The woman-manpath default value does not necessarily match man. If we have
+  ;; man available but aren't using it for performance reasons, we can extract
+  ;; it's manpath.
+  (when (executable-find "gman")
+    (setq woman-manpath
+          (split-string (cdr (doom-call-process "gman" "--path"))
+                        path-separator t))))
 #+end_src
 ** Yasnippet
 #+begin_src emacs-lisp :tangle yes
@@ -761,6 +777,12 @@ indentation.  The return value is the yanked text."
                  :width 'expanded
                  :size 15
                  ))
+#+end_src
+
+Increase font size for default variable pitch. Used for epub, eww (web browser),
+etc.
+#+begin_src emacs-lisp :tangle yes
+(set-face-attribute #'variable-pitch nil :height 170)
 #+end_src
 ** Theme
 Set different theme based on light or dark mode
