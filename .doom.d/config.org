@@ -195,6 +195,7 @@ with a timestamp)."
                            ("ot" "Project todo" entry #'+org-capture-central-project-todo-file "* TODO %?\n %i\n %a" :heading "Tasks" :prepend nil)
                            ("on" "Project notes" entry #'+org-capture-central-project-notes-file "* %U %?\n %i\n %a" :heading "Notes" :prepend t)
                            ("oc" "Project changelog" entry #'+org-capture-central-project-changelog-file "* %U %?\n %i\n %a" :heading "Changelog" :prepend t)))
+(setq org-archive-location "agenda_archive.org::")
 #+end_src
 *** Todo
 #+begin_src emacs-lisp :tangle yes
@@ -811,7 +812,7 @@ Set different theme based on light or dark mode
 #+end_src
 ** Org directory
 #+begin_src emacs-lisp :tangle yes
-(setq org-directory "/Users/richard/Documents/org/")
+(setq org-directory "/Users/richard/Documents/org/agenda/")
 #+end_src
 ** General
 #+begin_src emacs-lisp :tangle yes
