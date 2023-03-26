@@ -115,6 +115,7 @@
                              " ┄┄┄┄┄ " ""))
 (setq org-deadline-warning-days 7)
 (setq org-modules '(org-habit))
+(setq org-time-stamp-rounding-minutes '(0 15))
 #+end_src
 **** Agenda sorting
 #+begin_src emacs-lisp :tangle yes
@@ -357,6 +358,14 @@ with a timestamp)."
     :n "C-j" #'org-next-visible-heading
     :n "C-k" #'org-previous-visible-heading))
   (remove-hook 'org-tab-first-hook #'+org-cycle-only-current-subtree-h))
+#+end_src
+** Evil-org-agenda
+#+begin_src emacs-lisp :tangle yes
+(after! evil-org-agenda
+  (map!
+   (:map evil-org-agenda-mode-map
+    :m "H" #'org-agenda-date-earlier-minutes
+    :m "L" #'org-agenda-date-later-minutes)))
 #+end_src
 ** Flycheck
 #+begin_src emacs-lisp :tangle yes
