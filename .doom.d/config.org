@@ -284,8 +284,7 @@ with a timestamp)."
     '("-"))
    ;; hide certain org buffers
    ((and (string-equal default-directory org-directory)
-         (or (member (buffer-name) '("inbox.org" "journal.org"))
-             (string-match-p "_archive$" (buffer-name))))
+         (member (buffer-name) '("inbox.org" "journal.org" "agenda_archive.org")))
     (list (concat org-directory "--hidden")))
    ;; otherwise put all buffers in current perspective (workspace) together
    (t
