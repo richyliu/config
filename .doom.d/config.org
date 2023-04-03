@@ -220,12 +220,7 @@ with a timestamp)."
   :m "c d" #'org-agenda-deadline
   :m "s-s" #'org-save-all-org-buffers
   :m "s-r" #'org-agenda-redo
-  (:leader "f s" #'org-save-all-org-buffers))
- (:map org-capture-mode-map
-  :n "Z Z" #'org-capture-finalize
-  :n "Z Q" #'org-capture-kill
-  "C-c C-c" nil
-  "C-c C-k" nil))
+  (:leader "f s" #'org-save-all-org-buffers)))
 #+end_src
 *** Hooks and advice
 #+begin_src emacs-lisp :tangle yes
@@ -918,4 +913,17 @@ are not supported on Mac)
     (funcall orig-fun type)))
 
 (advice-add #'image-type-available-p :around #'my/image-type-available-p)
+#+end_src
+** Fix exit in org-src edit buffers
+Typing =Z Z= in org-src edit buffers cause a =user-error: Please specify a file
+name for the buffer= error, since [[https://github.com/hlissner/evil-org-mode/commit/e57a0f143251913b425160294a38e5fb0cbbb5f3][evil-org-mode]] calls ~evil-write~ before saving
+instead of ~save-buffer~. This advice overrides ~evil-org-edit-src-exit~ to save
+the buffer with ~save-buffer~.
+#+begin_src emacs-lisp :tangle yes
+(defun my/evil-org-edit-src-exit ()
+  "Override for `evil-org-edit-src-exit' to fix no file name error."
+  (interactive)
+  (call-interactively #'save-buffer)
+  (call-interactively #'org-edit-src-exit))
+(advice-add #'evil-org-edit-src-exit :override #'my/evil-org-edit-src-exit)
 #+end_src
