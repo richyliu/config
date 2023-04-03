@@ -1,0 +1,38 @@
+layouts:
+    - tall-right
+    - fullscreen
+    - wide
+    - two-pane
+    - tall
+    - 3column-left
+    - middle-wide
+    - 3column-right
+    - 4column-left
+    - 4column-right
+    - column
+    - row
+    - floating
+    - widescreen-tall
+    - widescreen-tall-right
+    - bsp
+
+mod1:
+    - option
+    - shift
+mod2:
+    - option
+    - shift
+    - command
+
+shrink-main:
+  mod: mod1
+  key: l
+
+expand-main:
+  mod: mod1
+  key: h
+
+mouse-follows-focus: false
+focus-follows-mouse: false
+
+window-margins: false
