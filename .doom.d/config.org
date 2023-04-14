@@ -582,7 +582,7 @@ Function
 (defun my/sync-org-with-remote ()
   "Sync personal org files with the cloud"
   (interactive)
-  (call-process (concat org-directory "sync/beorg_sync.sh"))
+  (call-process (concat org-directory "../scripts/beorg_sync.sh"))
   (message "Synced org with remote"))
 #+end_src
 
