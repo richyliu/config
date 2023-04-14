@@ -67,19 +67,26 @@
                                                                  (and (> time-in-minutes sched-start)
                                                                       (< time-in-minutes sched-end))))
                                                            scheduled-times))
-                                       (let* ((rawtimestr (replace-regexp-in-string " " "0" (format "%04s" time)))
-                                              (timestr (concat (substring rawtimestr 0 -2) ":" (substring rawtimestr -2)))
-                                              ;; show a different char for the last time-grid item for a particular scheduled item
-                                              (indicator-char (if-let ((end (nth 1 cur-scheduled))
-                                                                       (end-diff (- end time-in-minutes))
-                                                                       (diff-in-range (and (>= end-diff 0)
-                                                                                           (<= end-diff time-grid-interval))))
-                                                                  "┘"
-                                                                "│"))
-                                              (newel (org-agenda-format-item indicator-char (nth 3 org-agenda-time-grid)
-                                                                             nil "" nil timestr)))
-                                         (put-text-property 2 (length newel) 'face 'org-scheduled newel)
-                                         (list newel)))))
+                                       ;; don't show this time-grid if it's the start of another scheduled item since the
+                                       ;; scheduled item itself takes up a line
+                                       (unless (cl-some #'(lambda (scheduled)
+                                                            (let* ((sched-start (nth 0 scheduled))
+                                                                   (sched-end (nth 1 scheduled)))
+                                                              (= time-in-minutes sched-start)))
+                                                        scheduled-times)
+                                         (let* ((rawtimestr (replace-regexp-in-string " " "0" (format "%04s" time)))
+                                                (timestr (concat (substring rawtimestr 0 -2) ":" (substring rawtimestr -2)))
+                                                ;; show a different char for the last time-grid item for a particular scheduled item
+                                                (indicator-char (if-let ((end (nth 1 cur-scheduled))
+                                                                         (end-diff (- end time-in-minutes))
+                                                                         (diff-in-range (and (>= end-diff 0)
+                                                                                             (<= end-diff time-grid-interval))))
+                                                                    "┘"
+                                                                  "│"))
+                                                (newel (org-agenda-format-item indicator-char (nth 3 org-agenda-time-grid)
+                                                                               nil "" nil timestr)))
+                                           (put-text-property 2 (length newel) 'face 'org-scheduled newel)
+                                           (list newel))))))
                              ;; needs to be the same text as time grid to get formatted correctly
                              (nth 1 org-agenda-time-grid)))
          (newlist (append additional list)))
@@ -115,7 +122,8 @@
                              " ┄┄┄┄┄ " ""))
 (setq org-deadline-warning-days 7)
 (setq org-modules '(org-habit))
-(setq org-time-stamp-rounding-minutes '(0 15))
+(setq org-time-stamp-rounding-minutes '(0 30))
+(setq org-habit-show-habits-only-for-today nil)
 #+end_src
 **** Agenda sorting
 #+begin_src emacs-lisp :tangle yes
@@ -152,6 +160,8 @@ with a timestamp)."
                                                  (org-agenda-dim-blocked-tasks nil)))
                                      (agenda "" ((org-agenda-span 1)
                                                  (org-agenda-start-day "+1d")))
+                                     (agenda "" ((org-agenda-span 1)
+                                                 (org-agenda-start-day "+2d")))
                                      (todo "PROJIDEA" ((org-agenda-dim-blocked-tasks 'invisible)))))
                                    ("w" "Week-long daily agenda"
                                     ((agenda "" ((org-agenda-span 1) (org-agenda-start-day "0d")))
