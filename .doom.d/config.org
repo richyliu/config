@@ -44,7 +44,7 @@
                                       ;; all times are in minutes since midnight
                                       (if-let ((el-not-null-p el)
                                                (time-num (get-text-property 0 'time-of-day el))
-                                               (duration (get-text-property 0 'duration el))
+                                               (duration (or (get-text-property 0 'duration el) 0))
                                                (text (get-text-property 0 'txt el))
                                                (time-in-minutes (+ (* (/ time-num 100) 60) (mod time-num 100)))
                                                (time-end (+ time-in-minutes duration))
