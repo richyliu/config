@@ -240,6 +240,11 @@ with a timestamp)."
 (advice-add 'org-agenda-goto :after #'+nav-flash/blink-cursor)
 (advice-add 'org-agenda-add-time-grid-maybe :around #'my/time-grid-override)
 #+end_src
+
+Enable org-indent for nice word wrappings when using bullets while inside org log buffer.
+#+begin_src emacs-lisp :tangle yes
+(add-hook 'org-log-buffer-setup-hook #'org-indent-mode)
+#+end_src
 *** Footer
 #+begin_src emacs-lisp :tangle yes
 )
@@ -845,11 +850,6 @@ Set different theme based on light or dark mode
 (add-hook 'js-mode-hook #'my/set-shift-2)
 (add-hook 'web-mode-hook #'my/set-shift-2)
 #+end_src
-** Auto fold text
-#+begin_src emacs-lisp :tangle yes
-;; enable folding in text mode
-(add-hook 'text-mode-hook 'turn-on-auto-fill)
-#+end_src
 ** Disable menu bar
 Get rid of as many menu bar items as possible to reduce clutter. We can't get
 rid of the whole thing because of a bug with MacOS that treats windows without a
@@ -883,6 +883,10 @@ Disable smaller subscripts and superscripts in latex. Courtesy of Anakin.
 #+begin_src emacs-lisp :tangle yes
 (setq tex-fontify-script nil)
 (setq font-latex-fontify-script nil)
+#+end_src
+** Word wrap
+#+begin_src emacs-lisp :tangle yes
+(setq +word-wrap-fill-style 'auto)
 #+end_src
 * Advice
 ** Custom cache
