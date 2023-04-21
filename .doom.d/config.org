@@ -162,7 +162,7 @@ with a timestamp)."
                                                  (org-agenda-start-day "+1d")))
                                      (agenda "" ((org-agenda-span 1)
                                                  (org-agenda-start-day "+2d")))
-                                     (todo "PROJIDEA" ((org-agenda-dim-blocked-tasks 'invisible)))))
+                                     (todo "PROJIDEA" ((org-agenda-dim-blocked-tasks nil)))))
                                    ("w" "Week-long daily agenda"
                                     ((agenda "" ((org-agenda-span 1) (org-agenda-start-day "0d")))
                                      (agenda "" ((org-agenda-span 1) (org-agenda-start-day "+1d")))

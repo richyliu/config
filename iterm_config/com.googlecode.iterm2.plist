@@ -2695,7 +2695,7 @@
 	<key>RightOption</key>
 	<integer>1</integer>
 	<key>ShowFullScreenTabBar</key>
-	<false/>
+	<true/>
 	<key>SoundForEsc</key>
 	<false/>
 	<key>TabStyleWithAutomaticOption</key>
