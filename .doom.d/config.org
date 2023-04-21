@@ -873,6 +873,12 @@ which is slow.
 #+begin_src emacs-lisp :tangle yes
 (require 'python)
 #+end_src
+** Latex
+Disable smaller subscripts and superscripts in latex. Courtesy of Anakin.
+#+begin_src emacs-lisp :tangle yes
+(setq tex-fontify-script nil)
+(setq font-latex-fontify-script nil)
+#+end_src
 * Advice
 ** Custom cache
 #+begin_src emacs-lisp :tangle yes
