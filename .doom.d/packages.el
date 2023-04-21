@@ -59,3 +59,5 @@
            :repo "richyliu/anaconda-mode"
            :branch "feat-disable-rpc-on-tramp")
   :pin "ec93792c72cc36002c8351db80fdd3112cf49573")
+
+(package! janet-mode)

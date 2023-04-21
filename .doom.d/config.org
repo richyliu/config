@@ -410,6 +410,11 @@ For detecting git forges (github, gitlab, etc)
 (after! latex-preview-pane
   (setq preview-orientation 'down))
 #+end_src
+** Lispy
+Enable lispy when in janet-mode so that lispyville is also enabled
+#+begin_src emacs-lisp :tangle yes
+(add-hook 'janet-mode-hook #'lispy-mode)
+#+end_src
 ** LSP
 #+begin_src emacs-lisp :tangle yes
 (after! lsp-mode
