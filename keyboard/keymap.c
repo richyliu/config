@@ -67,7 +67,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     KC_TAB,         KC_Q,           KC_W,           KC_E,           KC_R,           KC_T,           KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_Y,           KC_U,           KC_I,           KC_O,           KC_P,           KC_BSPACE,
     KC_LCTRL,       KC_A,           KC_S,           KC_D,           KC_F,           KC_G,                                                                           KC_H,           KC_J,           KC_K,           KC_L,           KC_SCOLON,      KC_ENTER,
     KC_LSHIFT,      KC_B,           KC_Z,           KC_X,           KC_C,           KC_V,           LGUI(LSFT(KC_LBRACKET)),                LGUI(LSFT(KC_RBRACKET)),KC_N,           KC_M,           KC_COMMA,       KC_DOT,         KC_SLASH,       MT(MOD_RSFT, KC_QUOTE),
-    KC_TRANSPARENT, LALT(KC_LCTRL), TG(2),          KC_ESC,         KC_LALT,                                                                                                        KC_LEFT,        KC_DOWN,        KC_UP,          KC_RIGHT,       MO(2),
+    KC_TRANSPARENT, LALT(KC_LCTRL), MO(2),          KC_ESC,         KC_LALT,                                                                                                        KC_LEFT,        KC_DOWN,        KC_UP,          KC_RIGHT,       MO(2),
                                                                                                     LGUI(KC_LALT),  KC_HOME,        KC_PGUP,        KC_RALT,
                                                                                                                     KC_END,         KC_PGDOWN,
                                                                                     KC_LGUI,        MO(1),          OSL(1),         OSL(1),         MO(1),          KC_SPACE
@@ -84,7 +84,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   ),
   [2] = LAYOUT_ergodox_pretty(
     KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,     KC_TRANSPARENT,  KC_TRANSPARENT,    PLOVER,          RESET,
-    KC_TRANSPARENT, KC_F12,         KC_F7,          KC_F8,          KC_F9,          KC_TRANSPARENT, KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_PASTE_NO_FMT,    KC_TRANSPARENT,  KC_TRANSPARENT,    KC_TRANSPARENT,  LED_LEVEL,
+    KC_TRANSPARENT, KC_F12,         KC_F7,          KC_F8,          KC_F9,          KC_TRANSPARENT, KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_PASTE_NO_FMT,    KC_TRANSPARENT,  KC_TRANSPARENT,    LED_LEVEL,       KC_DELETE,
     KC_TRANSPARENT, KC_F11,         KC_F4,          KC_F5,          KC_F6,          KC_TRANSPARENT,                                                                 KC_CAPSLOCK,    KC_BRIGHTNESS_UP,   KC_SEL_EL,       KC_INSP_EL,        KC_TRANSPARENT,  KC_TRANSPARENT,
     KC_TRANSPARENT, KC_F10,         KC_F1,          KC_F2,          KC_F3,          KC_TRANSPARENT, KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_BRIGHTNESS_DOWN, KC_AUDIO_MUTE,   KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_TRANSPARENT,
     KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                                                                                 KC_SCRSHOT,         KC_SCRSHOT_CLIP, KC_TRANSPARENT,    KC_TRANSPARENT,  KC_TRANSPARENT,
