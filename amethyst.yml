@@ -11,7 +11,6 @@ layouts:
     - 4column-right
     - column
     - row
-    - floating
     - widescreen-tall
     - widescreen-tall-right
     - bsp
@@ -31,6 +30,10 @@ shrink-main:
 expand-main:
   mod: mod1
   key: h
+
+toggle-float:
+  mod: mod1
+  key: f
 
 mouse-follows-focus: false
 focus-follows-mouse: false
