@@ -5,6 +5,7 @@
 ** Config hook
 - display visual line numbers
 - rebind ZZ and ZQ to save note and discard note, respectively
+- change word wrap width
 
 #+begin_src emacs-lisp :tangle yes
 (defun my/org-mode-hook ()
@@ -12,6 +13,8 @@
    company-idle-delay nil
    ;; use visual line numbers for folded org-mode
    display-line-numbers 'visual)
+  ;; change word wrap width
+  (setq-local fill-column 120)
   ;; rebind ZZ and ZQ to save note
   (if (string-equal (buffer-name) "*Org Note*")
       (progn
@@ -289,10 +292,6 @@ Enable org-indent for nice word wrappings when using bullets while inside org lo
    ;; use default group ("-") for *star* buffers
    ((string-equal (substring (buffer-name) 0 1) "*")
     '("-"))
-   ;; hide certain org buffers
-   ((and (string-equal default-directory org-directory)
-         (member (buffer-name) '("inbox.org" "journal.org" "agenda_archive.org")))
-    (list (concat org-directory "--hidden")))
    ;; otherwise put all buffers in current perspective (workspace) together
    (t
     (if (persp-contain-buffer-p)
