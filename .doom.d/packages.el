@@ -61,3 +61,6 @@
   :pin "ec93792c72cc36002c8351db80fdd3112cf49573")
 
 (package! janet-mode)
+
+(package! ijanet-mode
+  :recipe (:host github :repo "serialdev/ijanet-mode"))

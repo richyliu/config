@@ -10,11 +10,7 @@
 #+begin_src emacs-lisp :tangle yes
 (defun my/org-mode-hook ()
   (setq-local
-   company-idle-delay nil
-   ;; use visual line numbers for folded org-mode
-   display-line-numbers 'visual)
-  ;; change word wrap width
-  (setq-local fill-column 120)
+   company-idle-delay nil)
   ;; rebind ZZ and ZQ to save note
   (if (string-equal (buffer-name) "*Org Note*")
       (progn
@@ -145,7 +141,7 @@ with a timestamp)."
 #+end_src
 
 #+begin_src emacs-lisp :tangle yes
-(setq org-agenda-sorting-strategy '((agenda user-defined-up category-keep habit-up scheduled-up deadline-up todo-state-up priority-down tag-up)
+(setq org-agenda-sorting-strategy '((agenda user-defined-up category-keep habit-up scheduled-up deadline-up todo-state-up priority-down)
                                     (todo category-keep todo-state-up priority-down deadline-up ts-up)
                                     (tags category-keep scheduled-up priority-down todo-state-up)
                                     (search category-keep)))
@@ -154,18 +150,28 @@ with a timestamp)."
 **** Custom commands
 #+begin_src emacs-lisp :tangle yes
 (setq org-agenda-custom-commands '(("d" "Daily agenda and TODOs"
-                                    ((todo "TODO" ((org-agenda-dim-blocked-tasks 'invisible)
-                                                   (org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))
-                                                   (org-agenda-overriding-header "Unscheduled TODOs")))
-                                     (todo "PROJ" ((org-agenda-dim-blocked-tasks nil)))
+                                    ((todo "TODO" ((org-agenda-overriding-header "Unscheduled inbox TODOs")
+                                                   (org-agenda-files '("inbox.org"))
+                                                   (org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))))
                                      (agenda "" ((org-agenda-span 1)
                                                  (org-agenda-start-day "0d")
                                                  (org-agenda-dim-blocked-tasks nil)))
                                      (agenda "" ((org-agenda-span 1)
                                                  (org-agenda-start-day "+1d")))
                                      (agenda "" ((org-agenda-span 1)
-                                                 (org-agenda-start-day "+2d")))
+                                                 (org-agenda-start-day "+2d")))))
+                                   ("tp" "Project TODOs"
+                                    ((tags-todo "projects+TODO=\"TODO\""
+                                                ((org-agenda-overriding-header "Project TODOs")))
+                                     (todo "PROJ" ((org-agenda-overriding-header "Projects")
+                                                   (org-agenda-dim-blocked-tasks nil)))
                                      (todo "PROJIDEA" ((org-agenda-dim-blocked-tasks nil)))))
+                                   ("te" "Entertainment"
+                                    ((tags-todo "entertainment+TODO=\"TODO\""
+                                                ((org-agenda-overriding-header "Entertainment TODOs")))))
+                                   ("ta" "Fine Arts"
+                                    ((tags-todo "arts+TODO=\"TODO\""
+                                                ((org-agenda-overriding-header "Fine Arts TODOs")))))
                                    ("w" "Week-long daily agenda"
                                     ((agenda "" ((org-agenda-span 1) (org-agenda-start-day "0d")))
                                      (agenda "" ((org-agenda-span 1) (org-agenda-start-day "+1d")))
@@ -212,10 +218,11 @@ with a timestamp)."
 #+begin_src emacs-lisp :tangle yes
 (with-no-warnings
   (custom-declare-face '+org-todo-someday '((t (:inherit (bold font-lock-comment-face org-todo)))) "" ))
-(setq org-todo-keywords '((sequence "TODO(t)" "SCHD(s)" "LOOP(l)" "PROJIDEA(r)" "PROJ(p)" "NEXT(n)" "WAIT(w)" "IDEA(i)" "SOMEDAY(m)" "|" "DONE(d@)" "KILL(k@)")))
-(setq org-todo-repeat-to-state "LOOP")
+(setq org-todo-keywords '((sequence "TODO(t)" "SCHD(s)" "HABIT(h!)" "LOOP(l!)" "PROJIDEA(r)" "PROJ(p)" "NEXT(n)" "WAIT(w@/@)" "IDEA(i)" "SOMEDAY(m)" "|" "DONE(d!)" "KILL(k@)")))
+(setq org-todo-repeat-to-state t)
 (setq org-todo-keyword-faces '(("TODO" . org-todo)
-                               ("SCHD" . +org-todo-cancel)
+                               ("SCHD" . org-headline-todo)
+                               ("HABIT" . org-table)
                                ("LOOP" . +org-todo-active)
                                ("PROJIDEA" . org-level-2)
                                ("PROJ" . org-level-1)
@@ -292,6 +299,10 @@ Enable org-indent for nice word wrappings when using bullets while inside org lo
    ;; use default group ("-") for *star* buffers
    ((string-equal (substring (buffer-name) 0 1) "*")
     '("-"))
+   ;; hide certain org buffers
+   ((and (string-equal default-directory org-directory)
+         (member (buffer-name) '("journal.org" "agenda_archive.org")))
+    (list (concat org-directory "--hidden")))
    ;; otherwise put all buffers in current perspective (workspace) together
    (t
     (if (persp-contain-buffer-p)
@@ -361,7 +372,8 @@ Enable org-indent for nice word wrappings when using bullets while inside org lo
     ;; go to beginning of line (not including bullets) in org
     :m "^" #'org-beginning-of-line
     :n "C-j" #'org-next-visible-heading
-    :n "C-k" #'org-previous-visible-heading))
+    :n "C-k" #'org-previous-visible-heading
+    :m "s-<up>" #'org-up-element))
   (remove-hook 'org-tab-first-hook #'+org-cycle-only-current-subtree-h))
 #+end_src
 ** Evil-org-agenda
@@ -465,6 +477,8 @@ editing projects over TRAMP.
   ;; send ctrl-p/n to vterm directly
   (define-key evil-normal-state-local-map (kbd "C-p") #'(lambda () (interactive) (vterm-send "C-p")))
   (define-key evil-normal-state-local-map (kbd "C-n") #'(lambda () (interactive) (vterm-send "C-n")))
+  ;; make delete send vterm delete
+  (define-key evil-insert-state-local-map (kbd "<deletechar>") #'(lambda () (interactive) (vterm-send "<delete>")))
   ;; make move with arrow keys word work correctly
   (define-key evil-insert-state-local-map (kbd "M-<left>") #'(lambda () (interactive) (vterm-send "M-b")))
   (define-key evil-insert-state-local-map (kbd "M-<right>") #'(lambda () (interactive) (vterm-send "M-f"))))
@@ -860,12 +874,6 @@ otherwise ispell will complain.
   (define-key global-map [menu-bar] nil)
   (define-key global-map [menu-bar tools] tools-bkup))
 #+end_src
-** Comments
-This is for MIPS style comments for Spimbot (CS 233)
-#+begin_src emacs-lisp :tangle yes
-(setq asm-comment-char ?#
-    comment-start "#")
-#+end_src
 ** Disable hl-line mode
 Copied from [[https://github.com/doomemacs/doomemacs/issues/4206#issuecomment-734414502][here]]
 #+begin_src emacs-lisp :tangle yes
@@ -886,6 +894,11 @@ Disable smaller subscripts and superscripts in latex. Courtesy of Anakin.
 ** Word wrap
 #+begin_src emacs-lisp :tangle yes
 (setq +word-wrap-fill-style 'auto)
+#+end_src
+** Assembly comment char
+#+begin_src emacs-lisp :tangle yes
+;; use pound sign for comments
+(setq asm-comment-char ?\#)
 #+end_src
 * Advice
 ** Custom cache
@@ -951,3 +964,7 @@ the buffer with ~save-buffer~.
   (call-interactively #'org-edit-src-exit))
 (advice-add #'evil-org-edit-src-exit :override #'my/evil-org-edit-src-exit)
 #+end_src
+* Local variables
+# local variables:
+# fill-column: 120
+# end:
