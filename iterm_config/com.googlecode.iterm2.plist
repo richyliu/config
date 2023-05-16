@@ -2694,6 +2694,8 @@
 	<integer>2</integer>
 	<key>RightOption</key>
 	<integer>1</integer>
+	<key>Selection Respects Soft Boundaries</key>
+	<true/>
 	<key>ShowFullScreenTabBar</key>
 	<true/>
 	<key>SoundForEsc</key>
