@@ -153,6 +153,8 @@ with a timestamp)."
                                     ((todo "TODO" ((org-agenda-overriding-header "Unscheduled inbox TODOs")
                                                    (org-agenda-files '("inbox.org"))
                                                    (org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))))
+                                     (tags-todo "everyday" ((org-agenda-overriding-header "Unscheduled everyday")
+                                                            (org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))))
                                      (agenda "" ((org-agenda-span 1)
                                                  (org-agenda-start-day "0d")
                                                  (org-agenda-dim-blocked-tasks nil)))
@@ -374,7 +376,8 @@ Enable org-indent for nice word wrappings when using bullets while inside org lo
     :n "C-j" #'org-next-visible-heading
     :n "C-k" #'org-previous-visible-heading
     :m "s-<up>" #'org-up-element))
-  (remove-hook 'org-tab-first-hook #'+org-cycle-only-current-subtree-h))
+  (remove-hook 'org-tab-first-hook #'+org-cycle-only-current-subtree-h)
+  (advice-add #'org-up-element :before #'better-jumper-set-jump))
 #+end_src
 ** Evil-org-agenda
 #+begin_src emacs-lisp :tangle yes
@@ -425,11 +428,6 @@ For detecting git forges (github, gitlab, etc)
 #+begin_src emacs-lisp :tangle yes
 (after! latex-preview-pane
   (setq preview-orientation 'down))
-#+end_src
-** Lispy
-Enable lispy when in janet-mode so that lispyville is also enabled
-#+begin_src emacs-lisp :tangle yes
-(add-hook 'janet-mode-hook #'lispy-mode)
 #+end_src
 ** LSP
 #+begin_src emacs-lisp :tangle yes
@@ -967,4 +965,5 @@ the buffer with ~save-buffer~.
 * Local variables
 # local variables:
 # fill-column: 120
-# end:
+# display-line-numbers: visual
+# End:
