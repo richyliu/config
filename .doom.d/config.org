@@ -90,7 +90,10 @@
                              (nth 1 org-agenda-time-grid)))
          (newlist (append additional list)))
     ;; call the original function (org-agenda-add-time-grid-maybe)
-    (apply (cons func (list newlist ndays todayp)))))
+    (apply (cons func (list
+                       ;; use the added list if we are using a time grid
+                       (if org-agenda-use-time-grid newlist list)
+                       ndays todayp)))))
 #+end_src
 ** Config
 *** Header
@@ -132,6 +135,9 @@
 This is very similar to the `time-up' options for `org-agenda-sorting-strategy',
 but it always sorts agenda items without a timestamp first (before any items
 with a timestamp)."
+  ;; (print (get-text-property 1 'date a))
+  ;; (print (get-text-property 1 'type a))
+  ;; (print (format "%s" a))
   (let ((a-timep (get-text-property 1 'time-of-day a))
         (b-timep (get-text-property 1 'time-of-day b)))
     (cond
@@ -153,15 +159,17 @@ with a timestamp)."
                                     ((todo "TODO" ((org-agenda-overriding-header "Unscheduled inbox TODOs")
                                                    (org-agenda-files '("inbox.org"))
                                                    (org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))))
-                                     (tags-todo "everyday" ((org-agenda-overriding-header "Unscheduled everyday")
-                                                            (org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))))
                                      (agenda "" ((org-agenda-span 1)
                                                  (org-agenda-start-day "0d")
                                                  (org-agenda-dim-blocked-tasks nil)))
                                      (agenda "" ((org-agenda-span 1)
-                                                 (org-agenda-start-day "+1d")))
-                                     (agenda "" ((org-agenda-span 1)
-                                                 (org-agenda-start-day "+2d")))))
+                                                 (org-agenda-start-day "+1d")))))
+                                   ("D" "Daily TODOs for a week"
+                                    ((agenda "" ((org-agenda-span 7)
+                                                 (org-agenda-start-day "0d")
+                                                 (org-agenda-dim-blocked-tasks nil)
+                                                 (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo '("HABIT" "LOOP" "TYPE")))
+                                                 (org-agenda-use-time-grid nil)))))
                                    ("tp" "Project TODOs"
                                     ((tags-todo "projects+TODO=\"TODO\""
                                                 ((org-agenda-overriding-header "Project TODOs")))
@@ -220,19 +228,21 @@ with a timestamp)."
 #+begin_src emacs-lisp :tangle yes
 (with-no-warnings
   (custom-declare-face '+org-todo-someday '((t (:inherit (bold font-lock-comment-face org-todo)))) "" ))
-(setq org-todo-keywords '((sequence "TODO(t)" "SCHD(s)" "HABIT(h!)" "LOOP(l!)" "PROJIDEA(r)" "PROJ(p)" "NEXT(n)" "WAIT(w@/@)" "IDEA(i)" "SOMEDAY(m)" "|" "DONE(d!)" "KILL(k@)")))
+(setq org-todo-keywords '((sequence "TODO(t)" "SCHD(s)" "HABIT(h!)" "LOOP(l!)" "TYPE(y!)" "PROJIDEA(r)" "PROJ(p)" "NEXT(n)" "WAIT(w@/@)" "IDEA(i)" "SOMEDAY(m)" "NOTE(o)" "|" "DONE(d!)" "KILL(k@)")))
 (setq org-todo-repeat-to-state t)
 (setq org-todo-keyword-faces '(("TODO" . org-todo)
                                ("SCHD" . org-headline-todo)
                                ("HABIT" . org-table)
                                ("LOOP" . +org-todo-active)
+                               ("TYPE" . org-todo)
                                ("PROJIDEA" . org-level-2)
                                ("PROJ" . org-level-1)
                                ("NEXT" . +org-todo-onhold)
                                ("WAIT" . org-level-4)
                                ("IDEA" . +org-todo-project)
                                ("SOMEDAY" . +org-todo-someday)
-                               ("KILL" . org-agenda-dimmed-todo-face)))
+                               ("KILL" . org-agenda-dimmed-todo-face)
+                               ("NOTE" . org-agenda-dimmed-todo-face)))
 #+end_src
 *** Mappings
 #+begin_src emacs-lisp :tangle yes
