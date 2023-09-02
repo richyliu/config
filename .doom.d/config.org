@@ -115,13 +115,15 @@
 **** Misc
 #+begin_src emacs-lisp :tangle yes
 (setq org-agenda-files '("inbox.org" "agenda.org"))
-(setq org-agenda-prefix-format '((agenda . " %i %?-12t% s")
+(setq org-agenda-prefix-format '((agenda . " %i %?-12t%?-7s%?-5e")
                                  (todo . " %i %-8:c")
                                  (tags . " %i %-8:c")
                                  (search . " %i %-8:c")))
 (setq org-agenda-time-grid '((daily today remove-match)
                              (900 930 1000 1030 1100 1130 1200 1230 1300 1330 1400 1430 1500 1530 1600 1630 1700 1730 1800 1830 1900 1930 2000 2030 2100 2130 2200 2230)
                              " ┄┄┄┄┄ " ""))
+(setq org-agenda-scheduled-leaders '("Sched: " "!!%dx: "))
+(setq org-agenda-deadline-leaders '("Due: " "In %dd: " "%2dd ago: "))
 (setq org-deadline-warning-days 7)
 (setq org-modules '(org-habit))
 (setq org-time-stamp-rounding-minutes '(0 30))
@@ -147,10 +149,10 @@ with a timestamp)."
 #+end_src
 
 #+begin_src emacs-lisp :tangle yes
-(setq org-agenda-sorting-strategy '((agenda user-defined-up category-keep habit-up scheduled-up deadline-up todo-state-up priority-down)
-                                    (todo category-keep todo-state-up priority-down deadline-up ts-up)
-                                    (tags category-keep scheduled-up priority-down todo-state-up)
-                                    (search category-keep)))
+(setq org-agenda-sorting-strategy '((agenda user-defined-up category-keep habit-up scheduled-up deadline-up todo-state-up priority-down effort-up)
+                                    (todo category-keep todo-state-up priority-down deadline-up ts-up effort-up)
+                                    (tags category-keep todo-state-up priority-down deadline-up ts-up effort-up)
+                                    (search category-keep scheduled-up priority-down todo-state-up effort-up)))
 (setq org-agenda-cmp-user-defined #'my/org-agenda-sort-time-last)
 #+end_src
 **** Custom commands
@@ -165,10 +167,14 @@ with a timestamp)."
                                      (agenda "" ((org-agenda-span 1)
                                                  (org-agenda-start-day "+1d")))))
                                    ("D" "Daily TODOs for a week"
-                                    ((agenda "" ((org-agenda-span 7)
+                                    ((agenda "" ((org-agenda-span 1)
                                                  (org-agenda-start-day "0d")
                                                  (org-agenda-dim-blocked-tasks nil)
-                                                 (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo '("HABIT" "LOOP" "TYPE")))
+                                                 (org-agenda-use-time-grid nil)))
+                                     (agenda "" ((org-agenda-span 6)
+                                                 (org-agenda-start-day "+1d")
+                                                 (org-agenda-dim-blocked-tasks nil)
+                                                 (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo '("HABIT" "TYPE")))
                                                  (org-agenda-use-time-grid nil)))))
                                    ("tp" "Project TODOs"
                                     ((tags-todo "projects+TODO=\"TODO\""
