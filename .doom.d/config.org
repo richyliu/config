@@ -279,6 +279,49 @@ Also sorts items with a deadline after scheduled items. "
   :m "s-r" #'org-agenda-redo
   (:leader "f s" #'org-save-all-org-buffers)))
 #+end_src
+*** Schedule time delay fix
+Fix for showing delayed scheduled items on the day they are scheduled (as opposed to only showing them for today). This is the =-1d= or =--1d= syntax that can be added to a =SCHEDULED= timestamp
+
+#+begin_src emacs-lisp :tangle yes
+(defun my/get-function-defun (func)
+  (unless (symbolp func)
+    (error "Argument must be a symbol"))
+  (let* ((func-lib (find-function-library func nil t))
+         (filename (replace-regexp-in-string "\.elc$" ".el" (cdr func-lib))))
+    (with-temp-buffer (find-file-literally filename)
+                      (goto-char (point-min))
+                      (search-forward (concat "(defun " (symbol-name func)))
+                      (beginning-of-defun)
+                      (prog1 (sexp-at-point)
+                        (kill-buffer)))))
+
+(defun my/find-by-keys (key-list assoc)
+  (if (null key-list)
+      assoc
+    (my/find-by-keys (cdr key-list)
+                  (alist-get (car key-list) assoc))))
+
+(defun my/org-agenda-get-scheduled-today (&rest args)
+  "Custom fix for `org-agenda-get-scheduled-today'
+
+Note that this generates the fixed function on demand. (Once this is called)"
+  (let* ((key-list '(let* org-element-cache-map lambda when catch let* unless when or))
+         (original-func (my/get-function-defun 'org-agenda-get-scheduled))
+         (modify-part (my/find-by-keys key-list original-func))
+         )
+    ;; add a fourth clause to the `and' expression:
+    ;;   (and (/= current schedule)
+    ;;        (/= current today)
+    ;;        (/= current repeat))
+    (setf (nth 3 modify-part) (append (nth 3 modify-part) '((/= current (+ schedule ddays)))))
+    ;; rename the function so it defines a new function
+    (setf (nth 1 original-func) 'my/org-agenda-get-scheduled-today)
+    (eval original-func)
+    ;; now actually call the function
+    ;; note that in future invocations, the function will be called itself
+    ;; instead of this lazy load wrapper
+    (apply 'my/org-agenda-get-scheduled-today args)))
+#+end_src
 *** Hooks and advice
 #+begin_src emacs-lisp :tangle yes
 (add-hook 'org-mode-hook #'my/org-mode-hook)
@@ -286,6 +329,7 @@ Also sorts items with a deadline after scheduled items. "
 (advice-add 'org-agenda-switch-to :after #'+nav-flash/blink-cursor)
 (advice-add 'org-agenda-goto :after #'+nav-flash/blink-cursor)
 (advice-add 'org-agenda-add-time-grid-maybe :around #'my/time-grid-override)
+(advice-add 'org-agenda-get-scheduled :override #'my/org-agenda-get-scheduled-today)
 #+end_src
 
 Enable org-indent for nice word wrappings when using bullets while inside org log buffer.
