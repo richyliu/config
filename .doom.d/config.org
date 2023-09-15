@@ -102,32 +102,37 @@
 #+end_src
 *** Priority
 #+begin_src emacs-lisp :tangle yes
-(setq org-priority-default ?C)
+(setq org-priority-default ?A)
 (setq org-priority-highest ?A)
-(setq org-priority-lowest ?D)
-(setq org-priority-faces '((?A . error)
-                           (?B . warning)
-                           (?C . success)
-                           (?D . font-lock-comment-face)))
+(setq org-priority-lowest ?E)
+(setq org-priority-faces '((?A . org-level-1)
+                           (?B . org-level-2)
+                           (?C . org-level-3)
+                           (?D . org-level-4)
+                           (?E . +org-todo-someday)))
 (setq org-priority-start-cycle-with-default nil)
 #+end_src
 *** Agenda
 **** Misc
 #+begin_src emacs-lisp :tangle yes
 (setq org-agenda-files '("inbox.org" "agenda.org"))
-(setq org-agenda-prefix-format '((agenda . " %i %?-12t%?-7s%?-5e")
+(setq org-agenda-prefix-format '((agenda . " %i %?-12t%-3s%?-5e")
                                  (todo . " %i %-8:c")
                                  (tags . " %i %-8:c")
                                  (search . " %i %-8:c")))
 (setq org-agenda-time-grid '((daily today remove-match)
                              (900 930 1000 1030 1100 1130 1200 1230 1300 1330 1400 1430 1500 1530 1600 1630 1700 1730 1800 1830 1900 1930 2000 2030 2100 2130 2200 2230)
                              " ┄┄┄┄┄ " ""))
-(setq org-agenda-scheduled-leaders '("Sched: " "!!%dx: "))
-(setq org-agenda-deadline-leaders '("Due: " "In %dd: " "%2dd ago: "))
+(setq org-agenda-scheduled-leaders '("S:" "!%d"))
+(setq org-agenda-deadline-leaders '("D:" "-%d" "%2dd ago: "))
 (setq org-deadline-warning-days 7)
 (setq org-modules '(org-habit))
 (setq org-time-stamp-rounding-minutes '(0 30))
 (setq org-habit-show-habits-only-for-today nil)
+(setq org-habit-show-done-always-green t)
+(setq org-habit-following-days 3)
+(setq +org-habit-graph-window-ratio 0.2)
+(setq org-extend-today-until 3)
 #+end_src
 **** Agenda sorting
 #+begin_src emacs-lisp :tangle yes
@@ -136,20 +141,25 @@
 
 This is very similar to the `time-up' options for `org-agenda-sorting-strategy',
 but it always sorts agenda items without a timestamp first (before any items
-with a timestamp)."
-  ;; (print (get-text-property 1 'date a))
-  ;; (print (get-text-property 1 'type a))
-  ;; (print (format "%s" a))
+with a timestamp).
+
+Also sorts items with a deadline after scheduled items. "
   (let ((a-timep (get-text-property 1 'time-of-day a))
-        (b-timep (get-text-property 1 'time-of-day b)))
+        (b-timep (get-text-property 1 'time-of-day b))
+        (a-type (get-text-property 1 'type a))
+        (b-type (get-text-property 1 'type b)))
     (cond
      ((and a-timep b-timep) (org-cmp-time a b))
      (a-timep +1)
-     (b-timep -1))))
+     (b-timep -1)
+     ((and (string= a-type "upcoming-deadline")
+           (not (string= b-type "upcoming-deadline"))) +1)
+     ((and (not (string= a-type "upcoming-deadline"))
+           (string= b-type "upcoming-deadline")) -1))))
 #+end_src
 
 #+begin_src emacs-lisp :tangle yes
-(setq org-agenda-sorting-strategy '((agenda user-defined-up category-keep habit-up scheduled-up deadline-up todo-state-up priority-down effort-up)
+(setq org-agenda-sorting-strategy '((agenda user-defined-up category-keep deadline-up priority-down scheduled-up todo-state-up habit-up effort-up)
                                     (todo category-keep todo-state-up priority-down deadline-up ts-up effort-up)
                                     (tags category-keep todo-state-up priority-down deadline-up ts-up effort-up)
                                     (search category-keep scheduled-up priority-down todo-state-up effort-up)))
@@ -161,20 +171,29 @@ with a timestamp)."
                                     ((todo "TODO" ((org-agenda-overriding-header "Unscheduled inbox TODOs")
                                                    (org-agenda-files '("inbox.org"))
                                                    (org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))))
-                                     (agenda "" ((org-agenda-span 1)
+                                     (agenda "" ((org-agenda-span 2)
+                                                 (org-agenda-start-day "0d")
+                                                 (org-agenda-dim-blocked-tasks nil)))))
+                                   ("g" "Time grid and TODOs for 3 days"
+                                    ((agenda "" ((org-agenda-span 1)
                                                  (org-agenda-start-day "0d")
                                                  (org-agenda-dim-blocked-tasks nil)))
                                      (agenda "" ((org-agenda-span 1)
-                                                 (org-agenda-start-day "+1d")))))
+                                                 (org-agenda-start-day "+1d")
+                                                 (org-agenda-dim-blocked-tasks nil)))
+                                     (agenda "" ((org-agenda-span 1)
+                                                 (org-agenda-start-day "+2d")
+                                                 (org-agenda-dim-blocked-tasks nil)))))
                                    ("D" "Daily TODOs for a week"
-                                    ((agenda "" ((org-agenda-span 1)
+                                    ((agenda "" ((org-agenda-overriding-header "Nonhabits")
+                                                 (org-agenda-span 7)
                                                  (org-agenda-start-day "0d")
                                                  (org-agenda-dim-blocked-tasks nil)
-                                                 (org-agenda-use-time-grid nil)))
-                                     (agenda "" ((org-agenda-span 6)
-                                                 (org-agenda-start-day "+1d")
-                                                 (org-agenda-dim-blocked-tasks nil)
-                                                 (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo '("HABIT" "TYPE")))
+                                                 (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo '("HABT")))
+                                                 (org-agenda-use-time-grid nil)))))
+                                   ("x" "test"
+                                    ((agenda "" ((org-agenda-span 1)
+                                                 (org-agenda-start-day "0d")
                                                  (org-agenda-use-time-grid nil)))))
                                    ("tp" "Project TODOs"
                                     ((tags-todo "projects+TODO=\"TODO\""
@@ -234,13 +253,13 @@ with a timestamp)."
 #+begin_src emacs-lisp :tangle yes
 (with-no-warnings
   (custom-declare-face '+org-todo-someday '((t (:inherit (bold font-lock-comment-face org-todo)))) "" ))
-(setq org-todo-keywords '((sequence "TODO(t)" "SCHD(s)" "HABIT(h!)" "LOOP(l!)" "TYPE(y!)" "PROJIDEA(r)" "PROJ(p)" "NEXT(n)" "WAIT(w@/@)" "IDEA(i)" "SOMEDAY(m)" "NOTE(o)" "|" "DONE(d!)" "KILL(k@)")))
+(setq org-todo-keywords '((sequence "TODO(t)" "SCHD(s)" "PROJIDEA(r)" "PROJ(p)" "LOOP(l!)" "CHOR(c!)" "HABT(h!)" "NEXT(n)" "WAIT(w@/@)" "IDEA(i)" "SOMEDAY(m)" "NOTE(o)" "|" "DONE(d!)" "KILL(k@)")))
 (setq org-todo-repeat-to-state t)
 (setq org-todo-keyword-faces '(("TODO" . org-todo)
                                ("SCHD" . org-headline-todo)
-                               ("HABIT" . org-table)
                                ("LOOP" . +org-todo-active)
-                               ("TYPE" . org-todo)
+                               ("HABT" . org-table)
+                               ("CHOR" . org-table)
                                ("PROJIDEA" . org-level-2)
                                ("PROJ" . org-level-1)
                                ("NEXT" . +org-todo-onhold)
@@ -913,6 +932,10 @@ Disable smaller subscripts and superscripts in latex. Courtesy of Anakin.
 #+begin_src emacs-lisp :tangle yes
 ;; use pound sign for comments
 (setq asm-comment-char ?\#)
+#+end_src
+** Modeline
+#+begin_src emacs-lisp :tangle yes
+(setq doom-modeline-enable-word-count t)
 #+end_src
 * Advice
 ** Custom cache
