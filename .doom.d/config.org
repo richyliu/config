@@ -11,6 +11,7 @@
 (defun my/org-mode-hook ()
   (setq-local
    company-idle-delay nil)
+  (setq-local fill-column 120)
   ;; rebind ZZ and ZQ to save note
   (if (string-equal (buffer-name) "*Org Note*")
       (progn
@@ -174,7 +175,7 @@ Also sorts items with a deadline after scheduled items. "
                                      (agenda "" ((org-agenda-span 2)
                                                  (org-agenda-start-day "0d")
                                                  (org-agenda-dim-blocked-tasks nil)))))
-                                   ("g" "Time grid and TODOs for 3 days"
+                                   ("g" "Time grid and TODOs for 3 days with effort sums"
                                     ((agenda "" ((org-agenda-span 1)
                                                  (org-agenda-start-day "0d")
                                                  (org-agenda-dim-blocked-tasks nil)))
@@ -216,6 +217,39 @@ Also sorts items with a deadline after scheduled items. "
                                      (agenda "" ((org-agenda-span 1) (org-agenda-start-day "+5d")))
                                      (agenda "" ((org-agenda-span 1) (org-agenda-start-day "+6d")))
                                      (agenda "" ((org-agenda-span 1) (org-agenda-start-day "+7d")))))))
+#+end_src
+**** Effort sums
+Show a sum of the efforts and scheduled agenda durations for a given day
+#+begin_src emacs-lisp :tangle yes
+(defun my/add-effort-sum (&rest args)
+  (goto-char (point-min))
+  (let ((date-header-regexp (rx
+                             (one-or-more (not (any " "))) ;; day of week
+                             (one-or-more " ")
+                             (one-or-more digit) ;; date
+                             (one-or-more " ")
+                             (one-or-more (not (any " "))) ;; month
+                             (one-or-more " ")
+                             (= 4 digit) ;; year
+                             )))
+    (while (re-search-forward date-header-regexp nil t)
+      (forward-line 1)
+      (let ((scheduled-time 0)
+            (todo-time 0))
+        (save-excursion
+          (while (and (< (line-number-at-pos) (count-lines (point-min) (point-max)))
+                      (not (string-match date-header-regexp (thing-at-point 'line))))
+            (unless (string= (get-text-property (point) 'type) "upcoming-deadline")
+              (let* ((effort-minutes (get-text-property (point) 'effort-minutes))
+                     (duration (get-text-property (point) 'duration)))
+                (when duration
+                  (setq scheduled-time (+ scheduled-time duration)))
+                (when (and effort-minutes (not duration))
+                  (setq todo-time (+ todo-time effort-minutes)))))
+            (forward-line 1)))
+        (insert (format "Todo: %d minutes. Scheduled: %d minutes.\n" todo-time scheduled-time))))))
+
+(add-hook 'org-agenda-finalize-hook #'my/add-effort-sum)
 #+end_src
 *** Capture and archive
 #+begin_src emacs-lisp :tangle yes
