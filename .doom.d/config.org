@@ -11,7 +11,7 @@
 (defun my/org-mode-hook ()
   (setq-local
    company-idle-delay nil)
-  (setq-local fill-column 120)
+  (setq-local fill-column 100)
   ;; rebind ZZ and ZQ to save note
   (if (string-equal (buffer-name) "*Org Note*")
       (progn
@@ -103,7 +103,7 @@
 #+end_src
 *** Priority
 #+begin_src emacs-lisp :tangle yes
-(setq org-priority-default ?A)
+(setq org-priority-default ?B)
 (setq org-priority-highest ?A)
 (setq org-priority-lowest ?E)
 (setq org-priority-faces '((?A . org-level-1)
@@ -117,7 +117,7 @@
 **** Misc
 #+begin_src emacs-lisp :tangle yes
 (setq org-agenda-files '("inbox.org" "agenda.org"))
-(setq org-agenda-prefix-format '((agenda . " %i %?-12t%-3s%?-5e")
+(setq org-agenda-prefix-format '((agenda . " %i %?-12t%-3s%2e ")
                                  (todo . " %i %-8:c")
                                  (tags . " %i %-8:c")
                                  (search . " %i %-8:c")))
@@ -137,7 +137,7 @@
 #+end_src
 **** Agenda sorting
 #+begin_src emacs-lisp :tangle yes
-(defun my/org-agenda-sort-time-last (a b)
+(defun my/org-agenda-custom-sort (a b)
   "Like the `time-up' sorting strategy, but keep timestamps last.
 
 This is very similar to the `time-up' options for `org-agenda-sorting-strategy',
@@ -164,7 +164,7 @@ Also sorts items with a deadline after scheduled items. "
                                     (todo category-keep todo-state-up priority-down deadline-up ts-up effort-up)
                                     (tags category-keep todo-state-up priority-down deadline-up ts-up effort-up)
                                     (search category-keep scheduled-up priority-down todo-state-up effort-up)))
-(setq org-agenda-cmp-user-defined #'my/org-agenda-sort-time-last)
+(setq org-agenda-cmp-user-defined #'my/org-agenda-custom-sort)
 #+end_src
 **** Custom commands
 #+begin_src emacs-lisp :tangle yes
@@ -239,7 +239,7 @@ Show a sum of the efforts and scheduled agenda durations for a given day
         (save-excursion
           (while (and (< (line-number-at-pos) (count-lines (point-min) (point-max)))
                       (not (string-match date-header-regexp (thing-at-point 'line))))
-            (unless (string= (get-text-property (point) 'type) "upcoming-deadline")
+            (unless (string-suffix-p "deadline" (get-text-property (point) 'type))
               (let* ((effort-minutes (get-text-property (point) 'effort-minutes))
                      (duration (get-text-property (point) 'duration)))
                 (when duration
@@ -247,7 +247,8 @@ Show a sum of the efforts and scheduled agenda durations for a given day
                 (when (and effort-minutes (not duration))
                   (setq todo-time (+ todo-time effort-minutes)))))
             (forward-line 1)))
-        (insert (format "Todo: %d minutes. Scheduled: %d minutes.\n" todo-time scheduled-time))))))
+        (insert (format "Todo: %d minutes. Scheduled: %d minutes. Total: %d minutes.\n"
+                        todo-time scheduled-time (+ todo-time scheduled-time)))))))
 
 (add-hook 'org-agenda-finalize-hook #'my/add-effort-sum)
 #+end_src
@@ -287,13 +288,12 @@ Show a sum of the efforts and scheduled agenda durations for a given day
 #+begin_src emacs-lisp :tangle yes
 (with-no-warnings
   (custom-declare-face '+org-todo-someday '((t (:inherit (bold font-lock-comment-face org-todo)))) "" ))
-(setq org-todo-keywords '((sequence "TODO(t)" "SCHD(s)" "PROJIDEA(r)" "PROJ(p)" "LOOP(l!)" "CHOR(c!)" "HABT(h!)" "NEXT(n)" "WAIT(w@/@)" "IDEA(i)" "SOMEDAY(m)" "NOTE(o)" "|" "DONE(d!)" "KILL(k@)")))
+(setq org-todo-keywords '((sequence "TODO(t)" "SCHD(s)" "PROJIDEA(r)" "PROJ(p)" "LOOP(l!)" "HABT(h!)" "NEXT(n)" "WAIT(w@/@)" "IDEA(i)" "SOMEDAY(m)" "NOTE(o)" "|" "DONE(d!)" "KILL(k@)")))
 (setq org-todo-repeat-to-state t)
 (setq org-todo-keyword-faces '(("TODO" . org-todo)
                                ("SCHD" . org-headline-todo)
                                ("LOOP" . +org-todo-active)
                                ("HABT" . org-table)
-                               ("CHOR" . org-table)
                                ("PROJIDEA" . org-level-2)
                                ("PROJ" . org-level-1)
                                ("NEXT" . +org-todo-onhold)
@@ -448,7 +448,13 @@ Enable org-indent for nice word wrappings when using bullets while inside org lo
   (setq
    copilot-node-executable "/usr/local/bin/node16"
    ;; to reduce memory use; can increase for debugging
-   copilot-log-max 50))
+   copilot-log-max 50)
+  (advice-add #'copilot--get-source :around #'my/copilot--get-source))
+
+(defun my/copilot--get-source (orig-fun &rest args)
+  "Advice to disable warnings"
+  (let ((warning-minimum-level :emergency))
+    (apply orig-fun args)))
 #+end_src
 ** Elcord
 #+begin_src emacs-lisp :tangle yes
@@ -681,8 +687,8 @@ Function
   (setq current-prefix-arg t)
   ;; switch to org-directory project first to avoid projectile issues
   (projectile-switch-project-by-name org-directory)
-  (find-file (concat org-directory "inbox.org"))
   (find-file (concat org-directory "agenda.org"))
+  (find-file (concat org-directory "inbox.org"))
   ;; open up org-agenda and agenda.org side by side
   (evil-window-vsplit)
   (org-agenda nil "d")
