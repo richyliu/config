@@ -2,6 +2,9 @@
 
 from pwn import *
 
+# context.log_level = 'debug'
+context.terminal = ['tmux', 'splitw', '-f', '-h']
+
 {bindings}
 
 context.binary = {bin_name}
