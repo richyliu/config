@@ -6,6 +6,7 @@
  '(custom-safe-themes
    '("1bddd01e6851f5c4336f7d16c56934513d41cc3d0233863760d1798e74809b4b" default))
  '(package-selected-packages '(processing-mode nov))
+ '(pdf-view-resize-factor 1.1)
  '(safe-local-variable-values '((display-line-numbers . visual)))
  '(warning-suppress-types
    '((auto-save)
