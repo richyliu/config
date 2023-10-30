@@ -342,83 +342,6 @@ Archive subtrees to a smaller, temporary file and append them to the bigger agen
   :m "s-r" #'org-agenda-redo
   (:leader "f s" #'org-save-all-org-buffers)))
 #+end_src
-*** Get function source
-General helpers for finding a function's source and modifying it.
-
-#+begin_src emacs-lisp :tangle yes
-(defun my/get-function-defun (func)
-  (unless (symbolp func)
-    (error "Argument must be a symbol"))
-  (let* ((func-lib (find-function-library func nil t))
-         (filename (replace-regexp-in-string "\.elc$" ".el" (cdr func-lib))))
-    (with-temp-buffer (find-file-literally filename)
-                      (goto-char (point-min))
-                      (search-forward (concat "(defun " (symbol-name func)))
-                      (beginning-of-defun)
-                      (prog1 (sexp-at-point)
-                        (kill-buffer)))))
-
-(defun my/find-by-keys (key-list assoc)
-  (if (null key-list)
-      assoc
-    (my/find-by-keys (cdr key-list)
-                  (alist-get (car key-list) assoc nil nil #'equal))))
-#+end_src
-*** Schedule time delay fix
-Fix for showing delayed scheduled items on the day they are scheduled (as opposed to only showing them for today). This is the =-1d= or =--1d= syntax that can be added to a =SCHEDULED= timestamp
-
-#+begin_src emacs-lisp :tangle yes
-
-(defun my/org-agenda-get-scheduled-today (&rest args)
-  "Custom fix for `org-agenda-get-scheduled-today'
-
-Note that this generates the fixed function on demand. (Once this is called)"
-  (let* ((key-list '(let* org-element-cache-map lambda when catch let* unless when or))
-         (original-func (my/get-function-defun 'org-agenda-get-scheduled))
-         (modify-part (my/find-by-keys key-list original-func))
-         )
-    ;; add a fourth clause to the `and' expression:
-    ;;   (and (/= current schedule)
-    ;;        (/= current today)
-    ;;        (/= current repeat))
-    (setf (nth 3 modify-part) (append (nth 3 modify-part) '((/= current (+ schedule ddays)))))
-    ;; rename the function so it defines a new function
-    (setf (nth 1 original-func) 'my/org-agenda-get-scheduled-today)
-    ;; evaluates the `defun`
-    (eval original-func)
-    ;; now actually call the function
-    ;; note that in future invocations, the function will be called itself
-    ;; instead of this lazy load wrapper
-    (apply 'my/org-agenda-get-scheduled-today args)))
-#+end_src
-*** Log reschedule and deadline with 3 prefix args
-Set =org-log-reschedule= and =org-log-redeadline= when invoking reschedule or redeadline with 3 prefix args. Also, use delay cookies with two =--= instead of one.
-#+begin_src emacs-lisp :tangle yes
-(defun my/org--deadline-or-schedule (arg type time)
-  "Custom fix.
-
-Log the reschedule if 3 prefix args (value: 64). Use delay cookies that delays only the first occurence.
-
-This generates the fixed function on demand."
-  (let ((original-func (my/get-function-defun 'org--deadline-or-schedule)))
-    ;; change " -%dd" to " --%dd"
-    (let* ((key-list '(org-fold-core-ignore-modifications let* pcase `(16) save-excursion let if let* replace-match concat format))
-           (modify-part (my/find-by-keys key-list original-func)))
-      (setf (nth 0 modify-part) " --%dd"))
-    ;; wrap the main body with:
-    ;;   (let ((org-log-reschedule (if (equal arg '(64)) 'note nil)))
-    ;;        ...)
-    (let* ((original-func-body (nth 4 original-func))
-           (new-func-body `(let ((org-log-reschedule (if (equal arg '(64)) 'note nil))) ,original-func-body))
-           ;; rename the function so it redefines this function
-           (new-func (list (nth 0 original-func) 'my/org--deadline-or-schedule (nth 2 original-func) (nth 3 original-func) new-func-body)))
-      ;; evaluate the `defun'
-      (eval new-func))
-    ;; now actually call the function
-    ;; note that in future invocations, the function will be called itself
-    ;; instead of this lazy load wrapper
-    (apply 'my/org--deadline-or-schedule (list arg type time))))
-#+end_src
 *** Hooks and advice
 #+begin_src emacs-lisp :tangle yes
 (add-hook 'org-mode-hook #'my/org-mode-hook)
@@ -426,8 +349,6 @@ This generates the fixed function on demand."
 (advice-add 'org-agenda-switch-to :after #'+nav-flash/blink-cursor)
 (advice-add 'org-agenda-goto :after #'+nav-flash/blink-cursor)
 (advice-add 'org-agenda-add-time-grid-maybe :around #'my/time-grid-override)
-(advice-add 'org-agenda-get-scheduled :override #'my/org-agenda-get-scheduled-today)
-(advice-add 'org--deadline-or-schedule :override #'my/org--deadline-or-schedule)
 #+end_src
 
 Enable org-indent for nice word wrappings when using bullets while inside org log buffer.
