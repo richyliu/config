@@ -64,3 +64,5 @@
 
 (package! ijanet-mode
   :recipe (:host github :repo "serialdev/ijanet-mode"))
+
+(package! good-scroll :pin "8530d6697b15e0")

@@ -5,6 +5,7 @@
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
    '("1bddd01e6851f5c4336f7d16c56934513d41cc3d0233863760d1798e74809b4b" default))
+ '(magit-todos-insert-after '(bottom) nil nil "Changed by setter of obsolete option `magit-todos-insert-at'")
  '(package-selected-packages '(processing-mode nov))
  '(pdf-view-resize-factor 1.1)
  '(safe-local-variable-values '((display-line-numbers . visual)))
