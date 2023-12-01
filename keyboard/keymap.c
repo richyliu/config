@@ -52,6 +52,7 @@ enum custom_keycodes {
   PLOVER,
   EXIT_PLOVER,
   CMD_TAB,
+  CTRL_TAB,
 };
 
 #define KC_PASTE_NO_FMT LALT(LGUI(LSFT(KC_V)))
@@ -67,8 +68,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     KC_ESC,         KC_1,           KC_2,           KC_3,           KC_4,           KC_5,           LSFT(KC_LALT),                                  LSFT(KC_LCTRL), KC_6,           KC_7,           KC_8,           KC_9,           KC_0,           KC_TRANSPARENT,
     KC_TAB,         KC_Q,           KC_W,           KC_E,           KC_R,           KC_T,           KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_Y,           KC_U,           KC_I,           KC_O,           KC_P,           KC_BSPACE,
     KC_LCTRL,       KC_A,           KC_S,           KC_D,           KC_F,           KC_G,                                                                           KC_H,           KC_J,           KC_K,           KC_L,           KC_SCOLON,      KC_ENTER,
-    KC_LSHIFT,      KC_B,           KC_Z,           KC_X,           KC_C,           KC_V,           LGUI(LSFT(KC_LBRACKET)),                LGUI(LSFT(KC_RBRACKET)),KC_N,           KC_M,           KC_COMMA,       KC_DOT,         KC_SLASH,       MT(MOD_RSFT, KC_QUOTE),
-    MO(2),          LALT(KC_LCTRL), KC_TRANSPARENT, KC_ESC,         KC_LALT,                                                                                                        KC_LEFT,        KC_DOWN,        KC_UP,          KC_RIGHT,       MO(2),
+    KC_LSHIFT,      KC_B,           KC_Z,           KC_X,           KC_C,           KC_V,           CTRL_TAB,                                       CTRL_TAB,       KC_N,           KC_M,           KC_COMMA,       KC_DOT,         KC_SLASH,       MT(MOD_RSFT, KC_QUOTE),
+    MO(2),          LALT(KC_LCTRL), KC_TRANSPARENT, KC_SPACE,       KC_LALT,                                                                                                        KC_LEFT,        KC_DOWN,        KC_UP,          KC_RIGHT,       MO(2),
                                                                                                     LGUI(KC_LALT),  KC_HOME,        KC_PGUP,        KC_RALT,
                                                                                                                     KC_END,         KC_PGDOWN,
                                                                                     KC_LGUI,        MO(1),          CMD_TAB,        CMD_TAB,        MO(1),          KC_SPACE
@@ -107,27 +108,33 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 
 /**
- * "cmd-tab" key, as adapted from "super alt tab":
+ * "*-tab" key, as adapted from "super alt tab":
  *    https://docs.qmk.fm/#/feature_macros?id=super-alt↯tab
+ * (where * is either cmd or ctrl)
  *
- * When the key is tapped, a single cmd-tab key is tapped, switching to the
+ * When the key is tapped, a single *-tab key is tapped, switching to the
  * most recently used application (timeout set by TAPPING_TERM). When the key
  * is held, it gives the user a set time to view the applications (as
- * determined by CMD_TAB_BEFORE_FIRST_TIMEOUT). The is_cmd_tab_hold bool is set
- * during the first hold and the is_cmd_tab_before_first is set after the hold
+ * determined by TAB_BEFORE_FIRST_TIMEOUT). The is_hold bool is set
+ * during the first hold and the is_before_first is set after the hold
  * but before the first tap after the hold. Once a key is tapped,
- * is_cmd_tab_active will be set. Each key tap will go to the next application,
- * and after the timeout (CMD_TAB_TIMEOUT) it will stop at the current
+ * is_active will be set. Each key tap will go to the next application,
+ * and after the timeout (TAB_TIMEOUT) it will stop at the current
  * application.
  */
-bool is_cmd_tab_active = false;
-uint16_t cmd_tab_timer = 0;
-#define CMD_TAB_TIMEOUT 500
-bool is_cmd_tab_hold = false;
-uint16_t cmd_tab_hold_timer = 0;
-bool is_cmd_tab_before_first = false;
-uint16_t cmd_tab_before_first_timer = 0;
-#define CMD_TAB_BEFORE_FIRST_TIMEOUT 3000
+#define TAB_TIMEOUT 500
+#define TAB_BEFORE_FIRST_TIMEOUT 1500
+struct tab_state {
+  bool is_active;
+  uint16_t timer;
+  bool is_hold;
+  uint16_t hold_timer;
+  bool is_before_first;
+  uint16_t before_first_timer;
+};
+
+struct tab_state cmd_tab_state;
+struct tab_state ctrl_tab_state;
 
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
@@ -165,25 +172,57 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       }
       return false;
     case CMD_TAB:
+      // reset ctrl-tab if cmd-tab is pressed
+      unregister_code(KC_LCTRL);
+      memset(&ctrl_tab_state, 0, sizeof(ctrl_tab_state));
+
       if (record->event.pressed) {
-        if (!is_cmd_tab_active) {
-          is_cmd_tab_hold = true;
-          cmd_tab_hold_timer = timer_read();
+        if (!cmd_tab_state.is_active) {
+          cmd_tab_state.is_hold = true;
+          cmd_tab_state.hold_timer = timer_read();
         } else {
-          is_cmd_tab_before_first = false;
-          cmd_tab_timer = timer_read();
+          cmd_tab_state.is_before_first = false;
+          cmd_tab_state.timer = timer_read();
           register_code(KC_TAB);
         }
       } else {
-        if (is_cmd_tab_hold) {
-          if (timer_elapsed(cmd_tab_hold_timer) < TAPPING_TERM) {
+        if (cmd_tab_state.is_hold) {
+          if (timer_elapsed(cmd_tab_state.hold_timer) < TAPPING_TERM) {
             register_code(KC_LGUI);
             tap_code(KC_TAB);
             unregister_code(KC_LGUI);
-            is_cmd_tab_hold = false;
+            cmd_tab_state.is_hold = false;
           }
         }
-        if (is_cmd_tab_active) {
+        if (cmd_tab_state.is_active) {
+          unregister_code(KC_TAB);
+        }
+      }
+      return false;
+    case CTRL_TAB:
+      // reset cmd-tab if ctrl-tab is pressed
+      unregister_code(KC_LGUI);
+      memset(&cmd_tab_state, 0, sizeof(cmd_tab_state));
+
+      if (record->event.pressed) {
+        if (!ctrl_tab_state.is_active) {
+          ctrl_tab_state.is_hold = true;
+          ctrl_tab_state.hold_timer = timer_read();
+        } else {
+          ctrl_tab_state.is_before_first = false;
+          ctrl_tab_state.timer = timer_read();
+          register_code(KC_TAB);
+        }
+      } else {
+        if (ctrl_tab_state.is_hold) {
+          if (timer_elapsed(ctrl_tab_state.hold_timer) < TAPPING_TERM) {
+            register_code(KC_LCTRL);
+            tap_code(KC_TAB);
+            unregister_code(KC_LCTRL);
+            ctrl_tab_state.is_hold = false;
+          }
+        }
+        if (ctrl_tab_state.is_active) {
           unregister_code(KC_TAB);
         }
       }
@@ -193,36 +232,64 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   /// NOTE: important to check this after checking for cmd-tab key
   // reset cmd-tab if a command modifier was released
   if ((keycode >> 8) & MOD_LGUI && !record->event.pressed) {
-    is_cmd_tab_active = false;
-    is_cmd_tab_before_first = false;
+    cmd_tab_state.is_active = false;
+    cmd_tab_state.is_before_first = false;
+  }
+  if ((keycode >> 8) & MOD_LCTL && !record->event.pressed) {
+    ctrl_tab_state.is_active = false;
+    ctrl_tab_state.is_before_first = false;
   }
 
    return true;
 }
 
 void matrix_scan_user(void) {
-  if (is_cmd_tab_before_first) {
-    if (timer_elapsed(cmd_tab_before_first_timer) > CMD_TAB_BEFORE_FIRST_TIMEOUT) {
+  if (cmd_tab_state.is_before_first) {
+    if (timer_elapsed(cmd_tab_state.before_first_timer) > TAB_BEFORE_FIRST_TIMEOUT) {
       unregister_code(KC_LGUI);
-      is_cmd_tab_before_first = false;
-      is_cmd_tab_active = false;
+      cmd_tab_state.is_before_first = false;
+      cmd_tab_state.is_active = false;
     }
   } else {
-    if (is_cmd_tab_active) {
-      if (timer_elapsed(cmd_tab_timer) > CMD_TAB_TIMEOUT) {
+    if (cmd_tab_state.is_active) {
+      if (timer_elapsed(cmd_tab_state.timer) > TAB_TIMEOUT) {
         unregister_code(KC_LGUI);
-        is_cmd_tab_active = false;
+        cmd_tab_state.is_active = false;
       }
     }
   }
-  if (is_cmd_tab_hold) {
-    if (timer_elapsed(cmd_tab_hold_timer) > TAPPING_TERM) {
+  if (cmd_tab_state.is_hold) {
+    if (timer_elapsed(cmd_tab_state.hold_timer) > TAPPING_TERM) {
       register_code(KC_LGUI);
       tap_code(KC_TAB);
-      is_cmd_tab_hold = false;
-      is_cmd_tab_active = true;
-      is_cmd_tab_before_first = true;
-      cmd_tab_before_first_timer = timer_read();
+      cmd_tab_state.is_hold = false;
+      cmd_tab_state.is_active = true;
+      cmd_tab_state.is_before_first = true;
+      cmd_tab_state.before_first_timer = timer_read();
+    }
+  }
+  if (ctrl_tab_state.is_before_first) {
+    if (timer_elapsed(ctrl_tab_state.before_first_timer) > TAB_BEFORE_FIRST_TIMEOUT) {
+      unregister_code(KC_LCTRL);
+      ctrl_tab_state.is_before_first = false;
+      ctrl_tab_state.is_active = false;
+    }
+  } else {
+    if (ctrl_tab_state.is_active) {
+      if (timer_elapsed(ctrl_tab_state.timer) > TAB_TIMEOUT) {
+        unregister_code(KC_LCTRL);
+        ctrl_tab_state.is_active = false;
+      }
+    }
+  }
+  if (ctrl_tab_state.is_hold) {
+    if (timer_elapsed(ctrl_tab_state.hold_timer) > TAPPING_TERM) {
+      register_code(KC_LCTRL);
+      tap_code(KC_TAB);
+      ctrl_tab_state.is_hold = false;
+      ctrl_tab_state.is_active = true;
+      ctrl_tab_state.is_before_first = true;
+      ctrl_tab_state.before_first_timer = timer_read();
     }
   }
 }
