@@ -118,11 +118,11 @@
 #+begin_src emacs-lisp :tangle yes
 (setq org-agenda-files '("inbox.org" "agenda.org" "agenda_more.org"))
 (setq org-agenda-prefix-format '((agenda . " %i %?-12t%-3s%2e ")
-                                 (todo . " %i")
+                                 (todo . " %i%3e ")
                                  (tags . " %i")
                                  (search . " %i")))
 (setq org-agenda-time-grid '((daily today remove-match)
-                             (900 930 1000 1030 1100 1130 1200 1230 1300 1330 1400 1430 1500 1530 1600 1630 1700 1730 1800 1830 1900 1930 2000 2030 2100 2130 2200 2230)
+                             (900 930 1000 1030 1100 1130 1200 1230 1300 1330 1400 1430 1500 1530 1600 1630 1700 1730 1800 1830 1900 1930 2000 2030 2100 2130 2200 2230 2300 2330)
                              " ┄┄┄┄┄ " ""))
 (setq org-agenda-scheduled-leaders '("S:" "!%d"))
 (setq org-agenda-deadline-leaders '("D:" "-%d" "%2dd ago: "))
@@ -163,12 +163,13 @@ everything else."
      ((and (string= a-todo-state "HABT")
            (not (string= b-todo-state "HABT"))) +1)
      ((and (string= b-todo-state "HABT")
-           (not (string= a-todo-state "HABT"))) -1))))
+           (not (string= a-todo-state "HABT"))) -1)
+     )))
 #+end_src
 
 #+begin_src emacs-lisp :tangle yes
 (setq org-agenda-sorting-strategy '((agenda user-defined-up deadline-up priority-down scheduled-up todo-state-up effort-up habit-up)
-                                    (todo todo-state-up priority-down deadline-up ts-up effort-up)
+                                    (todo todo-state-up priority-down deadline-up scheduled-up ts-up effort-up tag-up)
                                     (tags todo-state-up priority-down deadline-up ts-up effort-up)
                                     (search scheduled-up priority-down todo-state-up effort-up)))
 (setq org-agenda-cmp-user-defined #'my/org-agenda-custom-sort)
@@ -180,6 +181,7 @@ everything else."
                                                    (org-agenda-files '("inbox.org"))))
                                      (todo "PROJ" ((org-agenda-overriding-header "Projects")
                                                    (org-agenda-dim-blocked-tasks nil)))
+                                     (todo "NEXT")
                                      (agenda "" ((org-agenda-span 2)
                                                  (org-agenda-start-day "0d")
                                                  (org-agenda-dim-blocked-tasks nil)))))
@@ -317,16 +319,14 @@ Archive subtrees to a smaller, temporary file and append them to the bigger agen
 #+begin_src emacs-lisp :tangle yes
 (with-no-warnings
   (custom-declare-face '+org-todo-someday '((t (:inherit (bold font-lock-comment-face org-todo)))) "" ))
-(setq org-todo-keywords '((sequence "TODO(t)" "SCHD(s)" "PROJIDEA(r)" "PROJ(p)" "LOOP(l!)" "HABT(h!)" "NEXT(n)" "WAIT(w@/@)" "IDEA(i)" "SOMEDAY(m)" "NOTE(o)" "|" "DONE(d!)" "KILL(k@)")))
+(setq org-todo-keywords '((sequence "TODO(t)" "PROJ(p)" "LOOP(l!)" "HABT(h!)" "WAIT(w@/@)" "NEXT(n)" "IDEA(i)" "SOMEDAY(m)" "NOTE(o)" "|" "DONE(d!)" "KILL(k@)")))
 (setq org-todo-repeat-to-state t)
 (setq org-todo-keyword-faces '(("TODO" . org-todo)
-                               ("SCHD" . org-headline-todo)
                                ("LOOP" . +org-todo-active)
                                ("HABT" . org-table)
-                               ("PROJIDEA" . org-level-2)
                                ("PROJ" . org-level-1)
-                               ("NEXT" . +org-todo-onhold)
                                ("WAIT" . org-level-4)
+                               ("NEXT" . +org-todo-onhold)
                                ("IDEA" . +org-todo-project)
                                ("SOMEDAY" . +org-todo-someday)
                                ("KILL" . org-agenda-dimmed-todo-face)
@@ -431,6 +431,7 @@ Enable org-indent for nice word wrappings when using bullets while inside org lo
 ;; use ctrl-tab to accept copilot completion
 (use-package! copilot
   :hook (prog-mode . copilot-mode)
+  :hook (tex-mode . copilot-mode)
   :bind (("M-TAB" . 'copilot-accept-completion)
          ("M-<tab>" . 'copilot-accept-completion)))
 (after! copilot
@@ -546,10 +547,6 @@ For detecting git forges (github, gitlab, etc)
 ** LSP
 #+begin_src emacs-lisp :tangle yes
 (after! lsp-mode
-  (lsp-register-client
-   (make-lsp-client :new-connection (lsp-tramp-connection "ccls")
-                    :major-modes '(c++-mode)
-                    :remote? t))
   (setq lsp-log-io t))
 #+end_src
 ** Projectile
@@ -1007,10 +1004,16 @@ Disable smaller subscripts and superscripts in latex. Courtesy of Anakin.
 #+begin_src emacs-lisp :tangle yes
 (setq +word-wrap-fill-style 'auto)
 #+end_src
-** Assembly comment char
+** Asm mode disable comment key
+Also change comment char
 #+begin_src emacs-lisp :tangle yes
-;; use pound sign for comments
 (setq asm-comment-char ?\#)
+
+(defun my/asm-disable-comment-key ()
+  "Disable automatic comment key"
+  (local-set-key ";" 'self-insert-command)
+  (local-set-key "#" 'self-insert-command))
+(add-hook 'asm-mode-hook #'my/asm-disable-comment-key)
 #+end_src
 ** Modeline
 #+begin_src emacs-lisp :tangle yes

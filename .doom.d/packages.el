@@ -69,4 +69,4 @@
 
 (package! org
   :recipe (:repo "richyliu/org-mode")
-  :pin "938531704bbffb36389945be5caed1c717bf5c23")
+  :pin "25c00beb3dbb59d90572f35aa56d084436d94417")
