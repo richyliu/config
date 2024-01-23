@@ -105,12 +105,11 @@
 #+begin_src emacs-lisp :tangle yes
 (setq org-priority-default ?A)
 (setq org-priority-highest ?A)
-(setq org-priority-lowest ?E)
+(setq org-priority-lowest ?D)
 (setq org-priority-faces '((?A . org-level-1)
                            (?B . org-level-2)
                            (?C . org-level-3)
-                           (?D . org-level-4)
-                           (?E . +org-todo-someday)))
+                           (?D . org-level-4)))
 (setq org-priority-start-cycle-with-default t)
 #+end_src
 *** Agenda
@@ -159,12 +158,7 @@ everything else."
      ((and (string= a-type "upcoming-deadline")
            (not (string= b-type "upcoming-deadline"))) +1)
      ((and (not (string= a-type "upcoming-deadline"))
-           (string= b-type "upcoming-deadline")) -1)
-     ((and (string= a-todo-state "HABT")
-           (not (string= b-todo-state "HABT"))) +1)
-     ((and (string= b-todo-state "HABT")
-           (not (string= a-todo-state "HABT"))) -1)
-     )))
+           (string= b-type "upcoming-deadline")) -1))))
 #+end_src
 
 #+begin_src emacs-lisp :tangle yes
@@ -180,7 +174,9 @@ everything else."
                                     ((todo "TODO" ((org-agenda-overriding-header "Inbox TODOs")
                                                    (org-agenda-files '("inbox.org"))))
                                      (todo "PROJ" ((org-agenda-overriding-header "Projects")
-                                                   (org-agenda-dim-blocked-tasks nil)))
+                                                   (org-agenda-dim-blocked-tasks nil)
+                                                   (org-agenda-sorting-strategy
+                                                    (cons '(todo priority-down alpha-up) org-agenda-sorting-strategy))))
                                      (todo "NEXT")
                                      (agenda "" ((org-agenda-span 2)
                                                  (org-agenda-start-day "0d")
@@ -202,6 +198,13 @@ everything else."
                                                  (org-agenda-dim-blocked-tasks nil)
                                                  (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo '("HABT")))
                                                  (org-agenda-use-time-grid nil)))))
+                                   ("c" "Calendar"
+                                    ((agenda "" ((org-agenda-overriding-header "Calendar")
+                                                 (org-agenda-span 7)
+                                                 (org-agenda-start-day "0d")
+                                                 (org-agenda-dim-blocked-tasks nil)
+                                                 (org-agenda-use-time-grid nil)
+                                                 (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo '("HABT" "LOOP")))))))
                                    ("x" "test"
                                     ((agenda "" ((org-agenda-span 1)
                                                  (org-agenda-start-day "0d")
@@ -562,6 +565,14 @@ editing projects over TRAMP.
 #+begin_src emacs-lisp :tangle yes
 (after! rustic-cargo
   (setq rustic-cargo-check-arguments ""))
+#+end_src
+** Verilog
+#+begin_src emacs-lisp :tangle yes
+(after! verilog-mode
+  (setq verilog-indent-level 2)
+  (setq verilog-indent-level-module 2)
+  (setq verilog-indent-level-declaration 2)
+  (setq verilog-indent-level-behavioral 2))
 #+end_src
 ** Vterm
 *** Keymap override
