@@ -125,6 +125,7 @@
                              " ┄┄┄┄┄ " ""))
 (setq org-agenda-scheduled-leaders '("S:" "!%d"))
 (setq org-agenda-deadline-leaders '("D:" "-%d" "%2dd ago: "))
+(setq org-agenda-dim-blocked-tasks nil)
 (setq org-deadline-warning-days 7)
 (setq org-modules '(org-habit))
 (setq org-time-stamp-rounding-minutes '(0 30))
@@ -143,8 +144,7 @@ This is very similar to the `time-up' options for `org-agenda-sorting-strategy',
 but it always sorts agenda items without a timestamp first (before any items
 with a timestamp).
 
-Also sorts items with a deadline after scheduled items and habits (HABT) after
-everything else."
+Also sorts items with a deadline after scheduled items."
   (let ((a-timep (get-text-property 1 'time-of-day a))
         (b-timep (get-text-property 1 'time-of-day b))
         (a-type (get-text-property 1 'type a))
@@ -162,7 +162,7 @@ everything else."
 #+end_src
 
 #+begin_src emacs-lisp :tangle yes
-(setq org-agenda-sorting-strategy '((agenda user-defined-up deadline-up priority-down scheduled-up todo-state-up effort-up habit-up)
+(setq org-agenda-sorting-strategy '((agenda user-defined-up deadline-up priority-down todo-state-up scheduled-up effort-up habit-up)
                                     (todo todo-state-up priority-down deadline-up scheduled-up ts-up effort-up tag-up)
                                     (tags todo-state-up priority-down deadline-up ts-up effort-up)
                                     (search scheduled-up priority-down todo-state-up effort-up)))
@@ -173,11 +173,6 @@ everything else."
 (setq org-agenda-custom-commands '(("d" "Daily agenda and TODOs"
                                     ((todo "TODO" ((org-agenda-overriding-header "Inbox TODOs")
                                                    (org-agenda-files '("inbox.org"))))
-                                     (todo "PROJ" ((org-agenda-overriding-header "Projects")
-                                                   (org-agenda-dim-blocked-tasks nil)
-                                                   (org-agenda-sorting-strategy
-                                                    (cons '(todo priority-down alpha-up) org-agenda-sorting-strategy))))
-                                     (todo "NEXT")
                                      (agenda "" ((org-agenda-span 2)
                                                  (org-agenda-start-day "0d")
                                                  (org-agenda-dim-blocked-tasks nil)))))
@@ -229,41 +224,6 @@ everything else."
                                      (agenda "" ((org-agenda-span 1) (org-agenda-start-day "+5d")))
                                      (agenda "" ((org-agenda-span 1) (org-agenda-start-day "+6d")))
                                      (agenda "" ((org-agenda-span 1) (org-agenda-start-day "+7d")))))))
-#+end_src
-**** Effort sums
-Show a sum of the efforts and scheduled agenda durations for a given day
-#+begin_src emacs-lisp :tangle yes
-(defun my/add-effort-sum (&rest args)
-  (goto-char (point-min))
-  (let ((date-header-regexp (rx
-                             (one-or-more (not (any " "))) ;; day of week
-                             (one-or-more " ")
-                             (one-or-more digit) ;; date
-                             (one-or-more " ")
-                             (one-or-more (not (any " "))) ;; month
-                             (one-or-more " ")
-                             (= 4 digit) ;; year
-                             )))
-    (save-excursion
-      (while (re-search-forward date-header-regexp nil t)
-        (forward-line 1)
-        (let ((scheduled-time 0)
-              (todo-time 0))
-          (save-excursion
-            (while (and (< (line-number-at-pos) (count-lines (point-min) (point-max)))
-                        (not (string-match date-header-regexp (thing-at-point 'line))))
-              (unless (string-suffix-p "deadline" (get-text-property (point) 'type))
-                (let* ((effort-minutes (get-text-property (point) 'effort-minutes))
-                       (duration (get-text-property (point) 'duration)))
-                  (when duration
-                    (setq scheduled-time (+ scheduled-time duration)))
-                  (when (and effort-minutes (not duration))
-                    (setq todo-time (+ todo-time effort-minutes)))))
-              (forward-line 1)))
-          (insert (format "Todo: %d minutes. Scheduled: %d minutes. Total: %d minutes.\n"
-                          todo-time scheduled-time (+ todo-time scheduled-time))))))))
-
-(add-hook 'org-agenda-finalize-hook #'my/add-effort-sum)
 #+end_src
 **** Archive override
 Archive subtrees to a smaller, temporary file and append them to the bigger agenda_archive. This avoids opening the huge archive org file.
@@ -322,7 +282,7 @@ Archive subtrees to a smaller, temporary file and append them to the bigger agen
 #+begin_src emacs-lisp :tangle yes
 (with-no-warnings
   (custom-declare-face '+org-todo-someday '((t (:inherit (bold font-lock-comment-face org-todo)))) "" ))
-(setq org-todo-keywords '((sequence "TODO(t)" "PROJ(p)" "LOOP(l!)" "HABT(h!)" "WAIT(w@/@)" "NEXT(n)" "IDEA(i)" "SOMEDAY(m)" "NOTE(o)" "|" "DONE(d!)" "KILL(k@)")))
+(setq org-todo-keywords '((sequence "PROJ(p)" "TODO(t)" "LOOP(l!)" "HABT(h!)" "WAIT(w@/@)" "NEXT(n)" "IDEA(i)" "SOMEDAY(m)" "NOTE(o)" "|" "DONE(d!)" "KILL(k@)")))
 (setq org-todo-repeat-to-state t)
 (setq org-todo-keyword-faces '(("TODO" . org-todo)
                                ("LOOP" . +org-todo-active)
@@ -439,7 +399,7 @@ Enable org-indent for nice word wrappings when using bullets while inside org lo
          ("M-<tab>" . 'copilot-accept-completion)))
 (after! copilot
   (setq
-   copilot-node-executable "/usr/local/bin/node16"
+   copilot-node-executable "/usr/local/bin/node"
    ;; to reduce memory use; can increase for debugging
    copilot-log-max 50)
   (advice-add #'copilot--get-source :around #'my/copilot--get-source))
@@ -450,6 +410,7 @@ Enable org-indent for nice word wrappings when using bullets while inside org lo
     (apply orig-fun args)))
 #+end_src
 ** Elcord
+Discord rich presence
 #+begin_src emacs-lisp :tangle yes
 (use-package! elcord)
 (after! elcord
@@ -500,6 +461,12 @@ Enable org-indent for nice word wrappings when using bullets while inside org lo
     :m "L" #'org-agenda-date-later-minutes
     :m "z" nil)))
 #+end_src
+** Eww
+#+begin_src emacs-lisp :tangle yes
+(use-package! eww
+  :bind ((:map evil-normal-state-map
+               ("s-<return>" . 'eww-open-in-new-buffer))))
+#+end_src
 ** Flycheck
 #+begin_src emacs-lisp :tangle yes
 (defun my/flycheck-disable-over-remote (func buffer)
@@ -549,8 +516,17 @@ For detecting git forges (github, gitlab, etc)
 #+end_src
 ** LSP
 #+begin_src emacs-lisp :tangle yes
+(use-package lsp-mode
+  :init
+  (setq lsp-log-io t)
+  :hook ((verilog-mode . lsp)))
+
 (after! lsp-mode
-  (setq lsp-log-io t))
+  (delete 'lsp-terraform lsp-client-packages))
+#+end_src
+** Org-babel
+#+begin_src emacs-lisp :tangle yes
+(setq org-babel-python-command "python3.10")
 #+end_src
 ** Projectile
 Set ~projectile-generic-command~ to a fixed string to allow it to work when
@@ -566,13 +542,19 @@ editing projects over TRAMP.
 (after! rustic-cargo
   (setq rustic-cargo-check-arguments ""))
 #+end_src
+** Tree-sitter
+#+begin_src emacs-lisp :tangle yes
+(setq treesit-language-source-alist
+   '((typst "https://github.com/uben0/tree-sitter-typst")))
+#+end_src
 ** Verilog
 #+begin_src emacs-lisp :tangle yes
 (after! verilog-mode
   (setq verilog-indent-level 2)
   (setq verilog-indent-level-module 2)
   (setq verilog-indent-level-declaration 2)
-  (setq verilog-indent-level-behavioral 2))
+  (setq verilog-indent-level-behavioral 2)
+  (setq verilog-auto-newline nil))
 #+end_src
 ** Vterm
 *** Keymap override
@@ -666,7 +648,7 @@ Function
 (defun my/reset-doom ()
   "Kill all buffers in buffer-list and cd back to home"
   (interactive)
-  (mapc #'kill-buffer (buffer-list))
+  (ignore-errors (mapc #'kill-buffer (buffer-list)))
   (cd "~/")
   (delete-other-windows)
   ;; delete all workspaces
@@ -961,8 +943,9 @@ Set different theme based on light or dark mode
   (setq doom-theme 'doom-one-light))
 #+end_src
 ** Line numbers
+=relative= line numbers cause high CPU usage for some reason (first observed on [2024-02-22 Thu])
 #+begin_src emacs-lisp :tangle yes
-(setq display-line-numbers-type 'relative)
+(setq display-line-numbers-type 'visual)
 #+end_src
 ** Org directory
 #+begin_src emacs-lisp :tangle yes
@@ -993,6 +976,9 @@ otherwise ispell will complain.
 (let ((tools-bkup (lookup-key global-map [menu-bar tools])))
   (define-key global-map [menu-bar] nil)
   (define-key global-map [menu-bar tools] tools-bkup))
+
+(add-hook 'after-change-major-mode-hook (lambda () (local-set-key [menu-bar] nil)))
+(add-hook 'minibuffer-setup-hook (lambda () (local-set-key [menu-bar] nil)))
 #+end_src
 ** Disable hl-line mode
 Copied from [[https://github.com/doomemacs/doomemacs/issues/4206#issuecomment-734414502][here]]
@@ -1038,6 +1024,10 @@ Also change comment char
 Ignore tmp files in =recentf-list= (generated by =find-file-literally= for org agenda archive fix)
 #+begin_src emacs-lisp :tangle yes
 (setq recentf-exclude (list (getenv "TMPDIR")))
+#+end_src
+** Auto revert timer
+#+begin_src emacs-lisp :tangle yes
+(setq auto-revert-interval 0.5)
 #+end_src
 * Advice
 ** Custom man cache

@@ -69,4 +69,14 @@
 
 (package! org
   :recipe (:repo "richyliu/org-mode")
-  :pin "25c00beb3dbb59d90572f35aa56d084436d94417")
+  :pin "be01e74540d0242e90312d7c62fb440fbbbde6a9")
+
+;; (package! engrave-faces)
+;; (setq org-latex-src-block-backend 'engraved)
+;; (package! ox-chameleon
+;;   :recipe (:host github :repo "tecosaur/ox-chameleon"))
+
+(package! nov)
+
+(package! typst-ts-mode
+  :recipe (:repo "https://git.sr.ht/~meow_king/typst-ts-mode"))
