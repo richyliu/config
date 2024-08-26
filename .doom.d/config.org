@@ -96,6 +96,16 @@
                        (if org-agenda-use-time-grid newlist list)
                        ndays todayp)))))
 #+end_src
+** refiling macro for TEMP items
+#+begin_src emacs-lisp :tangle yes
+(defun my/temp-refile ()
+  (interactive)
+  (org-schedule nil "+0d")
+  (org-todo "TEMP")
+  (let* ((temp-agenda-file (concat org-directory "temp_agenda.org"))
+         (target-rfloc (list "temp_agenda.org" temp-agenda-file nil nil)))
+    (org-refile nil nil target-rfloc nil)))
+#+end_src
 ** Config
 *** Header
 #+begin_src emacs-lisp :tangle yes
@@ -103,7 +113,7 @@
 #+end_src
 *** Priority
 #+begin_src emacs-lisp :tangle yes
-(setq org-priority-default ?A)
+(setq org-priority-default ?0)
 (setq org-priority-highest ?A)
 (setq org-priority-lowest ?D)
 (setq org-priority-faces '((?A . org-level-1)
@@ -115,7 +125,7 @@
 *** Agenda
 **** Misc
 #+begin_src emacs-lisp :tangle yes
-(setq org-agenda-files '("inbox.org" "agenda.org" "agenda_more.org"))
+(setq org-agenda-files '("inbox.org" "agenda.org" "temp_agenda.org"))
 (setq org-agenda-prefix-format '((agenda . " %i %?-12t%-3s%2e ")
                                  (todo . " %i%3e ")
                                  (tags . " %i")
@@ -162,7 +172,7 @@ Also sorts items with a deadline after scheduled items."
 #+end_src
 
 #+begin_src emacs-lisp :tangle yes
-(setq org-agenda-sorting-strategy '((agenda user-defined-up deadline-up priority-down todo-state-up scheduled-up effort-up habit-up)
+(setq org-agenda-sorting-strategy '((agenda user-defined-up deadline-up priority-down scheduled-up todo-state-up effort-up habit-down)
                                     (todo todo-state-up priority-down deadline-up scheduled-up ts-up effort-up tag-up)
                                     (tags todo-state-up priority-down deadline-up ts-up effort-up)
                                     (search scheduled-up priority-down todo-state-up effort-up)))
@@ -171,9 +181,9 @@ Also sorts items with a deadline after scheduled items."
 **** Custom commands
 #+begin_src emacs-lisp :tangle yes
 (setq org-agenda-custom-commands '(("d" "Daily agenda and TODOs"
-                                    ((todo "TODO" ((org-agenda-overriding-header "Inbox TODOs")
+                                    ((todo "TODO" ((org-agenda-overriding-header "Inbox")
                                                    (org-agenda-files '("inbox.org"))))
-                                     (agenda "" ((org-agenda-span 2)
+                                     (agenda "" ((org-agenda-span 3)
                                                  (org-agenda-start-day "0d")
                                                  (org-agenda-dim-blocked-tasks nil)))))
                                    ("g" "Time grid and TODOs for 3 days with effort sums"
@@ -252,7 +262,7 @@ Archive subtrees to a smaller, temporary file and append them to the bigger agen
 (setq +org-capture-todo-file "inbox.org")
 (setq org-capture-templates '(("T" "Immediate todo" entry
                                (file +org-capture-todo-file)
-                               "* TODO %?\n%i")
+                               "* TODO %?\n%U\n%i")
                               ("S" "Scheduled todo" entry
                                (file+headline "agenda.org" "General")
                                "* SCHD %?\nSCHEDULED: %t\n%i")
@@ -282,14 +292,13 @@ Archive subtrees to a smaller, temporary file and append them to the bigger agen
 #+begin_src emacs-lisp :tangle yes
 (with-no-warnings
   (custom-declare-face '+org-todo-someday '((t (:inherit (bold font-lock-comment-face org-todo)))) "" ))
-(setq org-todo-keywords '((sequence "PROJ(p)" "TODO(t)" "LOOP(l!)" "HABT(h!)" "WAIT(w@/@)" "NEXT(n)" "IDEA(i)" "SOMEDAY(m)" "NOTE(o)" "|" "DONE(d!)" "KILL(k@)")))
+(setq org-todo-keywords '((sequence "TODO(t)" "TEMP(e)" "LOOP(l!)" "HABT(h!)" "WAIT(w@/@)" "IDEA(i)" "SOMEDAY(m)" "NOTE(o)" "|" "DONE(d!)" "KILL(k@)")))
 (setq org-todo-repeat-to-state t)
 (setq org-todo-keyword-faces '(("TODO" . org-todo)
+                               ("TEMP" . org-level-2)
                                ("LOOP" . +org-todo-active)
                                ("HABT" . org-table)
-                               ("PROJ" . org-level-1)
                                ("WAIT" . org-level-4)
-                               ("NEXT" . +org-todo-onhold)
                                ("IDEA" . +org-todo-project)
                                ("SOMEDAY" . +org-todo-someday)
                                ("KILL" . org-agenda-dimmed-todo-face)
@@ -303,7 +312,9 @@ Archive subtrees to a smaller, temporary file and append them to the bigger agen
   :m "c d" #'org-agenda-deadline
   :m "s-s" #'org-save-all-org-buffers
   :m "s-r" #'org-agenda-redo
-  (:leader "f s" #'org-save-all-org-buffers)))
+  (:leader "f s" #'org-save-all-org-buffers))
+ (:map org-mode-map
+  :n "SPC m T" #'my/temp-refile))
 #+end_src
 *** Hooks and advice
 #+begin_src emacs-lisp :tangle yes
@@ -673,6 +684,7 @@ Function
   ;; switch to org-directory project first to avoid projectile issues
   (projectile-switch-project-by-name org-directory)
   (find-file (concat org-directory "agenda.org"))
+  (find-file (concat org-directory "temp_agenda.org"))
   (find-file (concat org-directory "inbox.org"))
   ;; open up org-agenda and agenda.org side by side
   (evil-window-vsplit)
