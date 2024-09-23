@@ -259,6 +259,7 @@ Archive subtrees to a smaller, temporary file and append them to the bigger agen
 *** Capture and archive
 #+begin_src emacs-lisp :tangle yes
 (setq org-log-into-drawer t)
+(setq org-log-reschedule 'time)
 (setq +org-capture-todo-file "inbox.org")
 (setq org-capture-templates '(("T" "Immediate todo" entry
                                (file +org-capture-todo-file)
@@ -292,10 +293,11 @@ Archive subtrees to a smaller, temporary file and append them to the bigger agen
 #+begin_src emacs-lisp :tangle yes
 (with-no-warnings
   (custom-declare-face '+org-todo-someday '((t (:inherit (bold font-lock-comment-face org-todo)))) "" ))
-(setq org-todo-keywords '((sequence "TODO(t)" "TEMP(e)" "LOOP(l!)" "HABT(h!)" "WAIT(w@/@)" "IDEA(i)" "SOMEDAY(m)" "NOTE(o)" "|" "DONE(d!)" "KILL(k@)")))
+(setq org-todo-keywords '((sequence "TODO(t)" "TEMP(e)" "PROJ(p@)" "LOOP(l!)" "HABT(h!)" "WAIT(w@/@)" "IDEA(i)" "SOMEDAY(m)" "NOTE(o)" "|" "DONE(d!)" "KILL(k@)")))
 (setq org-todo-repeat-to-state t)
 (setq org-todo-keyword-faces '(("TODO" . org-todo)
                                ("TEMP" . org-level-2)
+                               ("PROJ" . org-level-1)
                                ("LOOP" . +org-todo-active)
                                ("HABT" . org-table)
                                ("WAIT" . org-level-4)
@@ -557,6 +559,10 @@ editing projects over TRAMP.
 #+begin_src emacs-lisp :tangle yes
 (setq treesit-language-source-alist
    '((typst "https://github.com/uben0/tree-sitter-typst")))
+#+end_src
+** Typst
+#+begin_src emacs-lisp :tangle yes
+(setq typst-ts-mode-indent-offset 2)
 #+end_src
 ** Verilog
 #+begin_src emacs-lisp :tangle yes
