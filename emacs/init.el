@@ -30,9 +30,6 @@
 (setq straight-use-package-by-default t)
 (setq straight-vc-git-default-clone-depth 1)
 
-; defer for lazy loading
-(setq use-package-always-defer t)
-
 (setq use-package-always-ensure t)
 
 
@@ -70,7 +67,8 @@
 
   (setq backup-directory-alist `(("." . ,(expand-file-name "saves/backups" user-emacs-directory)))
         auto-save-file-name-transforms `((".*" ,(expand-file-name "saves/auto-saves" user-emacs-directory) t))
-        vc-follow-symlinks nil)
+        vc-follow-symlinks nil
+        compilation-window-height 20)
 
   ; enable relative line numbers in prog-mode
   (defun my/enable-line-numbers ()
@@ -87,6 +85,7 @@
                    ))
   (set-face-attribute 'default nil :height 150)
 
+  (add-to-list 'safe-local-variable-values '(eval auto-revert-mode 1))
   (add-to-list 'safe-local-variable-values '(display-line-numbers . visual))
 
   (setq display-line-numbers-type 'relative)
@@ -301,12 +300,19 @@
            (target-rfloc (list "temp_agenda.org" temp-agenda-file nil nil)))
       (org-refile nil nil target-rfloc nil)))
 
-  (leader-def
+  (general-define-key
+    :prefix my-leader
+    :non-normal-prefix my-insert-leader
+    :keymaps 'org-mode-map
+    :states '(normal visual motion insert emacs)
     "mds" #'org-schedule
+    "mdd" #'org-deadline
     "mcE" #'org-set-effort
     "mpp" #'org-priority
 
     "mA" #'org-archive-subtree-default
+    "mh" #'org-toggle-heading
+    "mi" #'org-toggle-item
     "mo" #'org-set-property
     "mt" #'org-todo
     "mx" #'org-toggle-checkbox
@@ -329,7 +335,7 @@
     "m." #'consult-org-heading
     "mT" #'my/temp-refile
     "mN" #'org-add-note
-    "sR" #'org-fold-reveal
+    "msR" #'org-fold-reveal
     )
   (general-define-key
     :states 'motion
@@ -656,6 +662,10 @@ Also sorts items with a deadline after scheduled items."
   ; have to do this to override the default evil-org definitions
   (evil-define-key 'normal 'evil-org-mode (kbd "C-<return>") #'+org/insert-item-below)
   (evil-define-key 'normal 'evil-org-mode (kbd "C-S-<return>") #'+org/insert-item-above)
+  (evil-define-key 'insert 'evil-org-mode (kbd "C-<return>") #'+org/insert-item-below)
+  (evil-define-key 'insert 'evil-org-mode (kbd "C-S-<return>") #'+org/insert-item-above)
+  (evil-define-key 'motion 'org-agenda-mode-map "H" #'org-agenda-date-earlier-minutes)
+  (evil-define-key 'motion 'org-agenda-mode-map "L" #'org-agenda-date-later-minutes)
   )
 
 (use-package evil-surround
@@ -718,3 +728,90 @@ Also sorts items with a deadline after scheduled items."
           compilation-mode))
   (popper-mode +1)
   (popper-echo-mode +1))                ; For echo area hints
+
+(use-package gcmh
+  :config
+  (setq gcmh-high-cons-threshold (* 16 1024 1024))
+  :hook
+  (after-init . gcmh-mode))
+
+(use-package profiler
+  :general
+  (general-define-key
+    :states 'normal
+    :keymaps 'profiler-report-mode-map
+    "TAB" #'profiler-report-toggle-entry
+    "<return>" #'profiler-report-toggle-entry
+    "i" #'profiler-report-toggle-entry)
+  (leader-def
+    "hTs" #'profiler-start
+    "hTt" #'profiler-stop
+    "hTr" #'profiler-report))
+
+(use-package beancount
+  :config
+
+  ;; Defined in ~/.emacs.d/modules/lang/beancount/autoload.el
+
+  (defun +beancount/balance ()
+    "Display a balance report with bean-report (bean-report bal)."
+    (interactive)
+    (let (compilation-read-command)
+      (beancount--run "bean-report" buffer-file-name "bal")))
+
+  (defun +beancount/clone-transaction ()
+    "Clones a transaction from (and to the bottom of) the current ledger buffer.
+
+    Updates the date to today."
+    (interactive)
+    (save-restriction
+      (widen)
+      (when-let (transaction
+                  (completing-read
+                    "Clone transaction: "
+                    (string-lines (buffer-string))
+                    (apply-partially #'string-match-p "^[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\} [*!] ")
+                    t))
+                (goto-char (point-min))
+                (re-search-forward (concat "^" (regexp-quote transaction)))
+                (+beancount/clone-this-transaction t))))
+
+  (defun +beancount/clone-this-transaction (&optional arg)
+    "Clones the transaction at point to the bottom of the ledger.
+
+    Updates the date to today."
+    (interactive "P")
+    (if (and (not arg) (looking-at-p "^$"))
+      (call-interactively #'+beancount/clone-transaction)
+      (save-restriction
+        (widen)
+        (let ((transaction
+                (buffer-substring-no-properties
+                  (save-excursion
+                    (beancount-goto-transaction-begin)
+                    (re-search-forward " [!*] " nil t)
+                    (point))
+                  (save-excursion
+                    (beancount-goto-transaction-end)
+                    (point)))))
+          (goto-char (point-max))
+          (delete-blank-lines)
+          (newline)
+          (beancount-insert-date)
+          (insert " ! ")
+          (insert transaction)))))
+
+
+  (general-define-key
+    :prefix my-leader
+    :non-normal-prefix my-insert-leader
+    :keymaps 'beancount-mode-map
+    :states '(normal visual motion insert emacs)
+    "mid" #'beancount-insert-date
+    "mic" #'+beancount/clone-transaction
+    "miC" #'+beancount/clone-this-transaction
+    "mb" #'+beancount/balance
+    "mc" #'beancount-check
+    "mx" #'beancount-context
+    )
+  )
