@@ -88,6 +88,10 @@
   (set-face-attribute 'default nil :height 150)
 
   (add-to-list 'safe-local-variable-values '(display-line-numbers . visual))
+
+  (setq display-line-numbers-type 'relative)
+  (add-hook 'prog-mode-hook 'display-line-numbers-mode)
+  (add-hook 'text-mode-hook 'display-line-numbers-mode)
   )
 
 (use-package doom-themes
@@ -159,13 +163,10 @@
 
     "na" #'org-agenda
     "nt" #'org-todo-list
+    "nl" #'org-store-link
     "n SPC" #'my/default-agenda-view
-    )
-  ; TODO: this doesn't work (it's getting shadowed by evil mapping)
-  (general-define-key
-    :keymaps 'apropos-mode-map
-    :states '(normal visual motion)
-    "TAB" #'forward-button
+
+    "tw" #'visual-line-mode
     )
   )
 
@@ -210,6 +211,7 @@
     "wd" #'evil-window-delete
     )
   (evil-mode 1)
+  (evil-define-key 'normal 'help-mode-map (kbd "TAB") #'forward-button)
   )
 
 (use-package evil-collection
@@ -304,8 +306,10 @@
     "mcE" #'org-set-effort
     "mpp" #'org-priority
 
-    "mt" #'org-todo
     "mA" #'org-archive-subtree-default
+    "mo" #'org-set-property
+    "mt" #'org-todo
+    "mx" #'org-toggle-checkbox
 
     ;; "msb" #'org-tree-to-indirect-buffer
     "msc" #'org-clone-subtree-with-time-shift
@@ -321,6 +325,8 @@
     "msN" #'widen
 
     "m'" #'org-edit-special
+    "m," #'org-switchb
+    "m." #'consult-org-heading
     "mT" #'my/temp-refile
     "mN" #'org-add-note
     "sR" #'org-fold-reveal
@@ -356,15 +362,14 @@
 
   :config
 
+  ;; BEGIN from doom emacs
+
   (defvar +org-habit-graph-padding 2
     "The padding added to the end of the consistency graph")
-
   (defvar +org-habit-min-width 30
     "Hides the consistency graph if the `org-habit-graph-column' is less than this value")
-
   (defvar +org-habit-graph-window-ratio 0.3
     "The ratio of the consistency graphs relative to the window width")
-
 
   (add-hook 'org-agenda-mode-hook
             (defun +org-habit-resize-graph-h ()
@@ -383,6 +388,101 @@
                 (setq-local org-habit-preceding-days preceding-days)
                 (setq-local org-habit-following-days following-days)
                 (setq-local org-habit-graph-column graph-column-adjusted))))
+
+  (defun +org--insert-item (direction)
+    (let ((context (org-element-lineage
+                    (org-element-context)
+                    '(table table-row headline inlinetask item plain-list)
+                    t)))
+      (pcase (org-element-type context)
+        ;; Add a new list item (carrying over checkboxes if necessary)
+        ((or `item `plain-list)
+         (let ((orig-point (point)))
+           ;; Position determines where org-insert-todo-heading and `org-insert-item'
+           ;; insert the new list item.
+           (if (eq direction 'above)
+               (org-beginning-of-item)
+             (end-of-line))
+           (let* ((ctx-item? (eq 'item (org-element-type context)))
+                  (ctx-cb (org-element-property :contents-begin context))
+                  ;; Hack to handle edge case where the point is at the
+                  ;; beginning of the first item
+                  (beginning-of-list? (and (not ctx-item?)
+                                           (= ctx-cb orig-point)))
+                  (item-context (if beginning-of-list?
+                                    (org-element-context)
+                                  context))
+                  ;; Horrible hack to handle edge case where the
+                  ;; line of the bullet is empty
+                  (ictx-cb (org-element-property :contents-begin item-context))
+                  (empty? (and (eq direction 'below)
+                               ;; in case contents-begin is nil, or contents-begin
+                               ;; equals the position end of the line, the item is
+                               ;; empty
+                               (or (not ictx-cb)
+                                   (= ictx-cb
+                                      (1+ (point))))))
+                  (pre-insert-point (point)))
+             ;; Insert dummy content, so that `org-insert-item'
+             ;; inserts content below this item
+             (when empty?
+               (insert " "))
+             (org-insert-item (org-element-property :checkbox context))
+             ;; Remove dummy content
+             (when empty?
+               (delete-region pre-insert-point (1+ pre-insert-point))))))
+        ;; Add a new table row
+        ((or `table `table-row)
+         (pcase direction
+           ('below (save-excursion (org-table-insert-row t))
+                   (org-table-next-row))
+           ('above (save-excursion (org-shiftmetadown))
+                   (+org/table-previous-row))))
+
+        ;; Otherwise, add a new heading, carrying over any todo state, if
+        ;; necessary.
+        (_
+         (let ((level (or (org-current-level) 1)))
+           ;; I intentionally avoid `org-insert-heading' and the like because they
+           ;; impose unpredictable whitespace rules depending on the cursor
+           ;; position. It's simpler to express this command's responsibility at a
+           ;; lower level than work around all the quirks in org's API.
+           (pcase direction
+             (`below
+              (let (org-insert-heading-respect-content)
+                (goto-char (line-end-position))
+                (org-end-of-subtree)
+                (insert "\n" (make-string level ?*) " ")))
+             (`above
+              (org-back-to-heading)
+              (insert (make-string level ?*) " ")
+              (save-excursion (insert "\n"))))
+           (run-hooks 'org-insert-heading-hook)
+           (when-let* ((todo-keyword (org-element-property :todo-keyword context))
+                       (todo-type    (org-element-property :todo-type context)))
+             (org-todo
+              (cond ((eq todo-type 'done)
+                     ;; Doesn't make sense to create more "DONE" headings
+                     (car (+org-get-todo-keywords-for todo-keyword)))
+                    (todo-keyword)
+                    ('todo)))))))
+
+      (when (org-invisible-p)
+        (org-show-hidden-entry))
+      (when (and (bound-and-true-p evil-local-mode)
+                 (not (evil-emacs-state-p)))
+        (evil-insert 1))))
+
+  (defun +org/insert-item-below (count)
+    "Inserts a new heading, table cell or item below the current one."
+    (interactive "p")
+    (dotimes (_ count) (+org--insert-item 'below)))
+  (defun +org/insert-item-above (count)
+    "Inserts a new heading, table cell or item above the current one."
+    (interactive "p")
+    (dotimes (_ count) (+org--insert-item 'above)))
+
+  ;; END from doom emacs
 
   (setq org-startup-indented t)
   (setq org-special-ctrl-a/e t)
@@ -553,6 +653,9 @@ Also sorts items with a deadline after scheduled items."
   (evil-org-set-key-theme)
   (require 'evil-org-agenda)
   (evil-org-agenda-set-keys)
+  ; have to do this to override the default evil-org definitions
+  (evil-define-key 'normal 'evil-org-mode (kbd "C-<return>") #'+org/insert-item-below)
+  (evil-define-key 'normal 'evil-org-mode (kbd "C-S-<return>") #'+org/insert-item-above)
   )
 
 (use-package evil-surround
@@ -584,8 +687,6 @@ Also sorts items with a deadline after scheduled items."
   (global-evil-visualstar-mode))
 
 (use-package magit
-  ; TODO: can I load this on demand with first use of the key combo?
-  ;; :demand t
   :general
   (leader-def
     "gg" #'magit-status
