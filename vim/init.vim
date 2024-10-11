@@ -35,6 +35,8 @@ Plug 'evanleck/vim-svelte'            " Svelte language support
 Plug 'metakirby5/codi.vim'            " Python scratchpad
 Plug 'lervag/vimtex'                  " Latex support
 Plug 'jalvesaq/R-Vim-runtime'         " R language support (custom fork)
+Plug 'kaarmu/typst.vim'               " Typst language support
+Plug 'tikhomirov/vim-glsl'            " GLSl (WebGL2) language support
 
 Plug 'github/copilot.vim'             " Github Copilot
 
@@ -183,7 +185,7 @@ highlight def link xmlTagName htmlTagName
 highlight def link xmlEndTag htmlEndTag
 
 " Copilot node path
-let g:copilot_node_command = '/usr/local/bin/node16'
+let g:copilot_node_command = 'node'
 
 " Settings
 set autoindent
