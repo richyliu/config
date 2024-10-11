@@ -1,4 +1,12 @@
-;; (setq use-package-compute-statistics t)
+; (setq use-package-compute-statistics t)
+
+;; Checklist for things that constantly break (check when changing config):
+;; - `gc` opens calendar in org-agenda, but comments lines elesewhere
+;;   - `C-l`, etc. keys to move around in calendar
+;; - minibuffer:
+;;   - `esc` immediate exits
+;;   - `C-w` and `C-u` work as expected
+;;   - `C-f` enters normal mode
 
 (tool-bar-mode -1)             ; Hide the outdated icons
 (scroll-bar-mode -1)           ; Hide the always-visible scrollbar
@@ -65,18 +73,23 @@
     (setq mac-option-modifier 'meta)
     (setq mac-control-modifier 'control))
 
-  (setq backup-directory-alist `(("." . ,(expand-file-name "saves/backups" user-emacs-directory)))
-        auto-save-file-name-transforms `((".*" ,(expand-file-name "saves/auto-saves" user-emacs-directory) t))
+  (setq create-lockfiles nil
+        make-backup-files nil
         vc-follow-symlinks nil
-        compilation-window-height 20)
-
-  ; enable relative line numbers in prog-mode
-  (defun my/enable-line-numbers ()
-    "Enable relative line numbers"
-    (interactive)
-    (display-line-numbers-mode)
-    (setq display-line-numbers 'relative))
-  (add-hook 'prog-mode-hook #'my/enable-line-numbers)
+        compilation-window-height 20
+        auto-save-default t
+        ;; Don't auto-disable auto-save after deleting big chunks. This defeats
+        ;; the purpose of a failsafe. This adds the risk of losing the data we
+        ;; just deleted, but I believe that's VCS's jurisdiction, not ours.
+        auto-save-include-big-deletions t
+        ;; Keep it out of `doom-emacs-dir' or the local directory.
+        auto-save-list-file-prefix (expand-file-name "saves/autosave" user-emacs-directory)
+        tramp-auto-save-directory  (expand-file-name "saves/tramp-autosave" user-emacs-directory)
+        auto-save-file-name-transforms
+        (list (list "\\`/[^/]*:\\([^/]*/\\)*\\([^/]*\\)\\'"
+                    ;; Prefix tramp autosaves to prevent conflicts with local ones
+                    (concat auto-save-list-file-prefix "tramp-\\2") t)
+              (list ".*" auto-save-list-file-prefix t)))
 
   (set-frame-font (font-spec
                    :family "iosevka term ss07"
@@ -88,9 +101,16 @@
   (add-to-list 'safe-local-variable-values '(eval auto-revert-mode 1))
   (add-to-list 'safe-local-variable-values '(display-line-numbers . visual))
 
+  (defun my/enable-trailing-whitespace ()
+    "Enable show-trailing-whitespace"
+    (interactive)
+    (setq show-trailing-whitespace t))
+
   (setq display-line-numbers-type 'relative)
-  (add-hook 'prog-mode-hook 'display-line-numbers-mode)
-  (add-hook 'text-mode-hook 'display-line-numbers-mode)
+  (add-hook 'prog-mode-hook #'display-line-numbers-mode)
+  (add-hook 'text-mode-hook #'display-line-numbers-mode)
+  (add-hook 'prog-mode-hook #'my/enable-trailing-whitespace)
+  (add-hook 'text-mode-hook #'my/enable-trailing-whitespace)
   )
 
 (use-package doom-themes
@@ -146,11 +166,12 @@
   ;; doomesque hotkeys using spacebar as prefix
   (leader-def
     ;; map universal argument to SPC-u
-    "u" '(universal-argument :which-key "Universal argument")
+    "u" #'universal-argument
     "." #'find-file
     ";" #'pp-eval-expression
 
-    "qq" #'kill-emacs
+    "qq" #'save-buffers-kill-emacs
+    "qQ" #'kill-emacs
     "qa" #'my/kill-all
 
     "bi" #'ibuffer
@@ -166,6 +187,21 @@
     "n SPC" #'my/default-agenda-view
 
     "tw" #'visual-line-mode
+
+    "cw" #'delete-trailing-whitespace
+
+    "X" #'org-capture
+    "x" #'scratch-buffer
+    )
+  (general-define-key
+    :keymaps 'universal-argument-map
+    :prefix my-leader
+    :non-normal-prefix my-insert-leader
+    "u" #'universal-argument-more)
+  (general-define-key
+    :states 'normal
+    "g C-g" #'count-words
+    "s-w" #'kill-current-buffer
     )
   )
 
@@ -193,9 +229,11 @@
   :init
   (setq evil-want-C-u-scroll t
         evil-want-C-u-delete t
-        evil-want-minibuffer t
+        ; disable evil in minibuffer on startup
+        evil-want-minibuffer nil
         evil-want-keybinding nil
         evil-want-Y-yank-to-eol t
+        evil-symbol-word-search t
         evil-search-module 'evil-search
         evil-undo-system 'undo-redo)
   :config
@@ -209,6 +247,13 @@
     "ws" #'evil-window-split
     "wd" #'evil-window-delete
     )
+  (general-define-key
+    :kemaps 'minibuffer-mode-map
+    "C-u" #'evil-delete-back-to-indentation
+    ; some convenience "evil mode" keys in minibuffer directly
+    "C-w" #'evil-delete-backward-word
+    ; allow entering evil with C-f in minibuffer
+    "C-f" #'evil-normal-state)
   (evil-mode 1)
   (evil-define-key 'normal 'help-mode-map (kbd "TAB") #'forward-button)
   )
@@ -275,7 +320,8 @@
     "ss" #'consult-line
     "si" #'consult-imenu
     "," #'consult-project-buffer
-    "<" #'consult-buffer)
+    "<" #'consult-buffer
+    "/" #'consult-ripgrep)
   )
 
 (use-package recentf
@@ -287,6 +333,8 @@
         recentf-exclude '("/tmp/")))
 
 (use-package org
+  :straight (org :host github
+                 :repo "richyliu/org-mode")
   :init
   (setq org-directory "/Users/richard/Documents/org/agenda/")
   (setq org-agenda-files '("inbox.org" "agenda.org" "temp_agenda.org"))
@@ -300,14 +348,50 @@
            (target-rfloc (list "temp_agenda.org" temp-agenda-file nil nil)))
       (org-refile nil nil target-rfloc nil)))
 
+  (defun +org/dwim-at-point (&optional arg)
+    "Do-what-I-mean at point. Inspired by doom emacs function of the same name.
+
+    If on a:
+    - link: follow it
+    - otherwise, do nothing."
+    (interactive "P")
+    (if (button-at (point))
+      (call-interactively #'push-button)
+      (let* ((context (org-element-context))
+             (type (org-element-type context)))
+        ;; skip over unimportant contexts
+        (while (and context (memq type '(verbatim code bold italic underline strike-through subscript superscript)))
+               (setq context (org-element-property :parent context)
+                     type (org-element-type context)))
+        (pcase type
+               (`link (org-open-at-point arg))
+
+               (_
+                 (if (or (org-in-regexp org-ts-regexp-both nil t)
+                         (org-in-regexp org-tsr-regexp-both nil  t)
+                         (org-in-regexp org-link-any-re nil t))
+                   (call-interactively #'org-open-at-point)))))))
+
+  (defun my/org-copy-pair-inc-date ()
+    "Duplicate two headings (while on the second one) and increment date of both"
+    (interactive)
+    (org-clone-subtree-with-time-shift 1 "+1d")
+    (org-backward-element)
+    (org-clone-subtree-with-time-shift 1 "+1d")
+    (org-forward-element)
+    (org-metadown)
+    (org-forward-element))
+
   (general-define-key
     :prefix my-leader
     :non-normal-prefix my-insert-leader
     :keymaps 'org-mode-map
     :states '(normal visual motion insert emacs)
-    "mds" #'org-schedule
-    "mdd" #'org-deadline
     "mcE" #'org-set-effort
+    "mdd" #'org-deadline
+    "mds" #'org-schedule
+    "mdt" #'org-time-stamp
+    "mdT" #'org-time-stamp-inactive
     "mpp" #'org-priority
 
     "mA" #'org-archive-subtree-default
@@ -325,14 +409,21 @@
     "msk" #'org-move-subtree-up
     "msl" #'org-demote-subtree
     "msn" #'org-narrow-to-subtree
-    "msr" #'org-refile
     ;; "mss" #'org-sparse-tree
     "msA" #'org-archive-subtree-default
     "msN" #'widen
+    "msP" #'my/org-copy-pair-inc-date
+
+    "mrr" #'org-refile
+
+    "mgr" #'org-refile-goto-last-stored
+
+    "mlt" #'org-toggle-link-display
 
     "m'" #'org-edit-special
     "m," #'org-switchb
     "m." #'consult-org-heading
+    "m/" #'consult-org-agenda
     "mT" #'my/temp-refile
     "mN" #'org-add-note
     "msR" #'org-fold-reveal
@@ -347,6 +438,7 @@
     ;; "gl" #'org-down-element
     "s-<up>" #'org-up-element
     "s-k" #'org-insert-link
+    "<return>" #'+org/dwim-at-point
     )
   (general-define-key
     :states 'motion
@@ -356,18 +448,23 @@
     "s-s" #'org-save-all-org-buffers
     "s-r" #'org-agenda-redo
     "r" #'org-agenda-redo
+
+    "gc" #'org-agenda-goto-calendar
     )
   (general-define-key
-    :states '(normal insert visual)
     :keymaps 'org-read-date-minibuffer-local-map
     "C-h" #'(lambda () (interactive) (org-eval-in-calendar '(calendar-backward-day 1)))
     "C-l" #'(lambda () (interactive) (org-eval-in-calendar '(calendar-forward-day 1)))
     "C-k" #'(lambda () (interactive) (org-eval-in-calendar '(calendar-backward-week 1)))
-    "C-j" #'(lambda () (interactive) (org-eval-in-calendar '(calendar-forward-week 1)))
-    )
+    "C-j" #'(lambda () (interactive) (org-eval-in-calendar '(calendar-forward-week 1))))
+  (general-define-key
+    :keymaps 'calendar-mode-map
+    "C-h" #'(lambda () (interactive) (calendar-backward-day 1))
+    "C-l" #'(lambda () (interactive) (calendar-forward-day 1))
+    "C-k" #'(lambda () (interactive) (calendar-backward-week 1))
+    "C-j" #'(lambda () (interactive) (calendar-forward-week 1)))
 
   :config
-
   ;; BEGIN from doom emacs
 
   (defvar +org-habit-graph-padding 2
@@ -494,6 +591,35 @@
   (setq org-special-ctrl-a/e t)
   (setq org-blank-before-new-entry nil)
 
+  (setq org-indirect-buffer-display 'current-window
+        org-enforce-todo-dependencies t
+        org-entities-user
+        '(("flat"  "\\flat" nil "" "" "266D" "♭")
+          ("sharp" "\\sharp" nil "" "" "266F" "♯"))
+        org-fontify-done-headline t
+        org-fontify-quote-and-verse-blocks t
+        org-fontify-whole-heading-line t
+        org-hide-leading-stars t
+        org-image-actual-width nil
+        org-imenu-depth 6
+        org-tags-column 0
+        org-use-sub-superscripts '{}
+        ;; `showeverything' is org's default, but it doesn't respect
+        ;; `org-hide-block-startup' (#+startup: hideblocks), archive trees,
+        ;; hidden drawers, or VISIBILITY properties. `nil' is equivalent, but
+        ;; respects these settings.
+        org-startup-folded nil)
+
+  (setq org-refile-targets
+        '((nil :maxlevel . 3)
+          (org-agenda-files :maxlevel . 3))
+        ;; Without this, completers like ivy/helm are only given the first level of
+        ;; each outline candidates. i.e. all the candidates under the "Tasks" heading
+        ;; are just "Tasks/". This is unhelpful. We want the full path to each refile
+        ;; target! e.g. FILE/Tasks/heading/subheading
+        org-refile-use-outline-path 'file
+        org-outline-path-complete-in-steps nil)
+
   (setq org-priority-default ?0)
   (setq org-priority-highest ?A)
   (setq org-priority-lowest ?D)
@@ -571,7 +697,7 @@ Also sorts items with a deadline after scheduled items."
                                                    (org-agenda-dim-blocked-tasks nil)))))
                                      ("D" "Daily TODOs for a week"
                                       ((agenda "" ((org-agenda-overriding-header "Nonhabits")
-                                                   (org-agenda-span 7)
+                                                   (org-agenda-span 8)
                                                    (org-agenda-start-day "0d")
                                                    (org-agenda-dim-blocked-tasks nil)
                                                    (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo '("HABT")))
@@ -611,9 +737,13 @@ Also sorts items with a deadline after scheduled items."
   (setq org-log-into-drawer t)
   (setq org-log-reschedule 'time)
   (setq +org-capture-todo-file "inbox.org")
+  (setq +org-capture-journal-file "journal.org")
   (setq org-capture-templates '(("T" "Immediate todo" entry
                                  (file +org-capture-todo-file)
-                                 "* TODO %?\n%U\n%i")))
+                                 "* TODO %?\n%U\n%i")
+                                ("j" "Journal" entry
+                                 (file+olp+datetree +org-capture-journal-file)
+                                 "* %U %?\n%i" :prepend t)))
   (setq org-archive-location "agenda_archive.org::")
 
   (setq org-use-fast-todo-selection 'expert)
@@ -635,19 +765,83 @@ Also sorts items with a deadline after scheduled items."
                                  ("KILL" . org-agenda-dimmed-todo-face)
                                  ("NOTE" . org-agenda-dimmed-todo-face)))
 
+  (defun my/time-grid-override (func list ndays todayp)
+    "Show time grid items during scheduled blocks with org-scheduled face."
+    (let* (
+           ;; How frequent in minutes to have time grid intervals. This must match
+           ;; the times in org-agenda-time-grid
+           (time-grid-interval 30.0)
+           (scheduled-times (mapcan #'(lambda (el)
+                                        ;; only consider items with a scheduled time
+                                        (if (and el (get-text-property 0 'time-of-day el))
+                                          ;; get all scheduled items as pairs of (start time, end time)
+                                          ;; end time is rounded to nearest time-grid-interval
+                                          ;; all times are in minutes since midnight
+                                          (let* ((time-num (get-text-property 0 'time-of-day el))
+                                                 (duration (or (get-text-property 0 'duration el) 0))
+                                                 (time-in-minutes (+ (* (/ time-num 100) 60) (mod time-num 100)))
+                                                 (time-end (+ time-in-minutes duration))
+                                                 (round-up #'(lambda (num)
+                                                               "Like round, but always round up from 0.5"
+                                                               (if (< (- (abs (- num (round num))) 0.5) 0.000001)
+                                                                 (ceiling num)
+                                                                 (round num))))
+                                                 (time-end-rounded (* (funcall round-up (/ time-end time-grid-interval)) time-grid-interval)))
+                                            (list (list time-in-minutes time-end-rounded)))))
+                                    list))
+           (additional (mapcan #'(lambda (time)
+                                   (let ((time-in-minutes (+ (* (/ time 100) 60) (mod time 100))))
+                                     ;; check if this time-grid item is near a scheduled item
+                                     (if-let (cur-scheduled (cl-find-if
+                                                              #'(lambda (scheduled)
+                                                                  (let* ((sched-start (nth 0 scheduled))
+                                                                         (sched-end (nth 1 scheduled)))
+                                                                    ;; only show during scheduled time
+                                                                    (and (> time-in-minutes sched-start)
+                                                                         (< time-in-minutes sched-end))))
+                                                              scheduled-times))
+                                             ;; don't show this time-grid if it's the start of another scheduled item since the
+                                             ;; scheduled item itself takes up a line
+                                             (unless (cl-some #'(lambda (scheduled)
+                                                                  (let* ((sched-start (nth 0 scheduled))
+                                                                         (sched-end (nth 1 scheduled)))
+                                                                    (= time-in-minutes sched-start)))
+                                                              scheduled-times)
+                                               (let* ((rawtimestr (replace-regexp-in-string " " "0" (format "%04s" time)))
+                                                      (timestr (concat (substring rawtimestr 0 -2) ":" (substring rawtimestr -2)))
+                                                      ;; show a different char for the last time-grid item for a particular scheduled item
+                                                      (indicator-char (if-let ((end (nth 1 cur-scheduled))
+                                                                               (end-diff (- end time-in-minutes))
+                                                                               (diff-in-range (and (>= end-diff 0)
+                                                                                                   (<= end-diff time-grid-interval))))
+                                                                              "┘"
+                                                                              "│"))
+                                                      (newel (org-agenda-format-item indicator-char (nth 3 org-agenda-time-grid)
+                                                                                     nil "" nil timestr)))
+                                                 (put-text-property 2 (length newel) 'face 'org-scheduled newel)
+                                                 (list newel))))))
+                               ;; needs to be the same text as time grid to get formatted correctly
+                               (nth 1 org-agenda-time-grid)))
+           (newlist (append additional list)))
+      ;; call the original function (org-agenda-add-time-grid-maybe)
+      (apply (cons func (list
+                          ;; use the added list if we are using a time grid
+                          (if org-agenda-use-time-grid newlist list)
+                          ndays todayp)))))
+
+  (advice-add 'org-agenda-add-time-grid-maybe :around #'my/time-grid-override)
 
   )
 
 (use-package evil-nerd-commenter
+  :demand t
   :commands (evilnc-comment-operator
              evilnc-inner-comment
              evilnc-outer-commenter)
   :general
   ([remap comment-line] #'evilnc-comment-or-uncomment-lines)
-  (general-define-key
-   :states 'motion
-   :keymaps 'override
-   "gc" #'evilnc-comment-operator)
+  :config
+  (evil-define-key 'motion 'global "gc" #'evilnc-comment-operator)
   )
 
 (use-package evil-org
@@ -675,8 +869,7 @@ Also sorts items with a deadline after scheduled items."
 
 (use-package orderless
   :init
-  (setq orderless-matching-styles '(orderless-initialism
-                                    orderless-literal
+  (setq orderless-matching-styles '(orderless-literal
                                     orderless-regexp)
         ; not sure why this is needed, but gives error if this isn't set at all
         completion-lazy-hilit t)
@@ -815,3 +1008,16 @@ Also sorts items with a deadline after scheduled items."
     "mx" #'beancount-context
     )
   )
+
+(use-package marginalia
+  :general-config
+  (:keymaps 'minibuffer-local-map "M-a" #'marginalia-cycle)
+  :config
+  (setq marginalia--pangram "The quick brown fox jumps over the lazy dog")
+  :init
+  (marginalia-mode))
+
+(use-package solaire-mode
+  :demand t
+  :config
+  (solaire-global-mode +1))
