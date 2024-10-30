@@ -148,6 +148,10 @@ inoremap <c-u> <c-g>u<c-u>
 onoremap { V{
 onoremap } V}
 
+" easy buffer switching
+nnoremap <silent> <F8> :bn<CR>
+nnoremap <silent> <F7> :bp<CR>
+
 " Search for selected text and automatically escape characters
 " Source: https://vim.fandom.com/wiki/Search_for_visually_selected_text
 vnoremap <silent> * :<C-U>
