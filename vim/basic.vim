@@ -46,7 +46,7 @@ set shortmess-=S
 set showbreak=^
 set showcmd
 set smartcase
-set softtabstop=2
+set softtabstop=-1
 set spellcapcheck=
 set splitbelow
 set splitright

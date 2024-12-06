@@ -46,3 +46,5 @@ eval $(thefuck --alias)
 eval "$(github-copilot-cli alias -- "$0")"
 
 alias pjl=~/code/plojo/target/release/lookup
+
+export PYTHONPATH="$PYTHONPATH:/Users/richard/Documents/org/budgeting"

@@ -1,34 +1,5 @@
 #include QMK_KEYBOARD_H
 #include "version.h"
-#include "keymap_german.h"
-#include "keymap_nordic.h"
-#include "keymap_french.h"
-#include "keymap_spanish.h"
-#include "keymap_hungarian.h"
-#include "keymap_swedish.h"
-#include "keymap_br_abnt2.h"
-#include "keymap_canadian_multilingual.h"
-#include "keymap_german_ch.h"
-#include "keymap_jp.h"
-#include "keymap_korean.h"
-#include "keymap_bepo.h"
-#include "keymap_italian.h"
-#include "keymap_slovenian.h"
-#include "keymap_lithuanian_azerty.h"
-#include "keymap_danish.h"
-#include "keymap_norwegian.h"
-#include "keymap_portuguese.h"
-#include "keymap_contributions.h"
-#include "keymap_czech.h"
-#include "keymap_romanian.h"
-#include "keymap_russian.h"
-#include "keymap_uk.h"
-#include "keymap_estonian.h"
-#include "keymap_belgian.h"
-#include "keymap_us_international.h"
-#include "keymap_croatian.h"
-#include "keymap_turkish_q.h"
-#include "keymap_slovak.h"
 
 #define KC_MAC_UNDO LGUI(KC_Z)
 #define KC_MAC_CUT LGUI(KC_X)
@@ -48,7 +19,7 @@
 #define SE_SECT_MAC ALGR(KC_6)
 
 enum custom_keycodes {
-  RGB_SLD = EZ_SAFE_RANGE,
+  RGB_SLD = SAFE_RANGE,
   PLOVER,
   EXIT_PLOVER,
   CMD_TAB,
@@ -60,24 +31,24 @@ enum custom_keycodes {
 #define KC_SCRSHOT_CLIP LGUI(LCTL(LSFT(KC_4)))
 #define KC_SEL_EL       LGUI(LSFT(KC_X))
 #define KC_INSP_EL      LALT(LGUI(KC_L))
-#define KC_WEB_BACK     LGUI(KC_LBRACKET)
-#define KC_WEB_FWD      LGUI(KC_RBRACKET)
+#define KC_WEB_BACK     LGUI(KC_LBRC)
+#define KC_WEB_FWD      LGUI(KC_RBRC)
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   [0] = LAYOUT_ergodox_pretty(
-    KC_ESC,         KC_1,           KC_2,           KC_3,           KC_4,           KC_5,           LSFT(KC_LALT),                                  LSFT(KC_LCTRL), KC_6,           KC_7,           KC_8,           KC_9,           KC_0,           KC_TRANSPARENT,
-    KC_TAB,         KC_Q,           KC_W,           KC_E,           KC_R,           KC_T,           KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_Y,           KC_U,           KC_I,           KC_O,           KC_P,           KC_BSPACE,
-    KC_LCTRL,       KC_A,           KC_S,           KC_D,           KC_F,           KC_G,                                                                           KC_H,           KC_J,           KC_K,           KC_L,           KC_SCOLON,      KC_ENTER,
-    KC_LSHIFT,      KC_B,           KC_Z,           KC_X,           KC_C,           KC_V,           LCTL(LSFT(KC_TAB)),                             CTRL_TAB,       KC_N,           KC_M,           KC_COMMA,       KC_DOT,         KC_SLASH,       MT(MOD_RSFT, KC_QUOTE),
-    MO(2),          LALT(KC_LCTRL), KC_TRANSPARENT, KC_SPACE,       KC_LALT,                                                                                                        KC_LEFT,        KC_DOWN,        KC_UP,          KC_RIGHT,       MO(2),
+    KC_ESC,         KC_1,           KC_2,           KC_3,           KC_4,           KC_5,           LSFT(KC_LALT),                                  LSFT(KC_LCTL),  KC_6,           KC_7,           KC_8,           KC_9,           KC_0,           KC_TRANSPARENT,
+    KC_TAB,         KC_Q,           KC_W,           KC_E,           KC_R,           KC_T,           KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_Y,           KC_U,           KC_I,           KC_O,           KC_P,           KC_BSPC,
+    KC_LCTL,        KC_A,           KC_S,           KC_D,           KC_F,           KC_G,                                                                           KC_H,           KC_J,           KC_K,           KC_L,           KC_SCLN,        KC_ENTER,
+    KC_LSFT,        KC_B,           KC_Z,           KC_X,           KC_C,           KC_V,           CTRL_TAB,                                       LCTL(LSFT(KC_TAB)),KC_N,        KC_M,           KC_COMMA,       KC_DOT,         KC_SLASH,       MT(MOD_RSFT, KC_QUOTE),
+    MO(2),          LALT(KC_LCTL),  KC_TRANSPARENT, KC_SPACE,       KC_LALT,                                                                                                        KC_LEFT,        KC_DOWN,        KC_UP,          KC_RIGHT,       MO(2),
                                                                                                     LGUI(KC_LALT),  KC_HOME,        KC_PGUP,        KC_RALT,
-                                                                                                                    KC_END,         KC_PGDOWN,
+                                                                                                                    KC_END,         KC_PGDN,
                                                                                     KC_LGUI,        MO(1),          CMD_TAB,        CMD_TAB,        MO(1),          KC_SPACE
   ),
   [1] = LAYOUT_ergodox_pretty(
-    KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_BSLASH,
+    KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_BSLS,
     KC_TRANSPARENT, KC_EXLM,        KC_AT,          KC_HASH,        KC_DLR,         KC_PERC,        KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_CIRC,        KC_AMPR,        KC_ASTR,        KC_LCBR,        KC_RCBR,        KC_TRANSPARENT,
-    KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_GRAVE,       KC_BSLASH,                                                                      KC_TRANSPARENT, KC_MINUS,       KC_EQUAL,       KC_LBRACKET,    KC_RBRACKET,    KC_TRANSPARENT,
+    KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_GRAVE,       KC_BSLS,                                                                        KC_TRANSPARENT, KC_MINUS,       KC_EQUAL,       KC_LBRC,        KC_RBRC,        KC_TRANSPARENT,
     KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TILDE,       KC_PIPE,        KC_WEB_BACK,                                    KC_WEB_FWD,     KC_TRANSPARENT, KC_UNDS,        KC_PLUS,        KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
     KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                                                                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
                                                                                                     KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
@@ -85,9 +56,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                                                                     KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT
   ),
   [2] = LAYOUT_ergodox_pretty(
-    KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,     KC_TRANSPARENT,  KC_TRANSPARENT,    PLOVER,          RESET,
+    KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,     KC_TRANSPARENT,  KC_TRANSPARENT,    PLOVER,          QK_BOOT,
     KC_TRANSPARENT, KC_F12,         KC_F7,          KC_F8,          KC_F9,          KC_TRANSPARENT, KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_PASTE_NO_FMT,    KC_TRANSPARENT,  KC_TRANSPARENT,    LED_LEVEL,       KC_DELETE,
-    KC_TRANSPARENT, KC_F11,         KC_F4,          KC_F5,          KC_F6,          KC_TRANSPARENT,                                                                 KC_CAPSLOCK,    KC_BRIGHTNESS_UP,   KC_SEL_EL,       KC_INSP_EL,        KC_TRANSPARENT,  KC_TRANSPARENT,
+    KC_TRANSPARENT, KC_F11,         KC_F4,          KC_F5,          KC_F6,          KC_TRANSPARENT,                                                                 KC_CAPS,        KC_BRIGHTNESS_UP,   KC_SEL_EL,       KC_INSP_EL,        KC_TRANSPARENT,  KC_TRANSPARENT,
     KC_TRANSPARENT, KC_F10,         KC_F1,          KC_F2,          KC_F3,          KC_TRANSPARENT, KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_BRIGHTNESS_DOWN, KC_AUDIO_MUTE,   KC_AUDIO_VOL_DOWN, KC_AUDIO_VOL_UP, KC_TRANSPARENT,
     KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                                                                                 KC_SCRSHOT,         KC_SCRSHOT_CLIP, KC_TRANSPARENT,    KC_TRANSPARENT,  KC_TRANSPARENT,
                                                                                                     KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
@@ -139,15 +110,15 @@ struct tab_state ctrl_tab_state;
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   switch (keycode) {
-    case KC_BSPACE:
+    case KC_BSPC:
       // send esc on ctrl-backspace
-      if (get_mods() & MOD_BIT(KC_LCTRL)) {
+      if (get_mods() & MOD_BIT(KC_LCTL)) {
         if (record->event.pressed) {
           // don't want ctrl to be sent along with esc
-          unregister_code(KC_LCTRL);
+          unregister_code(KC_LCTL);
           tap_code(KC_ESC);
           wait_ms(10); // wait for the key to be processed
-          register_code(KC_LCTRL);
+          register_code(KC_LCTL);
         }
         // don't send the original keycode
         return false;
@@ -173,7 +144,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       return false;
     case CMD_TAB:
       // reset ctrl-tab if cmd-tab is pressed
-      unregister_code(KC_LCTRL);
+      unregister_code(KC_LCTL);
       memset(&ctrl_tab_state, 0, sizeof(ctrl_tab_state));
 
       if (record->event.pressed) {
@@ -216,9 +187,9 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       } else {
         if (ctrl_tab_state.is_hold) {
           if (timer_elapsed(ctrl_tab_state.hold_timer) < TAPPING_TERM) {
-            register_code(KC_LCTRL);
+            register_code(KC_LCTL);
             tap_code(KC_TAB);
-            unregister_code(KC_LCTRL);
+            unregister_code(KC_LCTL);
             ctrl_tab_state.is_hold = false;
           }
         }
@@ -270,21 +241,21 @@ void matrix_scan_user(void) {
   }
   if (ctrl_tab_state.is_before_first) {
     if (timer_elapsed(ctrl_tab_state.before_first_timer) > TAB_BEFORE_FIRST_TIMEOUT) {
-      unregister_code(KC_LCTRL);
+      unregister_code(KC_LCTL);
       ctrl_tab_state.is_before_first = false;
       ctrl_tab_state.is_active = false;
     }
   } else {
     if (ctrl_tab_state.is_active) {
       if (timer_elapsed(ctrl_tab_state.timer) > TAB_TIMEOUT) {
-        unregister_code(KC_LCTRL);
+        unregister_code(KC_LCTL);
         ctrl_tab_state.is_active = false;
       }
     }
   }
   if (ctrl_tab_state.is_hold) {
     if (timer_elapsed(ctrl_tab_state.hold_timer) > TAPPING_TERM) {
-      register_code(KC_LCTRL);
+      register_code(KC_LCTL);
       tap_code(KC_TAB);
       ctrl_tab_state.is_hold = false;
       ctrl_tab_state.is_active = true;

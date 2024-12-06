@@ -201,7 +201,11 @@
   (general-define-key
     :states 'normal
     "g C-g" #'count-words
+    )
+  (general-define-key
     "s-w" #'kill-current-buffer
+    "s-s" #'save-buffer
+    "s-v" #'yank
     )
   )
 
@@ -684,7 +688,11 @@ Also sorts items with a deadline after scheduled items."
                                                      (org-agenda-files '("inbox.org"))))
                                        (agenda "" ((org-agenda-span 3)
                                                    (org-agenda-start-day "0d")
-                                                   (org-agenda-dim-blocked-tasks nil)))))
+                                                   (org-agenda-dim-blocked-tasks nil)))
+                                       (todo "PROJ" ((org-agenda-overriding-header "Projects")
+                                                     (org-agenda-dim-blocked-tasks nil)
+                                                     (org-agenda-sorting-strategy
+                                                      '((todo todo-state-up deadline-up scheduled-up priority-down)))))))
                                      ("g" "Time grid and TODOs for 3 days with effort sums"
                                       ((agenda "" ((org-agenda-span 1)
                                                    (org-agenda-start-day "0d")
@@ -735,9 +743,8 @@ Also sorts items with a deadline after scheduled items."
                                        (agenda "" ((org-agenda-span 1) (org-agenda-start-day "+7d")))))))
 
   (setq org-log-into-drawer t)
-  (setq org-log-reschedule 'time)
-  (setq +org-capture-todo-file "inbox.org")
-  (setq +org-capture-journal-file "journal.org")
+  (setq +org-capture-todo-file (expand-file-name "inbox.org" org-directory))
+  (setq +org-capture-journal-file (expand-file-name "journal.org" org-directory))
   (setq org-capture-templates '(("T" "Immediate todo" entry
                                  (file +org-capture-todo-file)
                                  "* TODO %?\n%U\n%i")
@@ -752,7 +759,7 @@ Also sorts items with a deadline after scheduled items."
     (custom-declare-face '+org-todo-active  '((t (:inherit (bold font-lock-constant-face org-todo)))) "")
     (custom-declare-face '+org-todo-project '((t (:inherit (bold font-lock-doc-face org-todo)))) "")
     (custom-declare-face '+org-todo-someday '((t (:inherit (bold font-lock-comment-face org-todo)))) "" ))
-  (setq org-todo-keywords '((sequence "TODO(t)" "TEMP(e)" "PROJ(p@)" "LOOP(l!)" "HABT(h!)" "WAIT(w@/@)" "IDEA(i)" "SOMEDAY(m)" "NOTE(o)" "|" "DONE(d!)" "KILL(k@)")))
+  (setq org-todo-keywords '((sequence "TODO(t)" "TEMP(e)" "PROJ(p)" "LOOP(l!)" "HABT(h!)" "WAIT(w@/@)" "IDEA(i)" "SOMEDAY(m)" "NOTE(o)" "|" "DONE(d!)" "KILL(k@)")))
   (setq org-todo-repeat-to-state t)
   (setq org-todo-keyword-faces '(("TODO" . org-todo)
                                  ("TEMP" . org-level-2)
@@ -830,6 +837,15 @@ Also sorts items with a deadline after scheduled items."
                           ndays todayp)))))
 
   (advice-add 'org-agenda-add-time-grid-maybe :around #'my/time-grid-override)
+
+  (define-advice org-insert-link (:around (fn &rest args) my/dwim-clipboard)
+    (let ((clipboard-url (and (string-match-p "^http" (current-kill 0))
+                              (current-kill 0))))
+      (when clipboard-url (org-link--add-to-stored-links clipboard-url nil))
+      (ignore-error quit (funcall-interactively fn args))
+      (when clipboard-url (setq org-stored-links
+                                (delq (assoc clipboard-url org-stored-links)
+                                      org-stored-links)))))
 
   )
 
