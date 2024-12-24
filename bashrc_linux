@@ -1,0 +1,14 @@
+export PROMPT_COMMAND="history -a; history -n"
+export EDITOR="vim"
+
+function swap()
+{
+  local TMPFILE=tmp.$$;
+  mv "$1" $TMPFILE && mv "$2" "$1" && mv $TMPFILE "$2";
+}
+
+# z (quick jumper)
+source ~/config/zsh/z/z.sh
+
+# fzf integration
+source /usr/share/doc/fzf/examples/key-bindings.bash

@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+
+# curl -sL https://raw.githubusercontent.com/richyliu/config/refs/heads/master/init_linux.sh | bash
+
+# This script sets up my personal environment and scripts on a new Linux
+# (Debian-based) machine. It does not require sudo privileges, but if
+# available, will attempt to install some packages using apt-get.
+
+# Exit on error
+set -e
+
+cd ~
+
+function clone_repo() {
+  # check if git is installed
+  if ! command -v git &> /dev/null; then
+    echo "Git is not installed. Please install git and try again."
+    exit 1
+  fi
+
+  echo "Cloning repository..."
+  git clone https://github.com/richyliu/config.git
+}
+
+function install_with_apt() {
+  echo "Installing packages..."
+  sudo apt-get update
+  sudo apt-get install -y \
+    git \
+    htop \
+    ripgrep \
+    tmux \
+    fzf \
+    mosh
+}
+
+function install_dotfiles() {
+  echo "Installing dotfiles..."
+  echo "source ~/config/bashrc_linux" >> ~/.bashrc
+  ln -s ~/config/bash_aliases ~/.bash_aliases
+  ln -s ~/config/tmux.conf ~/.tmux.conf
+}
+
+echo "<<< Personal environment setup script >>>"
+
+echo -n "Would you like to install packages using apt-get? [y/N] "
+read -r response
+if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
+  install_with_apt
+fi
+
+clone_repo
+
+install_dotfiles
