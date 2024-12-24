@@ -19,7 +19,7 @@ function clone_repo() {
   fi
 
   echo "Cloning repository..."
-  git clone https://github.com/richyliu/config.git
+  git clone --recursive https://github.com/richyliu/config.git
 }
 
 function install_with_apt() {
@@ -39,6 +39,7 @@ function install_dotfiles() {
   echo "source ~/config/bashrc_linux" >> ~/.bashrc
   ln -s ~/config/bash_aliases ~/.bash_aliases
   ln -s ~/config/tmux.conf ~/.tmux.conf
+  ln -s ~/config/vim/basic.vim ~/.vimrc
 }
 
 echo "<<< Personal environment setup script >>>"

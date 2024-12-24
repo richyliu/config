@@ -27,6 +27,7 @@ alias ga='git add'
 alias gss='git status -s'
 alias gst='git status'
 alias gaa='git add --all'
+alias grv='git remote -v'
 
 # to make piping to less easier to type ("|_")
 alias _="less"
