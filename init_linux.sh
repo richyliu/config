@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# curl -sL https://raw.githubusercontent.com/richyliu/config/refs/heads/master/init_linux.sh | bash
+# bash <(curl -sL https://raw.githubusercontent.com/richyliu/config/refs/heads/master/init_linux.sh)
 
 # This script sets up my personal environment and scripts on a new Linux
 # (Debian-based) machine. It does not require sudo privileges, but if
@@ -12,6 +12,12 @@ set -e
 cd ~
 
 function clone_repo() {
+  # check if repository already exists
+  if [ -d "config" ]; then
+    echo "Repository already exists. Skipping cloning."
+    return
+  fi
+
   # check if git is installed
   if ! command -v git &> /dev/null; then
     echo "Git is not installed. Please install git and try again."
@@ -36,9 +42,24 @@ function install_with_apt() {
 
 function install_dotfiles() {
   echo "Installing dotfiles..."
-  echo "source ~/config/bashrc_linux" >> ~/.bashrc
+  SOURCE_STR="source ~/config/bashrc_linux"
+  if ! grep -q "$SOURCE_STR" ~/.bashrc; then
+    echo "$SOURCE_STR" >> ~/.bashrc
+  fi
+  if [ -f ~/.bash_aliases ]; then
+    echo "Backing up existing .bash_aliases to .bash_aliases.bak"
+    mv ~/.bash_aliases ~/.bash_aliases.bak
+  fi
   ln -s ~/config/bash_aliases ~/.bash_aliases
+  if [ -f ~/.tmux.conf ]; then
+    echo "Backing up existing .tmux.conf to .tmux.conf.bak"
+    mv ~/.tmux.conf ~/.tmux.conf.bak
+  fi
   ln -s ~/config/tmux.conf ~/.tmux.conf
+  if [ -f ~/.vimrc ]; then
+    echo "Backing up existing .vimrc to .vimrc.bak"
+    mv ~/.vimrc ~/.vimrc.bak
+  fi
   ln -s ~/config/vim/basic.vim ~/.vimrc
 }
 

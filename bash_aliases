@@ -28,6 +28,11 @@ alias gss='git status -s'
 alias gst='git status'
 alias gaa='git add --all'
 alias grv='git remote -v'
+alias gba='git branch -a'
+alias gsw='git switch'
+alias gco='git checkout'
+alias grs='git restore'
+alias grst='git restore --staged'
 
 # to make piping to less easier to type ("|_")
 alias _="less"
