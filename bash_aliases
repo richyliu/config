@@ -33,6 +33,8 @@ alias gsw='git switch'
 alias gco='git checkout'
 alias grs='git restore'
 alias grst='git restore --staged'
+alias gsta='git stash push'
+alias gstp='git stash pop'
 
 # to make piping to less easier to type ("|_")
 alias _="less"
