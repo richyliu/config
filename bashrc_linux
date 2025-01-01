@@ -7,6 +7,15 @@ function swap()
   mv "$1" $TMPFILE && mv "$2" "$1" && mv $TMPFILE "$2";
 }
 
+function beep()
+{
+  echo "BEEP! Press ctrl-c to stop"
+  while true; do
+    tput bel
+    sleep 0.5
+  done
+}
+
 # z (quick jumper)
 source ~/config/zsh/z/z.sh
 
