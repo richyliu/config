@@ -16,6 +16,10 @@ function beep()
   done
 }
 
+# use up arrow to search history by prefix
+bind '"\e[A": history-search-backward'
+bind '"\e[B": history-search-forward'
+
 # z (quick jumper)
 source ~/config/zsh/z/z.sh
 
