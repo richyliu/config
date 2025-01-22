@@ -22,6 +22,3 @@ bind '"\e[B": history-search-forward'
 
 # z (quick jumper)
 source ~/config/zsh/z/z.sh
-
-# fzf integration
-source /usr/share/doc/fzf/examples/key-bindings.bash

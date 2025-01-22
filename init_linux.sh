@@ -74,3 +74,5 @@ fi
 clone_repo
 
 install_dotfiles
+
+./zsh/fzf/install
