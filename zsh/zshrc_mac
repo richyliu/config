@@ -24,7 +24,7 @@ source $ZSH/oh-my-zsh.sh
 bindkey "^U" backward-kill-line
 
 # z folder fuzzy finder tool
-. $(brew --prefix)/etc/profile.d/z.sh
+. /Users/richard/config/zsh/z/z.sh
 
 # add `help` utility (similar to bash)
 unalias run-help

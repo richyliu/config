@@ -173,6 +173,8 @@
     "qq" #'save-buffers-kill-emacs
     "qQ" #'kill-emacs
     "qa" #'my/kill-all
+    "qr" #'restart-emacs
+    "qp" #'kill-process
 
     "bi" #'ibuffer
     "bk" #'kill-current-buffer
@@ -180,6 +182,7 @@
     "he" #'view-echo-area-messages
     "hl" #'view-lossage
     "hm" #'describe-mode
+    "ht" #'load-theme
 
     "na" #'org-agenda
     "nt" #'org-todo-list
@@ -643,7 +646,7 @@
                                " ┄┄┄┄┄ " ""))
   (setq org-agenda-scheduled-leaders '("S:" "!%d"))
   (setq org-agenda-deadline-leaders '("D:" "-%d" "%2dd ago: "))
-  (setq org-agenda-dim-blocked-tasks nil)
+  ;; (setq org-agenda-dim-blocked-tasks nil) ; for some reason overrides for this in agenda view don't work
   (setq org-agenda-window-setup 'current-window)
   (setq org-deadline-warning-days 7)
   (setq org-modules '(org-habit))
@@ -684,15 +687,18 @@ Also sorts items with a deadline after scheduled items."
   (setq org-agenda-cmp-user-defined #'my/org-agenda-custom-sort)
 
   (setq org-agenda-custom-commands '(("d" "Daily agenda and TODOs"
-                                      ((todo "TODO" ((org-agenda-overriding-header "Inbox")
+                                      ((todo "TODO" ((org-agenda-overriding-header "Reminders")
+                                                     (org-agenda-files '("reminders-beorg.org"))))
+                                       (todo "TODO" ((org-agenda-overriding-header "Inbox")
                                                      (org-agenda-files '("inbox.org"))))
+                                       (tags-todo "fun/TODO"
+                                                  ;; see https://orgmode.org/manual/Matching-tags-and-properties.html for syntax
+                                                  ((org-agenda-overriding-header "For fun")
+                                                   (org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))
+                                                   (org-agenda-dim-blocked-tasks 'invisible)))
                                        (agenda "" ((org-agenda-span 3)
                                                    (org-agenda-start-day "0d")
-                                                   (org-agenda-dim-blocked-tasks nil)))
-                                       (todo "PROJ" ((org-agenda-overriding-header "Projects")
-                                                     (org-agenda-dim-blocked-tasks nil)
-                                                     (org-agenda-sorting-strategy
-                                                      '((todo todo-state-up deadline-up scheduled-up priority-down)))))))
+                                                   (org-agenda-dim-blocked-tasks nil)))))
                                      ("g" "Time grid and TODOs for 3 days with effort sums"
                                       ((agenda "" ((org-agenda-span 1)
                                                    (org-agenda-start-day "0d")
@@ -722,15 +728,15 @@ Also sorts items with a deadline after scheduled items."
                                                    (org-agenda-start-day "0d")
                                                    (org-agenda-use-time-grid nil)))))
                                      ("tp" "Project TODOs"
-                                      ((tags-todo "projects+TODO=\"TODO\""
+                                      ((tags-todo "projects/TODO"
                                                   ((org-agenda-overriding-header "Project TODOs")))
                                        (todo "PROJ" ((org-agenda-overriding-header "Projects")
                                                      (org-agenda-dim-blocked-tasks nil)))))
                                      ("te" "Entertainment"
-                                      ((tags-todo "entertainment+TODO=\"TODO\""
+                                      ((tags-todo "entertainment/TODO"
                                                   ((org-agenda-overriding-header "Entertainment TODOs")))))
                                      ("ta" "Fine Arts"
-                                      ((tags-todo "arts+TODO=\"TODO\""
+                                      ((tags-todo "arts/TODO"
                                                   ((org-agenda-overriding-header "Fine Arts TODOs")))))
                                      ("w" "Week-long daily agenda"
                                       ((agenda "" ((org-agenda-span 1) (org-agenda-start-day "0d")))
@@ -847,6 +853,7 @@ Also sorts items with a deadline after scheduled items."
                                 (delq (assoc clipboard-url org-stored-links)
                                       org-stored-links)))))
 
+  (add-hook 'org-mode-hook 'auto-revert-mode)
   )
 
 (use-package evil-nerd-commenter
@@ -1010,6 +1017,13 @@ Also sorts items with a deadline after scheduled items."
           (insert " ! ")
           (insert transaction)))))
 
+  (defun +beancount/fava-stop ()
+    "Stop the fava server."
+    (interactive)
+    (when beancount--fava-process
+      (delete-process beancount--fava-process)
+      (setq beancount--fava-process nil)
+      (message "Fava process killed")))
 
   (general-define-key
     :prefix my-leader
@@ -1022,6 +1036,8 @@ Also sorts items with a deadline after scheduled items."
     "mb" #'+beancount/balance
     "mc" #'beancount-check
     "mx" #'beancount-context
+    "mf" #'beancount-fava
+    "mF" #'+beancount/fava-stop
     )
   )
 
@@ -1037,3 +1053,16 @@ Also sorts items with a deadline after scheduled items."
   :demand t
   :config
   (solaire-global-mode +1))
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(custom-safe-themes
+   '("88f7ee5594021c60a4a6a1c275614103de8c1435d6d08cc58882f920e0cec65e" default)))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
