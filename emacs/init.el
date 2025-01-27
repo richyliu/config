@@ -189,6 +189,8 @@
     "nl" #'org-store-link
     "n SPC" #'my/default-agenda-view
 
+    "ot" #'vterm
+
     "tw" #'visual-line-mode
 
     "cw" #'delete-trailing-whitespace
@@ -234,6 +236,10 @@
   :demand t
   :bind (("<escape>" . keyboard-escape-quit))
   :init
+  ;; these need to be set for evil-collection
+  (setq evil-want-integration t)
+  (setq evil-want-keybinding nil)
+
   (setq evil-want-C-u-scroll t
         evil-want-C-u-delete t
         ; disable evil in minibuffer on startup
@@ -262,14 +268,14 @@
     ; allow entering evil with C-f in minibuffer
     "C-f" #'evil-normal-state)
   (evil-mode 1)
-  (evil-define-key 'normal 'help-mode-map (kbd "TAB") #'forward-button)
+  (evil-define-key 'normal help-mode-map (kbd "TAB") #'forward-button)
   )
 
 (use-package evil-collection
   :after evil
+  :demand t
   :config
-  (setq evil-want-integration t)
-  (evil-collection-init '(calendar dired calc ediff)))
+  (evil-collection-init))
 
 (use-package vertico
   :demand t
@@ -675,10 +681,11 @@ Also sorts items with a deadline after scheduled items."
        ((and a-timep b-timep) (org-cmp-time a b))
        (a-timep +1)
        (b-timep -1)
-       ((and (string= a-type "upcoming-deadline")
-             (not (string= b-type "upcoming-deadline"))) +1)
-       ((and (not (string= a-type "upcoming-deadline"))
-             (string= b-type "upcoming-deadline")) -1))))
+       ;; ((and (string= a-type "upcoming-deadline")
+       ;;       (not (string= b-type "upcoming-deadline"))) +1)
+       ;; ((and (not (string= a-type "upcoming-deadline"))
+       ;;       (string= b-type "upcoming-deadline")) -1)
+       )))
 
   (setq org-agenda-sorting-strategy '((agenda user-defined-up deadline-up priority-down scheduled-up todo-state-up effort-up habit-down)
                                       (todo todo-state-up priority-down deadline-up scheduled-up ts-up effort-up tag-up)
@@ -1053,6 +1060,74 @@ Also sorts items with a deadline after scheduled items."
   :demand t
   :config
   (solaire-global-mode +1))
+
+(use-package copilot
+  :straight (:host github :repo "copilot-emacs/copilot.el" :files ("*.el"))
+  :hook (prog-mode . copilot-mode)
+  :hook (tex-mode . copilot-mode)
+  :bind (("M-TAB" . 'copilot-accept-completion)
+         ("M-<tab>" . 'copilot-accept-completion))
+
+  :config
+  (setq copilot-node-executable "/usr/local/bin/node")
+  ;; to reduce memory use (can increase for debugging)
+  (setq copilot-log-max 50)
+
+  (defun my/copilot--get-source (orig-fun &rest args)
+    "Advice to disable warnings"
+    (let ((warning-minimum-level :emergency))
+      (apply orig-fun args)))
+  (advice-add #'copilot--get-source :around #'my/copilot--get-source)
+
+  (add-to-list 'copilot-indentation-alist '(prog-mode 2))
+  (add-to-list 'copilot-indentation-alist '(org-mode 2))
+  (add-to-list 'copilot-indentation-alist '(text-mode 2))
+  (add-to-list 'copilot-indentation-alist '(emacs-lisp-mode 2)))
+
+(use-package magit
+  :ensure t)
+
+(use-package vterm
+  :config
+  (evil-collection-define-key 'insert 'vterm-mode-map
+    (kbd "C-a") 'vterm--self-insert
+    (kbd "C-b") 'vterm--self-insert
+    (kbd "C-d") 'vterm--self-insert
+    (kbd "C-e") 'vterm--self-insert
+    (kbd "C-f") 'vterm--self-insert
+    (kbd "C-k") 'vterm--self-insert
+    (kbd "C-l") 'vterm--self-insert
+    (kbd "C-n") 'vterm--self-insert
+    (kbd "C-o") 'vterm--self-insert
+    (kbd "C-p") 'vterm--self-insert
+    (kbd "C-q") 'vterm--self-insert
+    (kbd "C-r") 'vterm--self-insert
+    (kbd "C-s") 'vterm--self-insert
+    (kbd "C-t") 'vterm--self-insert
+    (kbd "C-u") 'vterm--self-insert
+    (kbd "C-v") 'vterm--self-insert
+    (kbd "C-w") 'vterm--self-insert
+    (kbd "C-y") 'vterm--self-insert
+    (kbd "C-z") 'vterm--self-insert
+    (kbd "<delete>") 'vterm-send-delete)
+
+  (evil-collection-define-key '(normal insert) 'vterm-mode-map
+    (kbd "C-v") #'vterm-send-next-key ; vterm "leader" (to send all ctrl keys)
+    (kbd "C-x c") #'vterm-copy-mode
+    (kbd "C-x z") #'evil-collection-vterm-toggle-send-escape
+    (kbd "C-x l") #'vterm-clear-scrollback)
+
+  ;; pass through select ctrl- keys
+  (evil-collection-define-key 'normal 'vterm-mode-map
+    (kbd "C-c") #'vterm--self-insert
+    (kbd "C-p") #'vterm--self-insert
+    (kbd "C-n") #'vterm--self-insert)
+  (evil-collection-define-key 'insert 'vterm-mode-map
+    (kbd "C-c") #'vterm--self-insert
+    (kbd "M-<left>") #'vterm-send-M-b
+    (kbd "M-<right>") #'vterm-send-M-f)
+  )
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
