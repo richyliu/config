@@ -111,6 +111,11 @@
   (add-hook 'text-mode-hook #'display-line-numbers-mode)
   (add-hook 'prog-mode-hook #'my/enable-trailing-whitespace)
   (add-hook 'text-mode-hook #'my/enable-trailing-whitespace)
+
+  (setq project-switch-commands #'project-find-file)
+
+  (tab-bar-mode)
+  (setq tab-bar-new-tab-choice "*scratch*")
   )
 
 (use-package doom-themes
@@ -152,7 +157,6 @@
     (setq current-prefix-arg t)
     ;; switch to org-directory project first to avoid projectile issues
     ;; (projectile-switch-project-by-name org-directory)
-    (find-file (concat org-directory "temp_agenda.org"))
     (find-file (concat org-directory "inbox.org"))
     (find-file (concat org-directory "agenda.org"))
     ;; open up org-agenda and agenda.org side by side
@@ -163,6 +167,16 @@
     (org-agenda-redo)
     )
 
+  (defun my/delete-this-file ()
+    "Delete the file associated with the current buffer and kill the buffer."
+    (interactive)
+    (if (buffer-file-name)
+        (progn
+          (delete-file (buffer-file-name))
+          (kill-buffer (current-buffer))
+          (message "File deleted and buffer killed."))
+      (message "Buffer is not associated with a file.")))
+
   ;; doomesque hotkeys using spacebar as prefix
   (leader-def
     ;; map universal argument to SPC-u
@@ -170,14 +184,12 @@
     "." #'find-file
     ";" #'pp-eval-expression
 
-    "qq" #'save-buffers-kill-emacs
-    "qQ" #'kill-emacs
-    "qa" #'my/kill-all
-    "qr" #'restart-emacs
-    "qp" #'kill-process
-
     "bi" #'ibuffer
     "bk" #'kill-current-buffer
+    "k" #'kill-current-buffer
+
+    "fd" #'my/delete-this-file
+    "fr" #'rename-visited-file
 
     "he" #'view-echo-area-messages
     "hl" #'view-lossage
@@ -191,12 +203,48 @@
 
     "ot" #'vterm
 
+    "pk" #'project-kill-buffers
+    "pp" #'project-switch-project
+    "SPC" #'project-find-file
+
+    "qq" #'save-buffers-kill-emacs
+    "qQ" #'kill-emacs
+    "qa" #'my/kill-all
+    "qr" #'restart-emacs
+    "qp" #'kill-process
+
     "tw" #'visual-line-mode
 
     "cw" #'delete-trailing-whitespace
 
     "X" #'org-capture
     "x" #'scratch-buffer
+
+    "1" #'(lambda () (interactive) (tab-bar-select-tab 1))
+    "2" #'(lambda () (interactive) (tab-bar-select-tab 2))
+    "3" #'(lambda () (interactive) (tab-bar-select-tab 3))
+    "4" #'(lambda () (interactive) (tab-bar-select-tab 4))
+    "5" #'(lambda () (interactive) (tab-bar-select-tab 5))
+    "6" #'(lambda () (interactive) (tab-bar-select-tab 6))
+    "7" #'(lambda () (interactive) (tab-bar-select-tab 7))
+    "8" #'(lambda () (interactive) (tab-bar-select-tab 8))
+    "9" #'tab-bar-switch-to-last-tab
+    "TAB 1" #'(lambda () (interactive) (tab-bar-select-tab 1))
+    "TAB 2" #'(lambda () (interactive) (tab-bar-select-tab 2))
+    "TAB 3" #'(lambda () (interactive) (tab-bar-select-tab 3))
+    "TAB 4" #'(lambda () (interactive) (tab-bar-select-tab 4))
+    "TAB 5" #'(lambda () (interactive) (tab-bar-select-tab 5))
+    "TAB 6" #'(lambda () (interactive) (tab-bar-select-tab 6))
+    "TAB 7" #'(lambda () (interactive) (tab-bar-select-tab 7))
+    "TAB 8" #'(lambda () (interactive) (tab-bar-select-tab 8))
+    "TAB 9" #'tab-bar-switch-to-last-tab
+    "TAB TAB" #'tab-list
+    "TAB c" #'tab-bar-new-tab
+    "TAB d" #'tab-bar-close-tab
+    "TAB m" #'tab-bar-move-tab
+    "TAB M" #'tab-bar-move-tab-to
+    "TAB n" #'tab-bar-switch-to-next-tab
+    "TAB p" #'tab-bar-switch-to-prev-tab
     )
   (general-define-key
     :keymaps 'universal-argument-map
@@ -225,7 +273,8 @@
     "hf" #'helpful-callable
     "hx" #'helpful-command
     "hv" #'helpful-variable
-    "hk" #'helpful-key)
+    "hk" #'helpful-key
+    "ha" #'apropos)
   (general-define-key
    :keymaps 'helpful-mode-map
    :states 'normal
@@ -350,15 +399,19 @@
                  :repo "richyliu/org-mode")
   :init
   (setq org-directory "/Users/richard/Documents/org/agenda/")
-  (setq org-agenda-files '("inbox.org" "agenda.org" "temp_agenda.org"))
+  (setq org-agenda-files '("inbox.org" "agenda.org"))
 
   :general
   (defun my/temp-refile ()
+    "Refile item to heading '*Temporary' in file 'agenda.org'"
     (interactive)
     (org-schedule nil "+0d")
     (org-todo "TEMP")
-    (let* ((temp-agenda-file (concat org-directory "temp_agenda.org"))
-           (target-rfloc (list "temp_agenda.org" temp-agenda-file nil nil)))
+    (let* ((org-buffer (get-buffer "agenda.org"))
+           (match-target-fn (lambda (refloc) (string-match "agenda.org/Temporary"
+                                                           (car refloc))))
+           (target-rfloc (cl-find-if match-target-fn
+                                     (org-refile-get-targets org-buffer))))
       (org-refile nil nil target-rfloc nil)))
 
   (defun +org/dwim-at-point (&optional arg)
@@ -642,7 +695,7 @@
                              (?D . org-level-4)))
   (setq org-priority-start-cycle-with-default t)
 
-  (setq org-agenda-files '("inbox.org" "agenda.org" "temp_agenda.org"))
+  (setq org-agenda-files '("inbox.org" "agenda.org"))
   (setq org-agenda-prefix-format '((agenda . " %i %?-12t%-3s%2e ")
                                    (todo . " %i%3e ")
                                    (tags . " %i")
@@ -1084,8 +1137,7 @@ Also sorts items with a deadline after scheduled items."
   (add-to-list 'copilot-indentation-alist '(text-mode 2))
   (add-to-list 'copilot-indentation-alist '(emacs-lisp-mode 2)))
 
-(use-package magit
-  :ensure t)
+(use-package magit)
 
 (use-package vterm
   :config
@@ -1127,6 +1179,13 @@ Also sorts items with a deadline after scheduled items."
     (kbd "M-<left>") #'vterm-send-M-b
     (kbd "M-<right>") #'vterm-send-M-f)
   )
+
+(use-package evil-numbers
+  :demand t
+  :config
+  (leader-def
+    "+" #'evil-numbers/inc-at-pt
+    "-" #'evil-numbers/dec-at-pt))
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
