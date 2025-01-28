@@ -115,7 +115,7 @@
   (setq project-switch-commands #'project-find-file)
 
   (tab-bar-mode)
-  (setq tab-bar-new-tab-choice "*scratch*")
+  (setq tab-bar-new-tab-choice "*new-tab*")
   )
 
 (use-package doom-themes
@@ -183,10 +183,11 @@
     "u" #'universal-argument
     "." #'find-file
     ";" #'pp-eval-expression
+    "`" #'evil-switch-to-windows-last-buffer
 
     "bi" #'ibuffer
     "bk" #'kill-current-buffer
-    "k" #'kill-current-buffer
+    "d" #'kill-current-buffer
 
     "fd" #'my/delete-this-file
     "fr" #'rename-visited-file
@@ -202,6 +203,7 @@
     "n SPC" #'my/default-agenda-view
 
     "ot" #'vterm
+    "oT" #'(lambda () (interactive) (let ((default-directory "/Users/richard")) (vterm)))
 
     "pk" #'project-kill-buffers
     "pp" #'project-switch-project
@@ -215,6 +217,8 @@
 
     "tw" #'visual-line-mode
 
+    ; cd to current file's directory
+    "cd" #'(lambda () (interactive) (cd (file-name-directory (buffer-file-name))))
     "cw" #'delete-trailing-whitespace
 
     "X" #'org-capture
@@ -381,9 +385,84 @@
     ;; "fr" #'consult-recent-file
     "ss" #'consult-line
     "si" #'consult-imenu
-    "," #'consult-project-buffer
-    "<" #'consult-buffer
+    "," #'consult-buffer
+    "<" #'consult-buffer-all
     "/" #'consult-ripgrep)
+
+  :config
+
+  (defvar consult--source-buffer-no-hidden
+    `( :name     "Buffer (no hidden)"
+       :narrow   ?\s
+       :category buffer
+       :face     consult-buffer
+       :history  buffer-name-history
+       :state    ,#'consult--buffer-state
+       :default  t
+       :items
+       ,(lambda () (consult--buffer-query
+                    :sort 'visibility
+                    :as #'consult--buffer-pair
+                    :predicate (lambda (buf)
+                                 (cond
+                                  ;; allow *Org Agenda*
+                                  ((string= "*Org Agenda*" (buffer-name buf)) t)
+                                  ;; allow *vterm*
+                                  ((string-prefix-p "*vterm" (buffer-name buf)) t)
+                                  ;; filter out hidden buffers (beginning with "*")
+                                  ((and (string-prefix-p "*" (buffer-name buf))
+                                        (string-suffix-p "*" (buffer-name buf))) nil)
+                                  (t t))))))
+    "Buffer candidates without most hidden buffers.")
+
+  ;; added :hidden t to default consult--source-buffer
+  (defvar consult--source-buffer-all
+    `( :name     "Buffer (all)"
+       :narrow   ?b
+       :hidden   t
+       :category buffer
+       :face     consult-buffer
+       :history  buffer-name-history
+       :state    ,#'consult--buffer-state
+       :default  t
+       :items
+       ,(lambda () (consult--buffer-query :sort 'visibility
+                                          :as #'consult--buffer-pair)))
+    "Buffer candidates with all buffers.")
+
+  ;; removed :hidden t from default consult--source-modified-buffer
+  (setq consult--source-modified-buffer
+    `( :name     "Modified Buffer"
+       :narrow   ?*
+       :category buffer
+       :face     consult-buffer
+       :history  buffer-name-history
+       :state    ,#'consult--buffer-state
+       :items
+       ,(lambda () (consult--buffer-query :sort 'visibility
+                                          :as #'consult--buffer-pair
+                                          :predicate
+                                          (lambda (buf)
+                                            (and (buffer-modified-p buf)
+                                                 (buffer-file-name buf)))))))
+
+  (setq consult-buffer-sources '(consult--source-modified-buffer
+                                 consult--source-buffer-no-hidden
+                                 consult--source-buffer-all
+                                 consult--source-recent-file
+                                 consult--source-file-register
+                                 consult--source-bookmark))
+
+  (defun consult-buffer-all (&rest all)
+    "Wrapper around consult-buffer which shows all buffer sources."
+    (interactive)
+    (let ((consult-buffer-sources
+           '(consult--source-modified-buffer
+             consult--source-buffer
+             consult--source-recent-file
+             consult--source-file-register
+             consult--source-bookmark)))
+      (apply #'consult-buffer all)))
   )
 
 (use-package recentf
@@ -395,6 +474,7 @@
         recentf-exclude '("/tmp/")))
 
 (use-package org
+  :demand t
   :straight (org :host github
                  :repo "richyliu/org-mode")
   :init
@@ -715,6 +795,7 @@
   (setq org-habit-following-days 3)
   (setq +org-habit-graph-window-ratio 0.2)
   (setq org-extend-today-until 3)
+  (setq org-use-effective-time t)
 
   (defun my/org-agenda-custom-sort (a b)
     "Like the `time-up' sorting strategy, but keep timestamps last.
@@ -1160,13 +1241,14 @@ Also sorts items with a deadline after scheduled items."
     (kbd "C-v") 'vterm--self-insert
     (kbd "C-w") 'vterm--self-insert
     (kbd "C-y") 'vterm--self-insert
-    (kbd "C-z") 'vterm--self-insert
+    (kbd "C-6") #'(lambda () (interactive) (vterm-send (kbd "C-^")))
     (kbd "<delete>") 'vterm-send-delete)
 
   (evil-collection-define-key '(normal insert) 'vterm-mode-map
-    (kbd "C-v") #'vterm-send-next-key ; vterm "leader" (to send all ctrl keys)
+    (kbd "C-z") #'vterm-send-next-key ; vterm "leader" (to send all ctrl keys)
     (kbd "C-x c") #'vterm-copy-mode
     (kbd "C-x z") #'evil-collection-vterm-toggle-send-escape
+    (kbd "C-x C-z") #'evil-normal-state
     (kbd "C-x l") #'vterm-clear-scrollback)
 
   ;; pass through select ctrl- keys
@@ -1186,6 +1268,10 @@ Also sorts items with a deadline after scheduled items."
   (leader-def
     "+" #'evil-numbers/inc-at-pt
     "-" #'evil-numbers/dec-at-pt))
+
+(use-package yaml-mode)
+
+(use-package dockerfile-mode)
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
