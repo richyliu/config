@@ -112,10 +112,16 @@
   (add-hook 'prog-mode-hook #'my/enable-trailing-whitespace)
   (add-hook 'text-mode-hook #'my/enable-trailing-whitespace)
 
+  (add-hook 'text-mode-hook #'visual-line-mode)
+
   (setq project-switch-commands #'project-find-file)
 
   (tab-bar-mode)
   (setq tab-bar-new-tab-choice "*new-tab*")
+
+  (setq browse-url-browser-function #'browse-url-default-browser)
+  (setq browse-url-secondary-browser-function #'xwidget-webkit-browse-url)
+  (setq url-privacy-level 'high)
   )
 
 (use-package doom-themes
@@ -147,7 +153,9 @@
     (interactive)
     (ignore-errors (mapc #'kill-buffer (buffer-list)))
     (cd "~/")
-    (delete-other-windows))
+    (delete-other-windows)
+    (tab-bar-close-other-tabs)
+    (tab-bar-close-tab))
 
   (defun my/default-agenda-view ()
     "Open my personal split screen agenda view"
@@ -177,6 +185,12 @@
           (message "File deleted and buffer killed."))
       (message "Buffer is not associated with a file.")))
 
+  (defun my/vterm-in-home (&optional arg)
+    "Start a vterm session in my home directory."
+    (interactive "P")
+    (let ((default-directory (getenv "HOME")))
+      (call-interactively #'vterm)))
+
   ;; doomesque hotkeys using spacebar as prefix
   (leader-def
     ;; map universal argument to SPC-u
@@ -188,6 +202,8 @@
     "bi" #'ibuffer
     "bk" #'kill-current-buffer
     "d" #'kill-current-buffer
+
+    "ev" #'eval-last-sexp
 
     "fd" #'my/delete-this-file
     "fr" #'rename-visited-file
@@ -203,7 +219,8 @@
     "n SPC" #'my/default-agenda-view
 
     "ot" #'vterm
-    "oT" #'(lambda () (interactive) (let ((default-directory "/Users/richard")) (vterm)))
+    "oT" #'my/vterm-in-home
+    "ow" #'xwidget-webkit-browse-url
 
     "pk" #'project-kill-buffers
     "pp" #'project-switch-project
@@ -216,6 +233,8 @@
     "qp" #'kill-process
 
     "tw" #'visual-line-mode
+    "td" #'(lambda () (interactive) (load-theme 'doom-one t))
+    "tl" #'(lambda () (interactive) (load-theme 'doom-one-light t))
 
     ; cd to current file's directory
     "cd" #'(lambda () (interactive) (cd (file-name-directory (buffer-file-name))))
@@ -304,7 +323,7 @@
         evil-undo-system 'undo-redo)
   :config
   (leader-def
-    "ww" #'evil-window-next
+    "ww" #'evil-window-mru
     "wh" #'evil-window-left
     "wl" #'evil-window-right
     "wk" #'evil-window-up
@@ -405,13 +424,15 @@
                     :as #'consult--buffer-pair
                     :predicate (lambda (buf)
                                  (cond
-                                  ;; allow *Org Agenda*
-                                  ((string= "*Org Agenda*" (buffer-name buf)) t)
-                                  ;; allow *vterm*
-                                  ((string-prefix-p "*vterm" (buffer-name buf)) t)
+                                  ;; allow certain prefixes
+                                  ((let ((allowed-prefixes '("*Org Agenda" "*vterm" "*xwidget-webkit"))
+                                         (buf-name (buffer-name buf))
+                                         (allowed-prefix-p (lambda (prefix) (string-prefix-p prefix buf-name))))
+                                     (cl-some allowed-prefix-p allowed-prefixes)) t)
                                   ;; filter out hidden buffers (beginning with "*")
                                   ((and (string-prefix-p "*" (buffer-name buf))
-                                        (string-suffix-p "*" (buffer-name buf))) nil)
+                                        (string-suffix-p "*" (buffer-name buf)))
+                                   nil)
                                   (t t))))))
     "Buffer candidates without most hidden buffers.")
 
@@ -446,8 +467,26 @@
                                             (and (buffer-modified-p buf)
                                                  (buffer-file-name buf)))))))
 
+  ;; changed key from b to p
+  (setq consult--source-project-buffer
+        `( :name     "Project Buffer"
+           :narrow   ?p
+           :category buffer
+           :face     consult-buffer
+           :history  buffer-name-history
+           :state    ,#'consult--buffer-state
+           :enabled  ,(lambda () consult-project-function)
+           :items
+           ,(lambda ()
+              (when-let (root (consult--project-root))
+                (consult--buffer-query :sort 'visibility
+                                       :directory root
+                                       :as #'consult--buffer-pair)))))
+
+
   (setq consult-buffer-sources '(consult--source-modified-buffer
                                  consult--source-buffer-no-hidden
+                                 consult--source-project-buffer
                                  consult--source-buffer-all
                                  consult--source-recent-file
                                  consult--source-file-register
@@ -459,6 +498,7 @@
     (let ((consult-buffer-sources
            '(consult--source-modified-buffer
              consult--source-buffer
+             consult--source-project-buffer
              consult--source-recent-file
              consult--source-file-register
              consult--source-bookmark)))
@@ -528,6 +568,12 @@
     (org-metadown)
     (org-forward-element))
 
+  (defun my/org-open-link-secondary-browser ()
+    "Open link at point in secondary browser"
+    (interactive)
+    (let ((browse-url-browser-function browse-url-secondary-browser-function))
+      (org-open-at-point)))
+
   (general-define-key
     :prefix my-leader
     :non-normal-prefix my-insert-leader
@@ -565,6 +611,7 @@
     "mgr" #'org-refile-goto-last-stored
 
     "mlt" #'org-toggle-link-display
+    "mlg" #'my/org-open-link-secondary-browser
 
     "m'" #'org-edit-special
     "m," #'org-switchb
@@ -995,6 +1042,9 @@ Also sorts items with a deadline after scheduled items."
                                       org-stored-links)))))
 
   (add-hook 'org-mode-hook 'auto-revert-mode)
+
+  ;; open pdfs in emacs (with pdf-tools)
+  (add-to-list 'org-file-apps '("\\.pdf\\'" . emacs))
   )
 
 (use-package evil-nerd-commenter
@@ -1260,6 +1310,10 @@ Also sorts items with a deadline after scheduled items."
     (kbd "C-c") #'vterm--self-insert
     (kbd "M-<left>") #'vterm-send-M-b
     (kbd "M-<right>") #'vterm-send-M-f)
+
+  (setq vterm-eval-cmds (append vterm-eval-cmds
+                                '(("evil-emacs-state" evil-emacs-state)
+                                  ("evil-insert-state" evil-insert-state))))
   )
 
 (use-package evil-numbers
@@ -1272,6 +1326,26 @@ Also sorts items with a deadline after scheduled items."
 (use-package yaml-mode)
 
 (use-package dockerfile-mode)
+
+(use-package pdf-tools
+  :magic ("%PDF" . pdf-view-mode)
+  :hook ((pdf-view-mode . pdf-view-midnight-minor-mode)
+         (pdf-view-mode . auto-revert-mode)
+         ;; hide cursor
+         (pdf-view-mode . (lambda () (blink-cursor-mode -1)))
+         ;; isearch is kinda useless in PDFs imo
+         (evil-collection-setup . (lambda (&rest _)
+                                    ;; (general-def 'pdf-view-mode-map "gr" #'revert-buffer-quick)
+                                    (general-def 'normal 'pdf-view-mode-map "/" #'pdf-occur))))
+  ;; :general-config
+  ;; ('normal 'pdf-view-mode-map "J" #'pdf-view-scroll-down-or-previous-page)
+  ;; ('normal 'pdf-view-mode-map "K" #'pdf-view-scroll-up-or-next-page)
+  :config
+  (add-to-list 'debug-ignored-errors "\\`No such page:")
+  (setq pdf-view-use-scaling t)
+  (setq-default pdf-view-display-size 'fit-page))
+
+(use-package vimrc-mode)
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.

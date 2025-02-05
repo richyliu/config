@@ -363,6 +363,26 @@ vnoremap <silent> # :<C-U>
   \gvy?<C-R><C-R>=substitute(escape(@", '?\.*$^~['),'\n','\\n','g')<CR><CR>
   \gV:call setreg('"', old_reg, old_regtype)<CR>
 
+function! s:VtermPrintf(str)
+  " use escape codes tell vterm to call an emacs function
+  if exists('$TMUX')
+    " if "$TMUX" is defined, use a different escape sequence
+    let l:escape_prefix = '\ePtmux;\e\e]51;E'
+    let l:escape_suffix = '\007\e\\'
+  else
+    let l:escape_prefix = '\e]51;E'
+    let l:escape_suffix = '\e\\'
+  endif
+
+  execute 'silent! !printf "' . l:escape_prefix . a:str . l:escape_suffix . '"'
+endfunction
+
+" Notify emacs about exiting insert mode
+if $INSIDE_EMACS == 'vterm'
+  call s:VtermPrintf('evil-emacs-state')
+  autocmd VimLeave * call s:VtermPrintf('evil-insert-state')
+endif
+
 " Operator pending mappings
 onoremap in( :<c-u>normal! f(vi(<cr>
 onoremap an( :<c-u>normal! f(va(<cr>
