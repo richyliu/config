@@ -1314,6 +1314,8 @@ Also sorts items with a deadline after scheduled items."
   (setq vterm-eval-cmds (append vterm-eval-cmds
                                 '(("evil-emacs-state" evil-emacs-state)
                                   ("evil-insert-state" evil-insert-state))))
+
+  (setq vterm-environment '("LC_INSIDE_EMACS=vterm"))
   )
 
 (use-package evil-numbers

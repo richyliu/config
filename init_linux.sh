@@ -63,6 +63,25 @@ function install_dotfiles() {
   ln -s ~/config/vim/basic.vim ~/.vimrc
 }
 
+function cleanup(){
+  echo "Cleaning up..."
+
+  rm -f ~/.bash_aliases
+  rm -f ~/.tmux.conf
+  rm -f ~/.vimrc
+  rm -rf ~/config
+
+  echo "Remove the following line from ~/.bashrc:"
+  echo "$SOURCE_STR"
+
+  echo "Done."
+}
+
+if [ "$1" == "--cleanup" ]; then
+  cleanup
+  exit 0
+fi
+
 echo "<<< Personal environment setup script >>>"
 
 echo -n "Would you like to install packages using apt-get? [y/N] "
@@ -75,4 +94,6 @@ clone_repo
 
 install_dotfiles
 
-./zsh/fzf/install
+~/config/zsh/fzf/install
+
+echo "Done."
