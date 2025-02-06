@@ -20,5 +20,7 @@ function beep()
 bind '"\e[A": history-search-backward'
 bind '"\e[B": history-search-forward'
 
+cd "$(dirname "$0")"
+
 # z (quick jumper)
-source ~/config/zsh/z/z.sh
+source ./zsh/z/z.sh

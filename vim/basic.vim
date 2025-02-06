@@ -108,8 +108,8 @@ nnoremap <leader>u :set<space>
 nnoremap ! :!
 " Make ex mode harder to enter on accident
 nnoremap Q :echo "To enter Ex mode, type  gQ  or start vim with 'vim -e'"<cr>
-" switch buffers
-nnoremap <leader>b :ls<cr>:b
+" switch buffers (note the trailing space)
+nnoremap <leader>b :ls<cr>:b 
 " search
 nnoremap <leader>% :%s/
 vnoremap <leader>% :s/
