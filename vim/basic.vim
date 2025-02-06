@@ -179,8 +179,8 @@ endfunction
 
 " Notify emacs about exiting insert mode
 if $INSIDE_EMACS == 'vterm' || $LC_INSIDE_EMACS == 'vterm'
-  call s:VtermPrintf('evil-emacs-state')
-  autocmd VimLeave * call s:VtermPrintf('evil-insert-state')
+  call s:VtermPrintf('evil-collection-vterm-toggle-send-escape')
+  autocmd VimLeave * call s:VtermPrintf('evil-collection-vterm-toggle-send-escape')
 endif
 
 " Operator pending mappings

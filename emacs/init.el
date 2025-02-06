@@ -1272,6 +1272,10 @@ Also sorts items with a deadline after scheduled items."
 
 (use-package vterm
   :config
+  ;; unbind C-q so we can use it as a prefix
+  (evil-collection-define-key '(normal insert) 'vterm-mode-map
+    (kbd "C-q") nil)
+
   (evil-collection-define-key 'insert 'vterm-mode-map
     (kbd "C-a") 'vterm--self-insert
     (kbd "C-b") 'vterm--self-insert
@@ -1283,23 +1287,25 @@ Also sorts items with a deadline after scheduled items."
     (kbd "C-n") 'vterm--self-insert
     (kbd "C-o") 'vterm--self-insert
     (kbd "C-p") 'vterm--self-insert
-    (kbd "C-q") 'vterm--self-insert
+    ;; no C-q since it's used as a prefix key
     (kbd "C-r") 'vterm--self-insert
     (kbd "C-s") 'vterm--self-insert
     (kbd "C-t") 'vterm--self-insert
     (kbd "C-u") 'vterm--self-insert
     (kbd "C-v") 'vterm--self-insert
     (kbd "C-w") 'vterm--self-insert
+    (kbd "C-x") 'vterm--self-insert
     (kbd "C-y") 'vterm--self-insert
+    ;; no C-z since it's used as a prefix key
     (kbd "C-6") #'(lambda () (interactive) (vterm-send (kbd "C-^")))
     (kbd "<delete>") 'vterm-send-delete)
 
   (evil-collection-define-key '(normal insert) 'vterm-mode-map
     (kbd "C-z") #'vterm-send-next-key ; vterm "leader" (to send all ctrl keys)
-    (kbd "C-x c") #'vterm-copy-mode
-    (kbd "C-x z") #'evil-collection-vterm-toggle-send-escape
-    (kbd "C-x C-z") #'evil-normal-state
-    (kbd "C-x l") #'vterm-clear-scrollback)
+    (kbd "C-q C-t") #'vterm-copy-mode
+    (kbd "C-q C-z") #'evil-collection-vterm-toggle-send-escape
+    (kbd "C-q C-q") #'evil-normal-state
+    (kbd "C-q C-l") #'vterm-clear-scrollback)
 
   ;; pass through select ctrl- keys
   (evil-collection-define-key 'normal 'vterm-mode-map
@@ -1313,7 +1319,8 @@ Also sorts items with a deadline after scheduled items."
 
   (setq vterm-eval-cmds (append vterm-eval-cmds
                                 '(("evil-emacs-state" evil-emacs-state)
-                                  ("evil-insert-state" evil-insert-state))))
+                                  ("evil-insert-state" evil-insert-state)
+                                  ("evil-collection-vterm-toggle-send-escape" evil-collection-vterm-toggle-send-escape))))
 
   (setq vterm-environment '("LC_INSIDE_EMACS=vterm"))
   )
