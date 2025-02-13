@@ -36,7 +36,6 @@ function install_with_apt() {
     htop \
     ripgrep \
     tmux \
-    fzf \
     mosh
 }
 

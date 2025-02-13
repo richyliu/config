@@ -41,6 +41,10 @@
 (setq use-package-always-ensure t)
 
 
+(use-package delight
+  :demand t)
+
+
 (use-package emacs
   :init
 
@@ -101,16 +105,18 @@
   (add-to-list 'safe-local-variable-values '(eval auto-revert-mode 1))
   (add-to-list 'safe-local-variable-values '(display-line-numbers . visual))
 
-  (defun my/enable-trailing-whitespace ()
-    "Enable show-trailing-whitespace"
-    (interactive)
-    (setq show-trailing-whitespace t))
-
   (setq display-line-numbers-type 'relative)
   (add-hook 'prog-mode-hook #'display-line-numbers-mode)
   (add-hook 'text-mode-hook #'display-line-numbers-mode)
-  (add-hook 'prog-mode-hook #'my/enable-trailing-whitespace)
-  (add-hook 'text-mode-hook #'my/enable-trailing-whitespace)
+
+  (setq-default show-trailing-whitespace nil)
+  ;; disable trailing whitespace in certain modes
+  (defun my/hide-trailing-whitespace ()
+    (setq-local show-trailing-whitespace nil))
+  (add-hook 'gptel-mode-hook #'my/hide-trailing-whitespace)
+  (add-hook 'org-agenda-mode-hook #'my/hide-trailing-whitespace)
+  (add-hook 'calendar-mode-hook #'my/hide-trailing-whitespace)
+  (add-hook 'vterm-mode-hook #'my/hide-trailing-whitespace)
 
   (add-hook 'text-mode-hook #'visual-line-mode)
 
@@ -203,6 +209,9 @@
     "bk" #'kill-current-buffer
     "d" #'kill-current-buffer
 
+    ;; open init.el file
+    "ei" (lambda () (interactive) (find-file "~/config/emacs/init.el"))
+    "eg" #'gptel
     "ev" #'eval-last-sexp
 
     "fd" #'my/delete-this-file
@@ -321,6 +330,14 @@
         evil-symbol-word-search t
         evil-search-module 'evil-search
         evil-undo-system 'undo-redo)
+  (defun my/toggle-window-maximize ()
+    "Temporarily maximize the buffer"
+    (interactive)
+    (if (= 1 (length (window-list)))
+        (jump-to-register '_)
+      (progn
+        (window-configuration-to-register '_)
+        (delete-other-windows))))
   :config
   (leader-def
     "ww" #'evil-window-mru
@@ -331,6 +348,7 @@
     "wv" #'evil-window-vsplit
     "ws" #'evil-window-split
     "wd" #'evil-window-delete
+    "wz" #'my/toggle-window-maximize
     )
   (general-define-key
     :kemaps 'minibuffer-mode-map
@@ -344,6 +362,7 @@
   )
 
 (use-package evil-collection
+  :delight evil-collection-unimpaired-mode
   :after evil
   :demand t
   :config
@@ -382,6 +401,7 @@
   (vertico-mode))
 
 (use-package which-key
+  :delight
   :general
   (leader-def
     "hbf" #'which-key-show-full-keymap
@@ -1092,6 +1112,7 @@ Also sorts items with a deadline after scheduled items."
   (completion-category-overrides '((file (styles basic partial-completion)))))
 
 (use-package moody
+  :after evil
   :demand t
   :config
   (moody-replace-mode-line-front-space)
@@ -1137,6 +1158,7 @@ Also sorts items with a deadline after scheduled items."
   (popper-echo-mode +1))                ; For echo area hints
 
 (use-package gcmh
+  :delight
   :config
   (setq gcmh-high-cons-threshold (* 16 1024 1024))
   :hook
@@ -1166,22 +1188,47 @@ Also sorts items with a deadline after scheduled items."
     (let (compilation-read-command)
       (beancount--run "bean-report" buffer-file-name "bal")))
 
-  (defun +beancount/clone-transaction ()
-    "Clones a transaction from (and to the bottom of) the current ledger buffer.
+  (defun +beancount/clone-transaction (arg)
+    "Clones a transaction to just beneath the current transaction.
 
-    Updates the date to today."
-    (interactive)
-    (save-restriction
-      (widen)
-      (when-let (transaction
-                  (completing-read
-                    "Clone transaction: "
-                    (string-lines (buffer-string))
-                    (apply-partially #'string-match-p "^[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\} [*!] ")
-                    t))
-                (goto-char (point-min))
-                (re-search-forward (concat "^" (regexp-quote transaction)))
-                (+beancount/clone-this-transaction t))))
+    Updates the date to the date of the previous transaction. With a
+    prefix arg, updates the date to today.
+
+    Transactions must be separated by a blank line."
+    (interactive "P")
+    (let* ((start-date-regex "^[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}")
+           (transaction-regex (concat start-date-regex " [!*] ")))
+      (save-restriction
+        (widen)
+        (when-let ((transaction
+                    (completing-read
+                     "Clone transaction: "
+                     (string-lines (buffer-string))
+                     (apply-partially #'string-match-p transaction-regex)
+                     t)))
+          (let* ((transaction
+                  (save-excursion
+                    (goto-char (point-min))
+                    (re-search-forward (concat "^" (regexp-quote transaction)))
+                    (buffer-substring-no-properties
+                     (save-excursion
+                       (beancount-goto-transaction-begin)
+                       (re-search-forward " [!*] ")
+                       (point))
+                     (save-excursion
+                       (beancount-goto-transaction-end)
+                       (point)))))
+                 (date (if arg
+                           (beancount--format-date (current-time))
+                         (save-excursion
+                           (forward-line)
+                           (re-search-backward start-date-regex nil t)
+                           (buffer-substring-no-properties
+                            (point)
+                            (re-search-forward start-date-regex))))))
+            (re-search-forward "^$")
+            (newline)
+            (insert date " ! " transaction))))))
 
   (defun +beancount/clone-this-transaction (&optional arg)
     "Clones the transaction at point to the bottom of the ledger.
@@ -1266,11 +1313,13 @@ Also sorts items with a deadline after scheduled items."
   (add-to-list 'copilot-indentation-alist '(prog-mode 2))
   (add-to-list 'copilot-indentation-alist '(org-mode 2))
   (add-to-list 'copilot-indentation-alist '(text-mode 2))
-  (add-to-list 'copilot-indentation-alist '(emacs-lisp-mode 2)))
+  (add-to-list 'copilot-indentation-alist '(emacs-lisp-mode 2))
+  (add-to-list 'copilot-indentation-alist '(vimrc-mode 2)))
 
 (use-package magit)
 
 (use-package vterm
+  :after evil-collection
   :config
   ;; unbind C-q so we can use it as a prefix
   (evil-collection-define-key '(normal insert) 'vterm-mode-map
@@ -1323,6 +1372,21 @@ Also sorts items with a deadline after scheduled items."
                                   ("evil-collection-vterm-toggle-send-escape" evil-collection-vterm-toggle-send-escape))))
 
   (setq vterm-environment '("LC_INSIDE_EMACS=vterm"))
+  (setq vterm-buffer-name-string "*vterm* %s")
+
+  ;; counterintuitively, this actually stops the cursor from moving back when set to t
+  (setq evil-collection-vterm-move-cursor-back t)
+
+  ;; add indicator to mode line only for vterm mode that shows value
+  ;; of evil-collection-vterm-send-escape-to-vterm-p
+  (defun my/vterm-send-escape-indicator ()
+    (if (and (eq major-mode 'vterm-mode)
+             evil-collection-vterm-send-escape-to-vterm-p)
+        " <esc>"))
+  (add-to-list 'mode-line-position
+               '(:eval (my/vterm-send-escape-indicator))
+               :append)
+  
   )
 
 (use-package evil-numbers
@@ -1356,6 +1420,26 @@ Also sorts items with a deadline after scheduled items."
 
 (use-package vimrc-mode)
 
+(use-package gptel
+  :config
+
+  (setq gptel-directives ((default . "You are a large language model and a helpful assistant. Respond concisely.")
+                          (programming . "You are a large language model and a careful programmer. Provide code and only code as output without any additional text, prompt or note.")
+                          (writing . "You are a large language model and a writing assistant. Respond concisely.")
+                          (chat . "You are a large language model and a conversation partner. Respond concisely.")))
+  (setq gptel-model 'deepseek/deepseek-r1-distill-llama-70b:free)
+  (setq gptel-backend
+        ;; OpenRouter offers an OpenAI compatible API
+        (gptel-make-openai "OpenRouter"
+          :host "openrouter.ai"
+          :endpoint "/api/v1/chat/completions"
+          :stream t
+          :key (with-temp-buffer
+                 (insert-file-contents (expand-file-name "~/.openrouter_key"))
+                 (buffer-string))
+          :models '(deepseek/deepseek-r1-distill-llama-70b:free
+                    google/gemini-2.0-pro-exp-02-05:free))))
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -1363,9 +1447,3 @@ Also sorts items with a deadline after scheduled items."
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
    '("88f7ee5594021c60a4a6a1c275614103de8c1435d6d08cc58882f920e0cec65e" default)))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
