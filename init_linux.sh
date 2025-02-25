@@ -76,6 +76,20 @@ function cleanup(){
   echo "Done."
 }
 
+
+NON_INTERACTIVE=${NON_INTERACTIVE:-false}
+FORCE_INSTALL=${FORCE_INSTALL:-false}
+
+# allow for non-interactive mode with the --non-interactive flag
+if [ "$1" == "--non-interactive" ]; then
+  NON_INTERACTIVE=true
+fi
+
+# print a message for non-interactive mode
+if [ "$NON_INTERACTIVE" = true ]; then
+  echo "Running in non-interactive mode."
+fi
+
 if [ "$1" == "--cleanup" ]; then
   cleanup
   exit 0
@@ -83,10 +97,21 @@ fi
 
 echo "<<< Personal environment setup script >>>"
 
-echo -n "Would you like to install packages using apt-get? [y/N] "
-read -r response
-if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
+if [ "$NON_INTERACTIVE" = false ]; then
+  echo -n "Would you like to install packages using apt-get? [y/N] "
+  read -r response
+  if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
   install_with_apt
+  fi
+else
+  if [ "$FORCE_INSTALL" = true ]; then
+    echo "Forcing package installation..."
+    echo "You can change this behavior by setting FORCE_INSTALL=false"
+    install_with_apt
+  else
+    echo "Skipping package installation..."
+    echo "You can change this behavior by setting FORCE_INSTALL=true"
+  fi
 fi
 
 clone_repo

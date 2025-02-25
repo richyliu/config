@@ -1,5 +1,7 @@
 export PROMPT_COMMAND="history -a; history -n"
 export EDITOR="vim"
+export PAGER='less'
+export LESS='-R'
 
 function swap()
 {
