@@ -30,8 +30,13 @@ function clone_repo() {
 
 function install_with_apt() {
   echo "Installing packages..."
-  sudo apt-get update
-  sudo apt-get install -y \
+  SUDO_PREFIX=""
+  if [ "$(id -u)" -ne 0 ]; then
+    SUDO_PREFIX="sudo"
+  fi
+  # update
+  $SUDO_PREFIX apt-get update
+  $SUDO_PREFIX apt-get install -y \
     git \
     htop \
     ripgrep \
