@@ -123,6 +123,10 @@ clone_repo
 
 install_dotfiles
 
-~/config/zsh/fzf/install
+if [ "$NON_INTERACTIVE" = false ]; then
+  ~/config/zsh/fzf/install
+else
+  yes | ~/config/zsh/fzf/install
+fi
 
 echo "Done."
