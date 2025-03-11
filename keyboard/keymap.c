@@ -1,6 +1,10 @@
 #include QMK_KEYBOARD_H
 #include "version.h"
 
+#ifdef CONSOLE_ENABLE
+#include "print.h"
+#endif
+
 #define KC_MAC_UNDO LGUI(KC_Z)
 #define KC_MAC_CUT LGUI(KC_X)
 #define KC_MAC_COPY LGUI(KC_C)
@@ -109,6 +113,20 @@ struct tab_state ctrl_tab_state;
 
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+  // taken from https://precondition.github.io/qmk-heatmap#keyboard-firmware-setup
+#ifdef CONSOLE_ENABLE
+  const bool is_combo = record->event.type == COMBO_EVENT;
+  uprintf("0x%04X,%u,%u,%u,%b,0x%02X,0x%02X,%u\n",
+          keycode,
+          is_combo ? 254 : record->event.key.row,
+          is_combo ? 254 : record->event.key.col,
+          get_highest_layer(layer_state),
+          record->event.pressed,
+          get_mods(),
+          get_oneshot_mods(),
+          record->tap.count
+          );
+#endif
   switch (keycode) {
     case KC_BSPC:
       // send esc on ctrl-backspace
