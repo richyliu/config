@@ -47,3 +47,5 @@ vterm_prompt_end(){
     vterm_printf "51;A$hostname:$(pwd)"
 }
 PS1=$PS1'\[$(vterm_prompt_end)\]'
+
+[ -r ~/.bash_aliases ] && source ~/.bash_aliases

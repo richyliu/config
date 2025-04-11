@@ -46,10 +46,18 @@ function install_with_apt() {
 
 function install_dotfiles() {
   echo "Installing dotfiles..."
+
   SOURCE_STR="source ~/config/bashrc_linux"
   if ! grep -q "$SOURCE_STR" ~/.bashrc; then
     echo "$SOURCE_STR" >> ~/.bashrc
   fi
+
+  if [ -f ~/.bash_profile ]; then
+    echo "Backing up existing .bash_profile to .bash_profile.bak"
+    mv ~/.bash_profile ~/.bash_profile.bak
+  fi
+  ln -s ~/config/.bash_profile ~/.bash_profile
+
   if [ -f ~/.bash_aliases ]; then
     echo "Backing up existing .bash_aliases to .bash_aliases.bak"
     mv ~/.bash_aliases ~/.bash_aliases.bak
