@@ -1,3 +1,5 @@
+; -*- lexical-binding: t; -*-
+
 ; (setq use-package-compute-statistics t)
 
 ;; Checklist for things that constantly break (check when changing config):
@@ -69,7 +71,6 @@
 
   ; use spaces
   (setq-default indent-tabs-mode nil)
-  (setq-default tab-width 2)
 
   ; fix macos keybindings
   (when (eq system-type 'darwin)
@@ -89,6 +90,8 @@
         ;; Keep it out of `doom-emacs-dir' or the local directory.
         auto-save-list-file-prefix (expand-file-name "saves/autosave" user-emacs-directory)
         tramp-auto-save-directory  (expand-file-name "saves/tramp-autosave" user-emacs-directory)
+        ;; source: https://github.com/akermu/emacs-libvterm/issues/369#issuecomment-658538400
+        tramp-shell-prompt-pattern "\\(?:^\\|\r\\)[^]#$%>\n]*#?[]#$%>].* *\\(^[\\[[0-9;]*[a-zA-Z] *\\)*"
         auto-save-file-name-transforms
         (list (list "\\`/[^/]*:\\([^/]*/\\)*\\([^/]*\\)\\'"
                     ;; Prefix tramp autosaves to prevent conflicts with local ones
@@ -128,6 +131,8 @@
   (setq browse-url-browser-function #'browse-url-default-browser)
   (setq browse-url-secondary-browser-function #'xwidget-webkit-browse-url)
   (setq url-privacy-level 'high)
+
+  (setq project-vc-merge-submodules nil)
   )
 
 (use-package doom-themes
@@ -140,6 +145,93 @@
   ;; Corrects (and improves) org-mode's native fontification.
   (doom-themes-org-config)
   )
+
+(defun my/kill-all ()
+  "Kill all buffers in buffer-list and cd back to home"
+  (interactive)
+  (ignore-errors (mapc #'kill-buffer (buffer-list)))
+  (cd "~/")
+  (delete-other-windows)
+  (tab-bar-close-other-tabs)
+  (tab-bar-close-tab))
+
+(defun my/default-agenda-view ()
+  "Open my personal split screen agenda view"
+  (interactive)
+  (delete-other-windows)
+  ;; disable popup for file selection in project
+  (setq current-prefix-arg t)
+  ;; switch to org-directory project first to avoid projectile issues
+  ;; (projectile-switch-project-by-name org-directory)
+  (find-file (concat org-directory "inbox.org"))
+  (find-file (concat org-directory "agenda.org"))
+  ;; open up org-agenda and agenda.org side by side
+  (evil-window-vsplit)
+  (org-agenda nil "d")
+  ;; ugly hack to refresh org-agenda after inline links are rendered
+  (sleep-for 0.01)
+  (org-agenda-redo)
+  )
+
+(defun my/delete-this-file ()
+  "Delete the file associated with the current buffer and kill the buffer."
+  (interactive)
+  (if (buffer-file-name)
+      (progn
+        (delete-file (buffer-file-name))
+        (kill-buffer (current-buffer))
+        (message "File deleted and buffer killed."))
+    (message "Buffer is not associated with a file.")))
+
+(defun my/vterm-in-home (&optional arg)
+  "Start a vterm session in my home directory."
+  (interactive "P")
+  (let ((default-directory (getenv "HOME")))
+    (call-interactively #'vterm)))
+
+(defun my/vterm-new-tab ()
+  "Open a new vterm buffer and switch to it in a new tab."
+  (interactive)
+  (let ((vterm-buffer (vterm)))
+    (switch-to-buffer-other-tab vterm-buffer)))
+
+;; adapted from: https://github.com/doomemacs/doomemacs/blob/2bc052425ca45a41532be0648ebd976d1bd2e6c1/modules/config/default/autoload/text.el#L42-L55
+;; see also: https://github.com/doomemacs/doomemacs/blob/2bc052425ca45a41532be0648ebd976d1bd2e6c1/modules/config/default/%2Bevil-bindings.el#L437
+(defun my/yank-buffer-path (&optional root)
+  "Copy the current buffer's path to the kill ring."
+  (interactive)
+  (if-let* ((filename (or (buffer-file-name (buffer-base-buffer))
+                          (bound-and-true-p list-buffers-directory))))
+      (let ((path (abbreviate-file-name
+                   (if root
+                       (file-relative-name filename root)
+                     filename))))
+        (kill-new path)
+        (if (string= path (car kill-ring))
+            (message "Copied path: %s" path)
+          (user-error "Couldn't copy filename in current buffer")))
+    (error "Couldn't find filename in current buffer")))
+
+;; adapted from: https://github.com/doomemacs/doomemacs/blob/2bc052425ca45a41532be0648ebd976d1bd2e6c1/modules/config/default/autoload/text.el#L58-L65
+(defun my/yank-buffer-path-relative-to-project (&optional include-root)
+  "Copy the current buffer's path to the kill ring.
+With non-nil prefix INCLUDE-ROOT, also include the project's root."
+  (interactive "P")
+  (my/yank-buffer-path
+   (when-let* ((proj (project-current))
+               (proj-root (project-root proj))
+               (proj-root-path (file-name-directory (directory-file-name proj-root))))
+     (if include-root
+         proj-root-path
+       proj-root))))
+
+;; (defun my/kill-non-project-buffers ()
+;;   "Kill all buffers that are not associated with a project."
+;;   (interactive)
+;;   (dolist (buffer (buffer-list))
+;;     (with-current-buffer buffer
+;;       (unless (project-current)
+;;         (kill-buffer buffer)))))
 
 (use-package general
   :demand t
@@ -154,49 +246,6 @@
                           :states '(normal visual motion insert emacs))
   (general-override-mode) ;; https://github.com/noctuid/general.el/issues/99#issuecomment-360914335
 
-  (defun my/kill-all ()
-    "Kill all buffers in buffer-list and cd back to home"
-    (interactive)
-    (ignore-errors (mapc #'kill-buffer (buffer-list)))
-    (cd "~/")
-    (delete-other-windows)
-    (tab-bar-close-other-tabs)
-    (tab-bar-close-tab))
-
-  (defun my/default-agenda-view ()
-    "Open my personal split screen agenda view"
-    (interactive)
-    (delete-other-windows)
-    ;; disable popup for file selection in project
-    (setq current-prefix-arg t)
-    ;; switch to org-directory project first to avoid projectile issues
-    ;; (projectile-switch-project-by-name org-directory)
-    (find-file (concat org-directory "inbox.org"))
-    (find-file (concat org-directory "agenda.org"))
-    ;; open up org-agenda and agenda.org side by side
-    (evil-window-vsplit)
-    (org-agenda nil "d")
-    ;; ugly hack to refresh org-agenda after inline links are rendered
-    (sleep-for 0.01)
-    (org-agenda-redo)
-    )
-
-  (defun my/delete-this-file ()
-    "Delete the file associated with the current buffer and kill the buffer."
-    (interactive)
-    (if (buffer-file-name)
-        (progn
-          (delete-file (buffer-file-name))
-          (kill-buffer (current-buffer))
-          (message "File deleted and buffer killed."))
-      (message "Buffer is not associated with a file.")))
-
-  (defun my/vterm-in-home (&optional arg)
-    "Start a vterm session in my home directory."
-    (interactive "P")
-    (let ((default-directory (getenv "HOME")))
-      (call-interactively #'vterm)))
-
   ;; doomesque hotkeys using spacebar as prefix
   (leader-def
     ;; map universal argument to SPC-u
@@ -207,6 +256,8 @@
 
     "bi" #'ibuffer
     "bk" #'kill-current-buffer
+    "bK" #'kill-buffer
+    "br" #'revert-buffer-quick
     "d" #'kill-current-buffer
 
     ;; open init.el file
@@ -216,6 +267,8 @@
 
     "fd" #'my/delete-this-file
     "fr" #'rename-visited-file
+    "fy" #'my/yank-buffer-path
+    "fY" #'my/yank-buffer-path-relative-to-project
 
     "he" #'view-echo-area-messages
     "hl" #'view-lossage
@@ -229,9 +282,11 @@
 
     "ot" #'vterm
     "oT" #'my/vterm-in-home
+    "on" #'my/vterm-new-tab
     "ow" #'xwidget-webkit-browse-url
 
     "pk" #'project-kill-buffers
+    "pK" #'my/kill-non-project-buffers
     "pp" #'project-switch-project
     "SPC" #'project-find-file
 
@@ -242,12 +297,19 @@
     "qp" #'kill-process
 
     "tw" #'visual-line-mode
+    "tt" #'toggle-truncate-lines
     "td" #'(lambda () (interactive) (load-theme 'doom-one t))
     "tl" #'(lambda () (interactive) (load-theme 'doom-one-light t))
 
     ; cd to current file's directory
     "cd" #'(lambda () (interactive) (cd (file-name-directory (buffer-file-name))))
     "cw" #'delete-trailing-whitespace
+    "c]" #'flymake-goto-next-error
+    "c[" #'flymake-goto-prev-error
+    "cx" #'flymake-show-project-diagnostics
+    "cd" #'evil-goto-definition
+    "cll" #'eglot
+    "cls" #'eglot-shutdown
 
     "X" #'org-capture
     "x" #'scratch-buffer
@@ -273,6 +335,7 @@
     "TAB TAB" #'tab-list
     "TAB c" #'tab-bar-new-tab
     "TAB d" #'tab-bar-close-tab
+    "TAB D" #'(lambda () (interactive) (kill-current-buffer) (tab-bar-close-tab))
     "TAB m" #'tab-bar-move-tab
     "TAB M" #'tab-bar-move-tab-to
     "TAB n" #'tab-bar-switch-to-next-tab
@@ -286,11 +349,27 @@
   (general-define-key
     :states 'normal
     "g C-g" #'count-words
+    ;; switch to most recently used tab
+    "C-M-6" #'tab-bar-switch-to-recent-tab
+    "C-s-6" #'tab-bar-switch-to-recent-tab
     )
   (general-define-key
     "s-w" #'kill-current-buffer
     "s-s" #'save-buffer
     "s-v" #'yank
+    "s-1" #'(lambda () (interactive) (tab-bar-select-tab 1))
+    "s-2" #'(lambda () (interactive) (tab-bar-select-tab 2))
+    "s-3" #'(lambda () (interactive) (tab-bar-select-tab 3))
+    "s-4" #'(lambda () (interactive) (tab-bar-select-tab 4))
+    "s-5" #'(lambda () (interactive) (tab-bar-select-tab 5))
+    "s-6" #'(lambda () (interactive) (tab-bar-select-tab 6))
+    "s-7" #'(lambda () (interactive) (tab-bar-select-tab 7))
+    "s-8" #'(lambda () (interactive) (tab-bar-select-tab 8))
+    "s-9" #'tab-bar-switch-to-last-tab
+    "s-}" #'tab-bar-switch-to-next-tab
+    "s-{" #'tab-bar-switch-to-prev-tab
+    "C-<tab>" #'tab-bar-switch-to-next-tab
+    "C-S-<tab>" #'tab-bar-switch-to-prev-tab
     )
   )
 
@@ -423,8 +502,10 @@
   (leader-def
     ;; "fr" #'consult-recent-file
     "ss" #'consult-line
+    "sb" #'consult-line-multi
     "si" #'consult-imenu
     "," #'consult-buffer
+    "p," #'consult-project-buffer
     "<" #'consult-buffer-all
     "/" #'consult-ripgrep)
 
@@ -445,14 +526,16 @@
                     :predicate (lambda (buf)
                                  (cond
                                   ;; allow certain prefixes
-                                  ((let ((allowed-prefixes '("*Org Agenda" "*vterm" "*xwidget-webkit"))
-                                         (buf-name (buffer-name buf))
-                                         (allowed-prefix-p (lambda (prefix) (string-prefix-p prefix buf-name))))
+                                  ((let* ((allowed-prefixes '("*Org Agenda" "*vterm" "*xwidget-webkit"))
+                                          (buf-name (buffer-name buf))
+                                          (allowed-prefix-p (lambda (prefix) (string-prefix-p prefix buf-name))))
                                      (cl-some allowed-prefix-p allowed-prefixes)) t)
                                   ;; filter out hidden buffers (beginning with "*")
                                   ((and (string-prefix-p "*" (buffer-name buf))
                                         (string-suffix-p "*" (buffer-name buf)))
                                    nil)
+                                  ;; filter out magit buffers
+                                  ((string-prefix-p "magit" (buffer-name buf)) nil)
                                   (t t))))))
     "Buffer candidates without most hidden buffers.")
 
@@ -487,26 +570,8 @@
                                             (and (buffer-modified-p buf)
                                                  (buffer-file-name buf)))))))
 
-  ;; changed key from b to p
-  (setq consult--source-project-buffer
-        `( :name     "Project Buffer"
-           :narrow   ?p
-           :category buffer
-           :face     consult-buffer
-           :history  buffer-name-history
-           :state    ,#'consult--buffer-state
-           :enabled  ,(lambda () consult-project-function)
-           :items
-           ,(lambda ()
-              (when-let (root (consult--project-root))
-                (consult--buffer-query :sort 'visibility
-                                       :directory root
-                                       :as #'consult--buffer-pair)))))
-
-
   (setq consult-buffer-sources '(consult--source-modified-buffer
                                  consult--source-buffer-no-hidden
-                                 consult--source-project-buffer
                                  consult--source-buffer-all
                                  consult--source-recent-file
                                  consult--source-file-register
@@ -518,7 +583,6 @@
     (let ((consult-buffer-sources
            '(consult--source-modified-buffer
              consult--source-buffer
-             consult--source-project-buffer
              consult--source-recent-file
              consult--source-file-register
              consult--source-bookmark)))
@@ -650,9 +714,12 @@
     ;; "gh" #'org-up-element
     ;; "gl" #'org-down-element
     "s-<up>" #'org-up-element
-    "s-k" #'org-insert-link
     "<return>" #'+org/dwim-at-point
     )
+  (general-define-key
+    :states '(motion insert)
+    :keymaps 'org-mode-map
+    "s-k" #'org-insert-link)
   (general-define-key
     :states 'motion
     :keymaps 'org-agenda-mode-map
@@ -743,7 +810,14 @@
              ;; inserts content below this item
              (when empty?
                (insert " "))
-             (org-insert-item (org-element-property :checkbox context))
+             ;; (my modification) Don't split the line so that we can
+             ;; insert past any children. I don't know why this is
+             ;; tied to the org-M-RET-may-split-line variable, but it
+             ;; seems like allowing for split lines forces the list
+             ;; item to be inserted immediately after the current one.
+             ;; See also: https://emacs.stackexchange.com/a/79066
+             (let ((org-M-RET-may-split-line nil))
+                (org-insert-item (org-element-property :checkbox context)))
              ;; Remove dummy content
              (when empty?
                (delete-region pre-insert-point (1+ pre-insert-point))))))
@@ -863,15 +937,13 @@
   (setq +org-habit-graph-window-ratio 0.2)
   (setq org-extend-today-until 3)
   (setq org-use-effective-time t)
+  (setq org-M-RET-may-split-line '((default . t)))
 
   (defun my/org-agenda-custom-sort (a b)
-    "Like the `time-up' sorting strategy, but keep timestamps last.
+    "Like the `time-up' sorting strategy, but keep deadline items first.
 
 This is very similar to the `time-up' options for `org-agenda-sorting-strategy',
-but it always sorts agenda items without a timestamp first (before any items
-with a timestamp).
-
-Also sorts items with a deadline after scheduled items."
+but it always sorts deadline items first, then timestamp items, then everything else."
     (let ((a-timep (get-text-property 1 'time-of-day a))
           (b-timep (get-text-property 1 'time-of-day b))
           (a-type (get-text-property 1 'type a))
@@ -879,34 +951,137 @@ Also sorts items with a deadline after scheduled items."
           (a-todo-state (get-text-property 1 'todo-state a))
           (b-todo-state (get-text-property 1 'todo-state b)))
       (cond
+       ((and (string= a-type "upcoming-deadline")
+             (not (string= b-type "upcoming-deadline"))) +1)
+       ((and (not (string= a-type "upcoming-deadline"))
+             (string= b-type "upcoming-deadline")) -1)
        ((and a-timep b-timep) (org-cmp-time a b))
-       (a-timep +1)
-       (b-timep -1)
-       ;; ((and (string= a-type "upcoming-deadline")
-       ;;       (not (string= b-type "upcoming-deadline"))) +1)
-       ;; ((and (not (string= a-type "upcoming-deadline"))
-       ;;       (string= b-type "upcoming-deadline")) -1)
+       (a-timep -1)
+       (b-timep +1)
        )))
+
+  (defun my/org-agenda-skip-entry-if (&rest conditions)
+    "Skip entry if any of CONDITIONS is true.
+Similar to org-agenda-skip-entry-if, except it supports 'tag and
+'nottag, which accept one argument and matches for or against that tag
+in the heading."
+    (org-back-to-heading t)
+    (let* ((end (org-entry-end-position))
+           (planning-end (line-end-position 2))
+           m)
+      (and
+       (or (and (memq 'scheduled conditions)
+                (re-search-forward org-scheduled-time-regexp planning-end t))
+           (and (memq 'notscheduled conditions)
+                (not
+                 (save-excursion
+                   (re-search-forward org-scheduled-time-regexp planning-end t))))
+           (and (memq 'deadline conditions)
+                (re-search-forward org-deadline-time-regexp planning-end t))
+           (and (memq 'notdeadline conditions)
+                (not
+                 (save-excursion
+                   (re-search-forward org-deadline-time-regexp planning-end t))))
+           (and (memq 'timestamp conditions)
+                (re-search-forward org-ts-regexp end t))
+           (and (memq 'nottimestamp conditions)
+                (not (save-excursion (re-search-forward org-ts-regexp end t))))
+           (and (setq m (memq 'regexp conditions))
+                (stringp (nth 1 m))
+                (re-search-forward (nth 1 m) end t))
+           (and (setq m (memq 'notregexp conditions))
+                (stringp (nth 1 m))
+                (not (save-excursion (re-search-forward (nth 1 m) end t))))
+           (and (or
+                 (setq m (memq 'nottodo conditions))
+                 (setq m (memq 'todo-unblocked conditions))
+                 (setq m (memq 'nottodo-unblocked conditions))
+                 (setq m (memq 'todo conditions)))
+                (org-agenda-skip-if-todo m end))
+           (and (setq m (memq 'tag conditions))
+                (listp (nth 1 m))
+                ;; check if any of the search list of tags is in the heading's tags
+                (let ((heading-tags (org-get-tags nil nil))
+                      (search-tags (nth 1 m)))
+                  (cl-intersection heading-tags search-tags :test #'string=))))
+       end)))
+
+  (defvar my/org-spaced-repetition-success 1.4
+    "Ratio applied to repeater on success for spaced repetition system.")
+  (defvar my/org-spaced-repetition-failure 0.2
+    "Ratio applied to repeater on success for spaced repetition system.")
+  (defun my/org-spaced-repetition (done-word)
+    "Advice for org-auto-repeat-maybe that implements spaced repetition.
+
+Any org item with the SPACED_REPETITION key set to non-nil value will
+have all its repeating timestamps affected. The spaced repetition
+system will multiply the repeater by my/org-spaced-repetition-success on
+every successful (DONE) repetition and by
+my/org-spaced-repetition-failure on every unsuccessful (KILL)
+repetition, with the minimum being 1. On successful repetition, always
+round up. Otherwise, round down."
+    (let ((repeat (org-get-repeat))
+          (is-success (string= done-word "DONE"))
+          (end (copy-marker (org-entry-end-position))))
+      (when (and repeat
+                 (not (= 0 (string-to-number (substring repeat 1))))
+                 (org-entry-get nil "SPACED_REPETITION" t))
+        (save-excursion
+          (org-back-to-heading t)
+          ;; update every repeating timestamp
+          (while (re-search-forward org-repeat-re end t)
+            (when-let ((new-repeater
+                        (save-match-data
+                          ;; change the repeater in the timestamp
+                          (when-let* ((ts (match-string 0))
+                                      (repeater-regexp "\\([.+]\\)?\\(\\+[0-9]+\\)\\([hdwmy]\\)")
+                                      (has-repeater (string-match repeater-regexp ts))
+                                      (n (string-to-number (match-string 2 ts)))
+                                      (new-n (if is-success
+                                                 (ceiling (* n my/org-spaced-repetition-success))
+                                               (floor (* n my/org-spaced-repetition-failure)))))
+                            (format "%s+%d%s" (match-string 1 ts) (max 1 new-n) (match-string 3 ts))))))
+              ;; only do this replacement if we have a valid repeater
+              ;; note that this replaces the string found with org-repeat-re
+              (replace-match new-repeater nil nil nil 1)))))))
+  (advice-add 'org-auto-repeat-maybe :before #'my/org-spaced-repetition)
 
   (setq org-agenda-sorting-strategy '((agenda user-defined-up deadline-up priority-down scheduled-up todo-state-up effort-up habit-down)
                                       (todo todo-state-up priority-down deadline-up scheduled-up ts-up effort-up tag-up)
-                                      (tags todo-state-up priority-down deadline-up ts-up effort-up)
+                                      (tags priority-down todo-state-up deadline-up ts-up effort-up)
                                       (search scheduled-up priority-down todo-state-up effort-up)))
   (setq org-agenda-cmp-user-defined #'my/org-agenda-custom-sort)
 
   (setq org-agenda-custom-commands '(("d" "Daily agenda and TODOs"
-                                      ((todo "TODO" ((org-agenda-overriding-header "Reminders")
-                                                     (org-agenda-files '("reminders-beorg.org"))))
-                                       (todo "TODO" ((org-agenda-overriding-header "Inbox")
+                                      ((todo "TODO" ((org-agenda-overriding-header "Inbox")
                                                      (org-agenda-files '("inbox.org"))))
-                                       (tags-todo "fun/TODO"
+                                       (agenda "" ((org-agenda-overriding-header "Today's HABTs")
+                                                   (org-agenda-span 1)
+                                                   (org-agenda-use-time-grid nil)
+                                                   (org-agenda-start-day "0d")
+                                                   (org-agenda-skip-function '(org-agenda-skip-entry-if 'nottodo '("HABT")))
+                                                   (org-agenda-dim-blocked-tasks nil)))
+                                       (agenda "" ((org-agenda-overriding-header "3 days of non-HABTs")
+                                                   (org-agenda-span 3)
+                                                   (org-agenda-start-day "0d")
+                                                   (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo '("HABT")))
+                                                   (org-agenda-dim-blocked-tasks nil)))
+                                       (todo "PROJ" ((org-agenda-overriding-header "Projects")
+                                                     (org-agenda-skip-function '(my/org-agenda-skip-entry-if 'tag '("fun")))
+                                                     (org-agenda-files '("agenda.org"))))
+                                       (tags "fun"
                                                   ;; see https://orgmode.org/manual/Matching-tags-and-properties.html for syntax
                                                   ((org-agenda-overriding-header "For fun")
-                                                   (org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))
+                                                   (org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled 'nottodo '("TODO" "PROJ")))
                                                    (org-agenda-dim-blocked-tasks 'invisible)))
-                                       (agenda "" ((org-agenda-span 3)
-                                                   (org-agenda-start-day "0d")
-                                                   (org-agenda-dim-blocked-tasks nil)))))
+                                       (todo "TODO" ((org-agenda-overriding-header "Low priority todos")
+                                                     (org-agenda-files '("agenda.org"))
+                                                     (org-agenda-skip-function '(my/org-agenda-skip-entry-if 'scheduled 'tag '("fun")))
+                                                     ;; (org-agenda-sorting-strategy '((agenda user-defined-up deadline-up priority-down scheduled-up todo-state-up effort-up habit-down)))
+                                                     ))
+                                       (todo "PEND" ((org-agenda-overriding-header "Pending projects")
+                                                     ))
+                                       ))
                                      ("g" "Time grid and TODOs for 3 days with effort sums"
                                       ((agenda "" ((org-agenda-span 1)
                                                    (org-agenda-start-day "0d")
@@ -973,11 +1148,12 @@ Also sorts items with a deadline after scheduled items."
     (custom-declare-face '+org-todo-active  '((t (:inherit (bold font-lock-constant-face org-todo)))) "")
     (custom-declare-face '+org-todo-project '((t (:inherit (bold font-lock-doc-face org-todo)))) "")
     (custom-declare-face '+org-todo-someday '((t (:inherit (bold font-lock-comment-face org-todo)))) "" ))
-  (setq org-todo-keywords '((sequence "TODO(t)" "TEMP(e)" "PROJ(p)" "LOOP(l!)" "HABT(h!)" "WAIT(w@/@)" "IDEA(i)" "SOMEDAY(m)" "NOTE(o)" "|" "DONE(d!)" "KILL(k@)")))
+  (setq org-todo-keywords '((sequence "TEMP(e)" "TODO(t)" "PROJ(p)" "LOOP(l!)" "HABT(h!)" "WAIT(w@/@)" "PEND(n)" "IDEA(i)" "SOMEDAY(m)" "NOTE(o)" "|" "DONE(d!)" "KILL(k!)")))
   (setq org-todo-repeat-to-state t)
   (setq org-todo-keyword-faces '(("TODO" . org-todo)
                                  ("TEMP" . org-level-2)
                                  ("PROJ" . org-level-1)
+                                 ("PEND" . org-level-3)
                                  ("LOOP" . +org-todo-active)
                                  ("HABT" . org-table)
                                  ("WAIT" . org-level-4)
@@ -1065,6 +1241,9 @@ Also sorts items with a deadline after scheduled items."
 
   ;; open pdfs in emacs (with pdf-tools)
   (add-to-list 'org-file-apps '("\\.pdf\\'" . emacs))
+
+  (evil-add-command-properties #'org-up-element :jump t)
+  (evil-add-command-properties #'org-agenda-goto :jump t)
   )
 
 (use-package evil-nerd-commenter
@@ -1188,22 +1367,33 @@ Also sorts items with a deadline after scheduled items."
     (let (compilation-read-command)
       (beancount--run "bean-report" buffer-file-name "bal")))
 
+  (defun my/presorted-completion-table (completions)
+    "Return a completion table sorted by the order of the completions.
+
+Requires lexical binding to be enabled."
+    (lambda (string pred action)
+      (if (eq action 'metadata)
+          `(metadata (display-sort-function . ,#'identity))
+        (complete-with-action action completions string pred))))
+
   (defun +beancount/clone-transaction (arg)
     "Clones a transaction to just beneath the current transaction.
 
-    Updates the date to the date of the previous transaction. With a
-    prefix arg, updates the date to today.
+Updates the date to the date of the previous transaction, unless at
+the end of the buffer, in which case use today's date. Or, with a
+prefix arg, updates the date to today.
 
-    Transactions must be separated by a blank line."
+Transactions must be separated by a blank line."
     (interactive "P")
     (let* ((start-date-regex "^[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}")
-           (transaction-regex (concat start-date-regex " [!*] ")))
+           (transaction-regex (concat start-date-regex " [!*] "))
+           (use-today-date (or arg (eobp))))
       (save-restriction
         (widen)
         (when-let ((transaction
                     (completing-read
                      "Clone transaction: "
-                     (string-lines (buffer-string))
+                     (my/presorted-completion-table (reverse (string-lines (buffer-string))))
                      (apply-partially #'string-match-p transaction-regex)
                      t)))
           (let* ((transaction
@@ -1218,17 +1408,26 @@ Also sorts items with a deadline after scheduled items."
                      (save-excursion
                        (beancount-goto-transaction-end)
                        (point)))))
-                 (date (if arg
-                           (beancount--format-date (current-time))
-                         (save-excursion
-                           (forward-line)
-                           (re-search-backward start-date-regex nil t)
-                           (buffer-substring-no-properties
-                            (point)
-                            (re-search-forward start-date-regex))))))
+                 (previous-date
+                  (save-excursion
+                    (forward-line)
+                    (re-search-backward start-date-regex nil t)
+                    (buffer-substring-no-properties
+                     (point)
+                     (re-search-forward start-date-regex))))
+                 (today-date
+                  (beancount--format-date (current-time)))
+                 (date (if use-today-date
+                           today-date
+                         previous-date)))
             (re-search-forward "^$")
             (newline)
-            (insert date " ! " transaction))))))
+            (insert date " ! " transaction)
+            ;; go to the amount on the last line of the transaction
+            (forward-line -1)
+            (re-search-forward "  " nil t)
+            (re-search-forward "[0-9]" nil t)
+            (backward-char))))))
 
   (defun +beancount/clone-this-transaction (&optional arg)
     "Clones the transaction at point to the bottom of the ledger.
@@ -1314,7 +1513,24 @@ Also sorts items with a deadline after scheduled items."
   (add-to-list 'copilot-indentation-alist '(org-mode 2))
   (add-to-list 'copilot-indentation-alist '(text-mode 2))
   (add-to-list 'copilot-indentation-alist '(emacs-lisp-mode 2))
-  (add-to-list 'copilot-indentation-alist '(vimrc-mode 2)))
+  (add-to-list 'copilot-indentation-alist '(vimrc-mode 2))
+
+  ;; Sometimes, the copilot-balancer-debug-buffer will be deleted and
+  ;; the copilot-balancer--debug function will error. I override the
+  ;; function and catch the "Selecting deleted buffer" error,
+  ;; recreating the buffer if necessary
+  (defun my/copilot-balancer--debug-wrapper (func &rest args)
+    "Advice to catch error when debug buffer is deleted"
+    (condition-case err
+        (apply func args)
+      (error
+       (if (string= (cadr err) "Selecting deleted buffer")
+           (progn
+             (setq copilot-balancer-debug-buffer (get-buffer-create "*copilot-balancer-debug*"))
+             (apply func args))
+         (signal (car err) (cdr err))))))
+  (advice-add #'copilot-balancer--debug :around #'my/copilot-balancer--debug-wrapper)
+  )
 
 (use-package magit)
 
@@ -1354,7 +1570,9 @@ Also sorts items with a deadline after scheduled items."
     (kbd "C-q C-t") #'vterm-copy-mode
     (kbd "C-q C-z") #'evil-collection-vterm-toggle-send-escape
     (kbd "C-q C-q") #'evil-normal-state
-    (kbd "C-q C-l") #'vterm-clear-scrollback)
+    (kbd "C-q C-l") #'vterm-clear-scrollback
+    ;; send C-g to vterm
+    (kbd "C-q g") #'(lambda () (interactive) (vterm-send "C-g")))
 
   ;; pass through select ctrl- keys
   (evil-collection-define-key 'normal 'vterm-mode-map
@@ -1386,7 +1604,20 @@ Also sorts items with a deadline after scheduled items."
   (add-to-list 'mode-line-position
                '(:eval (my/vterm-send-escape-indicator))
                :append)
-  
+
+  ;; from here: https://github.com/akermu/emacs-libvterm/issues/569#issuecomment-2244574273
+  ;; fixes the issue where tramp messes up tty on remote shells
+  (define-advice vterm--get-shell (:filter-return (vterm-shell) quote-remote)
+    "Quote VTERM-SHELL if it's a remote shell.
+
+Fixes the issue where tramp messes up tty on remote shells. By quoting
+the shell, this prevents tramp from enabling heredoc mode and changing
+fd 0 to something different than fd 1 and 2."
+    (if (and (ignore-errors (file-remote-p default-directory))
+             (not (string-match-p "'.*'" vterm-shell)))
+        (format "'%s'" vterm-shell)
+      vterm-shell))
+
   )
 
 (use-package evil-numbers
@@ -1402,8 +1633,7 @@ Also sorts items with a deadline after scheduled items."
 
 (use-package pdf-tools
   :magic ("%PDF" . pdf-view-mode)
-  :hook ((pdf-view-mode . pdf-view-midnight-minor-mode)
-         (pdf-view-mode . auto-revert-mode)
+  :hook ((pdf-view-mode . auto-revert-mode)
          ;; hide cursor
          (pdf-view-mode . (lambda () (blink-cursor-mode -1)))
          ;; isearch is kinda useless in PDFs imo
@@ -1423,10 +1653,10 @@ Also sorts items with a deadline after scheduled items."
 (use-package gptel
   :config
 
-  (setq gptel-directives ((default . "You are a large language model and a helpful assistant. Respond concisely.")
-                          (programming . "You are a large language model and a careful programmer. Provide code and only code as output without any additional text, prompt or note.")
-                          (writing . "You are a large language model and a writing assistant. Respond concisely.")
-                          (chat . "You are a large language model and a conversation partner. Respond concisely.")))
+  (setq gptel-directives '((default . "You are a large language model and a helpful assistant. Respond concisely.")
+                           (programming . "You are a large language model and a careful programmer. Provide code and only code as output without any additional text, prompt or note.")
+                           (writing . "You are a large language model and a writing assistant. Respond concisely.")
+                           (chat . "You are a large language model and a conversation partner. Respond concisely.")))
   (setq gptel-model 'deepseek/deepseek-r1-distill-llama-70b:free)
   (setq gptel-backend
         ;; OpenRouter offers an OpenAI compatible API
@@ -1440,10 +1670,26 @@ Also sorts items with a deadline after scheduled items."
           :models '(deepseek/deepseek-r1-distill-llama-70b:free
                     google/gemini-2.0-pro-exp-02-05:free))))
 
+(straight-use-package
+ '(ultra-scroll
+   :type git
+   :host github
+   :repo "jdtsmith/ultra-scroll"))
+
+(use-package ultra-scroll
+  :demand t
+  :init
+  (setq scroll-conservatively 101 ; important!
+        scroll-margin 0)
+  :config
+  (ultra-scroll-mode 1))
+
+(use-package csv-mode)
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
-   '("88f7ee5594021c60a4a6a1c275614103de8c1435d6d08cc58882f920e0cec65e" default)))
+   '("9f297216c88ca3f47e5f10f8bd884ab24ac5bc9d884f0f23589b0a46a608fe14" "88f7ee5594021c60a4a6a1c275614103de8c1435d6d08cc58882f920e0cec65e" default)))
