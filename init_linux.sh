@@ -73,6 +73,11 @@ function install_dotfiles() {
     mv ~/.vimrc ~/.vimrc.bak
   fi
   ln -s ~/config/vim/basic.vim ~/.vimrc
+  if [ -f ~/.inputrc ]; then
+    echo "Backing up existing .inputrc to .inputrc.bak"
+    mv ~/.inputrc ~/.inputrc.bak
+  fi
+  ln -s ~/config/inputrc ~/.inputrc
 }
 
 function cleanup(){
@@ -81,6 +86,7 @@ function cleanup(){
   rm -f ~/.bash_aliases
   rm -f ~/.tmux.conf
   rm -f ~/.vimrc
+  rm -f ~/.inputrc
   rm -rf ~/config
 
   echo "Remove the following line from ~/.bashrc:"
