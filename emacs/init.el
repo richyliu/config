@@ -149,6 +149,10 @@
 (defun my/kill-all ()
   "Kill all buffers in buffer-list and cd back to home"
   (interactive)
+  (tramp-cleanup-all-connections)
+  (and (fboundp 'eglot-shutdown-all)
+       ;; shutdown all eglot servers
+       (eglot-shutdown-all))
   (ignore-errors (mapc #'kill-buffer (buffer-list)))
   (cd "~/")
   (delete-other-windows)
@@ -299,7 +303,12 @@ With non-nil prefix INCLUDE-ROOT, also include the project's root."
     "tw" #'visual-line-mode
     "tt" #'toggle-truncate-lines
     "td" #'(lambda () (interactive) (load-theme 'doom-one t))
-    "tl" #'(lambda () (interactive) (load-theme 'doom-one-light t))
+    "tl" #'(lambda () (interactive)
+             (if (eq display-line-numbers-type 'relative)
+                 (setq display-line-numbers-type t)
+               (setq display-line-numbers-type 'relative))
+             (display-line-numbers-mode))
+    "tL" #'(lambda () (interactive) (load-theme 'doom-one-light t))
 
     ; cd to current file's directory
     "cd" #'(lambda () (interactive) (cd (file-name-directory (buffer-file-name))))
@@ -669,6 +678,8 @@ With non-nil prefix INCLUDE-ROOT, also include the project's root."
     "mdt" #'org-time-stamp
     "mdT" #'org-time-stamp-inactive
     "mpp" #'org-priority
+    ;; clear the priority
+    "mpc" (lambda () (interactive) (org-priority 'remove))
 
     "mA" #'org-archive-subtree-default
     "mh" #'org-toggle-heading
@@ -1047,7 +1058,7 @@ round up. Otherwise, round down."
   (advice-add 'org-auto-repeat-maybe :before #'my/org-spaced-repetition)
 
   (setq org-agenda-sorting-strategy '((agenda user-defined-up deadline-up priority-down scheduled-up todo-state-up effort-up habit-down)
-                                      (todo todo-state-up priority-down deadline-up scheduled-up ts-up effort-up tag-up)
+                                      (todo todo-state-up priority-down deadline-up ts-up effort-up tag-up)
                                       (tags priority-down todo-state-up deadline-up ts-up effort-up)
                                       (search scheduled-up priority-down todo-state-up effort-up)))
   (setq org-agenda-cmp-user-defined #'my/org-agenda-custom-sort)
@@ -1055,33 +1066,28 @@ round up. Otherwise, round down."
   (setq org-agenda-custom-commands '(("d" "Daily agenda and TODOs"
                                       ((todo "TODO" ((org-agenda-overriding-header "Inbox")
                                                      (org-agenda-files '("inbox.org"))))
-                                       (agenda "" ((org-agenda-overriding-header "Today's HABTs")
-                                                   (org-agenda-span 1)
-                                                   (org-agenda-use-time-grid nil)
-                                                   (org-agenda-start-day "0d")
-                                                   (org-agenda-skip-function '(org-agenda-skip-entry-if 'nottodo '("HABT")))
-                                                   (org-agenda-dim-blocked-tasks nil)))
                                        (agenda "" ((org-agenda-overriding-header "3 days of non-HABTs")
                                                    (org-agenda-span 3)
                                                    (org-agenda-start-day "0d")
                                                    (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo '("HABT")))
                                                    (org-agenda-dim-blocked-tasks nil)))
-                                       (todo "PROJ" ((org-agenda-overriding-header "Projects")
-                                                     (org-agenda-skip-function '(my/org-agenda-skip-entry-if 'tag '("fun")))
-                                                     (org-agenda-files '("agenda.org"))))
-                                       (tags "fun"
-                                                  ;; see https://orgmode.org/manual/Matching-tags-and-properties.html for syntax
-                                                  ((org-agenda-overriding-header "For fun")
-                                                   (org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled 'nottodo '("TODO" "PROJ")))
-                                                   (org-agenda-dim-blocked-tasks 'invisible)))
                                        (todo "TODO" ((org-agenda-overriding-header "Low priority todos")
                                                      (org-agenda-files '("agenda.org"))
                                                      (org-agenda-skip-function '(my/org-agenda-skip-entry-if 'scheduled 'tag '("fun")))
                                                      ;; (org-agenda-sorting-strategy '((agenda user-defined-up deadline-up priority-down scheduled-up todo-state-up effort-up habit-down)))
                                                      ))
-                                       (todo "PEND" ((org-agenda-overriding-header "Pending projects")
-                                                     ))
                                        ))
+                                     ("p" "Projects and for fun"
+                                      ((todo "PROJ" ((org-agenda-overriding-header "Projects")
+                                                     (org-agenda-files '("agenda.org"))
+                                                     (org-agenda-dim-blocked-tasks nil)))
+                                       (tags "fun"
+                                             ;; see https://orgmode.org/manual/Matching-tags-and-properties.html for syntax
+                                             ((org-agenda-overriding-header "For fun")
+                                              (org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled 'nottodo '("TODO")))
+                                              (org-agenda-dim-blocked-tasks 'invisible)))
+                                       (todo "PEND" ((org-agenda-overriding-header "Pending projects")
+                                                     ))))
                                      ("g" "Time grid and TODOs for 3 days with effort sums"
                                       ((agenda "" ((org-agenda-span 1)
                                                    (org-agenda-start-day "0d")
@@ -1171,60 +1177,60 @@ round up. Otherwise, round down."
            (scheduled-times (mapcan #'(lambda (el)
                                         ;; only consider items with a scheduled time
                                         (if (and el (get-text-property 0 'time-of-day el))
-                                          ;; get all scheduled items as pairs of (start time, end time)
-                                          ;; end time is rounded to nearest time-grid-interval
-                                          ;; all times are in minutes since midnight
-                                          (let* ((time-num (get-text-property 0 'time-of-day el))
-                                                 (duration (or (get-text-property 0 'duration el) 0))
-                                                 (time-in-minutes (+ (* (/ time-num 100) 60) (mod time-num 100)))
-                                                 (time-end (+ time-in-minutes duration))
-                                                 (round-up #'(lambda (num)
-                                                               "Like round, but always round up from 0.5"
-                                                               (if (< (- (abs (- num (round num))) 0.5) 0.000001)
-                                                                 (ceiling num)
-                                                                 (round num))))
-                                                 (time-end-rounded (* (funcall round-up (/ time-end time-grid-interval)) time-grid-interval)))
-                                            (list (list time-in-minutes time-end-rounded)))))
+                                            ;; get all scheduled items as pairs of (start time, end time)
+                                            ;; end time is rounded to nearest time-grid-interval
+                                            ;; all times are in minutes since midnight
+                                            (let* ((time-num (get-text-property 0 'time-of-day el))
+                                                   (duration (or (get-text-property 0 'duration el) 0))
+                                                   (time-in-minutes (+ (* (/ time-num 100) 60) (mod time-num 100)))
+                                                   (time-end (+ time-in-minutes duration))
+                                                   (round-up #'(lambda (num)
+                                                                 "Like round, but always round up from 0.5"
+                                                                 (if (< (- (abs (- num (round num))) 0.5) 0.000001)
+                                                                     (ceiling num)
+                                                                   (round num))))
+                                                   (time-end-rounded (* (funcall round-up (/ time-end time-grid-interval)) time-grid-interval)))
+                                              (list (list time-in-minutes time-end-rounded)))))
                                     list))
            (additional (mapcan #'(lambda (time)
                                    (let ((time-in-minutes (+ (* (/ time 100) 60) (mod time 100))))
                                      ;; check if this time-grid item is near a scheduled item
                                      (if-let (cur-scheduled (cl-find-if
-                                                              #'(lambda (scheduled)
-                                                                  (let* ((sched-start (nth 0 scheduled))
-                                                                         (sched-end (nth 1 scheduled)))
-                                                                    ;; only show during scheduled time
-                                                                    (and (> time-in-minutes sched-start)
-                                                                         (< time-in-minutes sched-end))))
-                                                              scheduled-times))
-                                             ;; don't show this time-grid if it's the start of another scheduled item since the
-                                             ;; scheduled item itself takes up a line
-                                             (unless (cl-some #'(lambda (scheduled)
-                                                                  (let* ((sched-start (nth 0 scheduled))
-                                                                         (sched-end (nth 1 scheduled)))
-                                                                    (= time-in-minutes sched-start)))
-                                                              scheduled-times)
-                                               (let* ((rawtimestr (replace-regexp-in-string " " "0" (format "%04s" time)))
-                                                      (timestr (concat (substring rawtimestr 0 -2) ":" (substring rawtimestr -2)))
-                                                      ;; show a different char for the last time-grid item for a particular scheduled item
-                                                      (indicator-char (if-let ((end (nth 1 cur-scheduled))
-                                                                               (end-diff (- end time-in-minutes))
-                                                                               (diff-in-range (and (>= end-diff 0)
-                                                                                                   (<= end-diff time-grid-interval))))
-                                                                              "┘"
-                                                                              "│"))
-                                                      (newel (org-agenda-format-item indicator-char (nth 3 org-agenda-time-grid)
-                                                                                     nil "" nil timestr)))
-                                                 (put-text-property 2 (length newel) 'face 'org-scheduled newel)
-                                                 (list newel))))))
+                                                             #'(lambda (scheduled)
+                                                                 (let* ((sched-start (nth 0 scheduled))
+                                                                        (sched-end (nth 1 scheduled)))
+                                                                   ;; only show during scheduled time
+                                                                   (and (> time-in-minutes sched-start)
+                                                                        (< time-in-minutes sched-end))))
+                                                             scheduled-times))
+                                         ;; don't show this time-grid if it's the start of another scheduled item since the
+                                         ;; scheduled item itself takes up a line
+                                         (unless (cl-some #'(lambda (scheduled)
+                                                              (let* ((sched-start (nth 0 scheduled))
+                                                                     (sched-end (nth 1 scheduled)))
+                                                                (= time-in-minutes sched-start)))
+                                                          scheduled-times)
+                                           (let* ((rawtimestr (replace-regexp-in-string " " "0" (format "%04s" time)))
+                                                  (timestr (concat (substring rawtimestr 0 -2) ":" (substring rawtimestr -2)))
+                                                  ;; show a different char for the last time-grid item for a particular scheduled item
+                                                  (indicator-char (if-let ((end (nth 1 cur-scheduled))
+                                                                           (end-diff (- end time-in-minutes))
+                                                                           (diff-in-range (and (>= end-diff 0)
+                                                                                               (<= end-diff time-grid-interval))))
+                                                                      "┘"
+                                                                    "│"))
+                                                  (newel (org-agenda-format-item indicator-char (nth 3 org-agenda-time-grid)
+                                                                                 nil "" nil timestr)))
+                                             (put-text-property 2 (length newel) 'face 'org-scheduled newel)
+                                             (list newel))))))
                                ;; needs to be the same text as time grid to get formatted correctly
                                (nth 1 org-agenda-time-grid)))
            (newlist (append additional list)))
       ;; call the original function (org-agenda-add-time-grid-maybe)
       (apply (cons func (list
-                          ;; use the added list if we are using a time grid
-                          (if org-agenda-use-time-grid newlist list)
-                          ndays todayp)))))
+                         ;; use the added list if we are using a time grid
+                         (if org-agenda-use-time-grid newlist list)
+                         ndays todayp)))))
 
   (advice-add 'org-agenda-add-time-grid-maybe :around #'my/time-grid-override)
 
@@ -1266,7 +1272,7 @@ round up. Otherwise, round down."
   (evil-org-set-key-theme)
   (require 'evil-org-agenda)
   (evil-org-agenda-set-keys)
-  ; have to do this to override the default evil-org definitions
+                                        ; have to do this to override the default evil-org definitions
   (evil-define-key 'normal 'evil-org-mode (kbd "C-<return>") #'+org/insert-item-below)
   (evil-define-key 'normal 'evil-org-mode (kbd "C-S-<return>") #'+org/insert-item-above)
   (evil-define-key 'insert 'evil-org-mode (kbd "C-<return>") #'+org/insert-item-below)
@@ -1284,7 +1290,7 @@ round up. Otherwise, round down."
   :init
   (setq orderless-matching-styles '(orderless-literal
                                     orderless-regexp)
-        ; not sure why this is needed, but gives error if this isn't set at all
+                                        ; not sure why this is needed, but gives error if this isn't set at all
         completion-lazy-hilit t)
   :custom
   (completion-styles '(orderless basic))
@@ -1346,11 +1352,11 @@ round up. Otherwise, round down."
 (use-package profiler
   :general
   (general-define-key
-    :states 'normal
-    :keymaps 'profiler-report-mode-map
-    "TAB" #'profiler-report-toggle-entry
-    "<return>" #'profiler-report-toggle-entry
-    "i" #'profiler-report-toggle-entry)
+   :states 'normal
+   :keymaps 'profiler-report-mode-map
+   "TAB" #'profiler-report-toggle-entry
+   "<return>" #'profiler-report-toggle-entry
+   "i" #'profiler-report-toggle-entry)
   (leader-def
     "hTs" #'profiler-start
     "hTt" #'profiler-stop
@@ -1435,18 +1441,18 @@ Transactions must be separated by a blank line."
     Updates the date to today."
     (interactive "P")
     (if (and (not arg) (looking-at-p "^$"))
-      (call-interactively #'+beancount/clone-transaction)
+        (call-interactively #'+beancount/clone-transaction)
       (save-restriction
         (widen)
         (let ((transaction
-                (buffer-substring-no-properties
-                  (save-excursion
-                    (beancount-goto-transaction-begin)
-                    (re-search-forward " [!*] " nil t)
-                    (point))
-                  (save-excursion
-                    (beancount-goto-transaction-end)
-                    (point)))))
+               (buffer-substring-no-properties
+                (save-excursion
+                  (beancount-goto-transaction-begin)
+                  (re-search-forward " [!*] " nil t)
+                  (point))
+                (save-excursion
+                  (beancount-goto-transaction-end)
+                  (point)))))
           (goto-char (point-max))
           (delete-blank-lines)
           (newline)
@@ -1463,19 +1469,19 @@ Transactions must be separated by a blank line."
       (message "Fava process killed")))
 
   (general-define-key
-    :prefix my-leader
-    :non-normal-prefix my-insert-leader
-    :keymaps 'beancount-mode-map
-    :states '(normal visual motion insert emacs)
-    "mid" #'beancount-insert-date
-    "mic" #'+beancount/clone-transaction
-    "miC" #'+beancount/clone-this-transaction
-    "mb" #'+beancount/balance
-    "mc" #'beancount-check
-    "mx" #'beancount-context
-    "mf" #'beancount-fava
-    "mF" #'+beancount/fava-stop
-    )
+   :prefix my-leader
+   :non-normal-prefix my-insert-leader
+   :keymaps 'beancount-mode-map
+   :states '(normal visual motion insert emacs)
+   "mid" #'beancount-insert-date
+   "mic" #'+beancount/clone-transaction
+   "miC" #'+beancount/clone-this-transaction
+   "mb" #'+beancount/balance
+   "mc" #'beancount-check
+   "mx" #'beancount-context
+   "mf" #'beancount-fava
+   "mF" #'+beancount/fava-stop
+   )
   )
 
 (use-package marginalia
@@ -1685,6 +1691,11 @@ fd 0 to something different than fd 1 and 2."
   (ultra-scroll-mode 1))
 
 (use-package csv-mode)
+
+(use-package rust-mode)
+(use-package rustic
+  :init
+  (setq rustic-lsp-setup-p nil))
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.

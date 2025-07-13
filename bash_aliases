@@ -2,6 +2,7 @@ alias ..="cd .."
 alias ...="cd ../.."
 alias ....="cd ../../.."
 
+alias ls="\ls --color=auto"
 alias l="ls -la"
 alias ll="ls -lh"
 alias lltr="ll -tr"

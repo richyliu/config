@@ -41,7 +41,8 @@ function install_with_apt() {
     htop \
     ripgrep \
     tmux \
-    mosh
+    mosh \
+    keychain
 }
 
 function install_dotfiles() {
