@@ -25,7 +25,7 @@ function clone_repo() {
   fi
 
   echo "Cloning repository..."
-  git clone --recursive https://github.com/richyliu/config.git
+  git clone --depth 1 --recurse-submodules --shallow-submodules https://github.com/richyliu/config.git
 }
 
 function install_with_apt() {
