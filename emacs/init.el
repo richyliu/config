@@ -320,6 +320,12 @@ With non-nil prefix INCLUDE-ROOT, also include the project's root."
     "cll" #'eglot
     "cls" #'eglot-shutdown
 
+    "w+" #'enlarge-window
+    "w-" #'shrink-window
+    "w<" #'shrink-window-horizontally
+    "w>" #'enlarge-window-horizontally
+    "w=" #'balance-windows
+
     "X" #'org-capture
     "x" #'scratch-buffer
 
@@ -520,6 +526,28 @@ With non-nil prefix INCLUDE-ROOT, also include the project's root."
 
   :config
 
+  (defun allowed-consult-buffer-p (buf)
+    "Predicate to filter out most hidden buffers (with some exceptions).
+
+This makes consult-buffer more useful by hiding most of the
+hidden buffers (starting and ending with *), while allowing
+some useful ones, such as Org Agenda and vterm"
+    (let ((buf-name (buffer-name buf)))
+      (cond
+       ;; allow certain prefixes
+       ((let ((allowed-prefixes '("*Org Agenda" "*vterm" "*xwidget-webkit"))
+              (allowed-prefix-p (lambda (prefix) (string-prefix-p prefix buf-name))))
+          (cl-some allowed-prefix-p allowed-prefixes)) t)
+       ;; filter out hidden buffers (beginning with "*")
+       ((and (string-prefix-p "*" buf-name)
+             (string-suffix-p "*" buf-name))
+        nil)
+       ;; filter out magit buffers
+       ((string-prefix-p "magit" buf-name)
+        nil)
+       ;; default allow
+       (t t))))
+
   (defvar consult--source-buffer-no-hidden
     `( :name     "Buffer (no hidden)"
        :narrow   ?\s
@@ -532,20 +560,7 @@ With non-nil prefix INCLUDE-ROOT, also include the project's root."
        ,(lambda () (consult--buffer-query
                     :sort 'visibility
                     :as #'consult--buffer-pair
-                    :predicate (lambda (buf)
-                                 (cond
-                                  ;; allow certain prefixes
-                                  ((let* ((allowed-prefixes '("*Org Agenda" "*vterm" "*xwidget-webkit"))
-                                          (buf-name (buffer-name buf))
-                                          (allowed-prefix-p (lambda (prefix) (string-prefix-p prefix buf-name))))
-                                     (cl-some allowed-prefix-p allowed-prefixes)) t)
-                                  ;; filter out hidden buffers (beginning with "*")
-                                  ((and (string-prefix-p "*" (buffer-name buf))
-                                        (string-suffix-p "*" (buffer-name buf)))
-                                   nil)
-                                  ;; filter out magit buffers
-                                  ((string-prefix-p "magit" (buffer-name buf)) nil)
-                                  (t t))))))
+                    :predicate #'allowed-consult-buffer-p)))
     "Buffer candidates without most hidden buffers.")
 
   ;; added :hidden t to default consult--source-buffer
@@ -562,6 +577,24 @@ With non-nil prefix INCLUDE-ROOT, also include the project's root."
        ,(lambda () (consult--buffer-query :sort 'visibility
                                           :as #'consult--buffer-pair)))
     "Buffer candidates with all buffers.")
+
+  ;; remove magit-* from project buffers
+  (defvar consult--source-project-buffer-no-magit
+    `( :name     "Project Buffer"
+       :narrow   ?b
+       :category buffer
+       :face     consult-buffer
+       :history  buffer-name-history
+       :state    ,#'consult--buffer-state
+       :enabled  ,(lambda () consult-project-function)
+       :items
+       ,(lambda ()
+          (when-let (root (consult--project-root))
+            (consult--buffer-query :sort 'visibility
+                                   :directory root
+                                   :as #'consult--buffer-pair
+                                   :predicate #'allowed-consult-buffer-p))))
+    "Project buffer candidate source for `consult-buffer'.")
 
   ;; removed :hidden t from default consult--source-modified-buffer
   (setq consult--source-modified-buffer
@@ -585,6 +618,10 @@ With non-nil prefix INCLUDE-ROOT, also include the project's root."
                                  consult--source-recent-file
                                  consult--source-file-register
                                  consult--source-bookmark))
+
+  (setq consult-project-buffer-sources '(consult--source-project-buffer-no-magit
+                                         consult--source-project-recent-file))
+ 
 
   (defun consult-buffer-all (&rest all)
     "Wrapper around consult-buffer which shows all buffer sources."
@@ -891,6 +928,7 @@ With non-nil prefix INCLUDE-ROOT, also include the project's root."
 
   (setq org-indirect-buffer-display 'current-window
         org-enforce-todo-dependencies t
+        org-checkbox-hierarchical-statistics nil
         org-entities-user
         '(("flat"  "\\flat" nil "" "" "266D" "♭")
           ("sharp" "\\sharp" nil "" "" "266F" "♯"))
@@ -907,7 +945,7 @@ With non-nil prefix INCLUDE-ROOT, also include the project's root."
         ;; hidden drawers, or VISIBILITY properties. `nil' is equivalent, but
         ;; respects these settings.
         org-startup-folded nil)
-
+  
   (setq org-refile-targets
         '((nil :maxlevel . 3)
           (org-agenda-files :maxlevel . 3))
@@ -1021,7 +1059,9 @@ in the heading."
     "Ratio applied to repeater on success for spaced repetition system.")
   (defvar my/org-spaced-repetition-failure 0.2
     "Ratio applied to repeater on success for spaced repetition system.")
-  (defun my/org-spaced-repetition (done-word)
+  (defvar my/org-spaced-repetition-max 120
+    "Maximum number of days for spaced repetition.")
+  (defun my/org-spaced-repetition (oldfun done-word)
     "Advice for org-auto-repeat-maybe that implements spaced repetition.
 
 Any org item with the SPACED_REPETITION key set to non-nil value will
@@ -1031,31 +1071,41 @@ every successful (DONE) repetition and by
 my/org-spaced-repetition-failure on every unsuccessful (KILL)
 repetition, with the minimum being 1. On successful repetition, always
 round up. Otherwise, round down."
-    (let ((repeat (org-get-repeat))
-          (is-success (string= done-word "DONE"))
-          (end (copy-marker (org-entry-end-position))))
-      (when (and repeat
-                 (not (= 0 (string-to-number (substring repeat 1))))
-                 (org-entry-get nil "SPACED_REPETITION" t))
-        (save-excursion
-          (org-back-to-heading t)
-          ;; update every repeating timestamp
-          (while (re-search-forward org-repeat-re end t)
-            (when-let ((new-repeater
-                        (save-match-data
-                          ;; change the repeater in the timestamp
-                          (when-let* ((ts (match-string 0))
-                                      (repeater-regexp "\\([.+]\\)?\\(\\+[0-9]+\\)\\([hdwmy]\\)")
-                                      (has-repeater (string-match repeater-regexp ts))
-                                      (n (string-to-number (match-string 2 ts)))
-                                      (new-n (if is-success
-                                                 (ceiling (* n my/org-spaced-repetition-success))
-                                               (floor (* n my/org-spaced-repetition-failure)))))
-                            (format "%s+%d%s" (match-string 1 ts) (max 1 new-n) (match-string 3 ts))))))
-              ;; only do this replacement if we have a valid repeater
-              ;; note that this replaces the string found with org-repeat-re
-              (replace-match new-repeater nil nil nil 1)))))))
-  (advice-add 'org-auto-repeat-maybe :before #'my/org-spaced-repetition)
+    (let* ((repeat (org-get-repeat))
+           (is-spaced-repetition (and repeat
+                                      (not (= 0 (string-to-number (substring repeat 1))))
+                                      (org-entry-get nil "SPACED_REPETITION" t)))
+           (is-success (string= done-word "DONE"))
+           (end (copy-marker (org-entry-end-position)))
+           (check-spaced-repetition-fn
+            (lambda ()
+              (when is-spaced-repetition
+                (save-excursion
+                  (org-back-to-heading t)
+                  ;; update every repeating timestamp
+                  (while (re-search-forward org-repeat-re end t)
+                    (when-let
+                        ((new-repeater
+                          (save-match-data
+                            ;; change the repeater in the timestamp
+                            (when-let* ((ts (match-string 0))
+                                        (repeater-regexp "\\([.+]\\)?\\(\\+[0-9]+\\)\\([hdwmy]\\)")
+                                        (has-repeater (string-match repeater-regexp ts))
+                                        (n (string-to-number (match-string 2 ts)))
+                                        (new-n (if is-success
+                                                   (min my/org-spaced-repetition-max
+                                                        (ceiling (* n my/org-spaced-repetition-success)))
+                                                 (floor (* n my/org-spaced-repetition-failure)))))
+                              (format "%s+%d%s" (match-string 1 ts) (max 1 new-n) (match-string 3 ts))))))
+                      ;; only do this replacement if we have a valid repeater
+                      ;; note that this replaces the string found with org-repeat-re
+                      (replace-match new-repeater nil nil nil 1))))))))
+      ;; run our code after if this was a success (increments repeater)
+      (if is-success
+          (prog1 (funcall oldfun done-word) (funcall check-spaced-repetition-fn))
+        ;; run our code before if this was a failure (decrements repeater)
+        (progn (funcall check-spaced-repetition-fn) (funcall oldfun done-word)))))
+  (advice-add 'org-auto-repeat-maybe :around #'my/org-spaced-repetition)
 
   (setq org-agenda-sorting-strategy '((agenda user-defined-up deadline-up priority-down scheduled-up todo-state-up effort-up habit-down)
                                       (todo todo-state-up priority-down deadline-up ts-up effort-up tag-up)
@@ -1065,17 +1115,19 @@ round up. Otherwise, round down."
 
   (setq org-agenda-custom-commands '(("d" "Daily agenda and TODOs"
                                       ((todo "TODO" ((org-agenda-overriding-header "Inbox")
-                                                     (org-agenda-files '("inbox.org"))))
+                                                     (org-agenda-files '("inbox.org")))) 
                                        (agenda "" ((org-agenda-overriding-header "3 days of non-HABTs")
                                                    (org-agenda-span 3)
                                                    (org-agenda-start-day "0d")
-                                                   (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo '("HABT")))
-                                                   (org-agenda-dim-blocked-tasks nil)))
-                                       (todo "TODO" ((org-agenda-overriding-header "Low priority todos")
+                                                   (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo '("HABT")))))
+                                       (tags "fun"
+                                             ;; see https://orgmode.org/manual/Matching-tags-and-properties.html for syntax
+                                             ((org-agenda-overriding-header "For fun")
+                                              (org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled 'nottodo '("TODO")))
+                                              (org-agenda-dim-blocked-tasks nil)))
+                                       (todo "PROJ" ((org-agenda-overriding-header "Fun projects")
                                                      (org-agenda-files '("agenda.org"))
-                                                     (org-agenda-skip-function '(my/org-agenda-skip-entry-if 'scheduled 'tag '("fun")))
-                                                     ;; (org-agenda-sorting-strategy '((agenda user-defined-up deadline-up priority-down scheduled-up todo-state-up effort-up habit-down)))
-                                                     ))
+                                                     (org-agenda-dim-blocked-tasks nil)))
                                        ))
                                      ("p" "Projects and for fun"
                                       ((todo "PROJ" ((org-agenda-overriding-header "Projects")
@@ -1087,6 +1139,7 @@ round up. Otherwise, round down."
                                               (org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled 'nottodo '("TODO")))
                                               (org-agenda-dim-blocked-tasks 'invisible)))
                                        (todo "PEND" ((org-agenda-overriding-header "Pending projects")
+                                                     (org-agenda-dim-blocked-tasks nil)
                                                      ))))
                                      ("g" "Time grid and TODOs for 3 days with effort sums"
                                       ((agenda "" ((org-agenda-span 1)
@@ -1696,6 +1749,52 @@ fd 0 to something different than fd 1 and 2."
 (use-package rustic
   :init
   (setq rustic-lsp-setup-p nil))
+
+;;
+;; mode for .pv files (typed pi calculus)
+;;
+
+(defvar proverif-pv-kw '("lemma" "axiom" "restriction" "among" "channel" "choice" "clauses" "const" "def" "diff" "do" "elimtrue" "else" "equation" "equivalence" "event" "expand" "fail" "for" "forall" "foreach" "free" "fun" "get" "if" "implementation" "in" "inj-event" "insert" "let" "letfun" "letproba" "new" "noninterf" "noselect" "not" "nounif" "or" "otherwise" "out" "param" "phase" "pred" "proba" "process" "proof" "public_vars" "putbegin" "query" "reduc" "secret" "select" "set" "suchthat" "sync" "table" "then" "type" "weaksecret" "yield") "ProVerif keywords")
+
+(defvar proverif-pv-builtin '("private" "data" "typeConverter" "reachability" "pv_reachability" "real_or_random" "pv_real_or_random" "memberOptim" "decompData" "decompDataSelect" "block" "attacker" "mess" "maxSubset" "proveAll" "noneSat" "noneVerif" "discardSat" "discardVerif" "instantiateSat" "instantiateVerif" "fullSat" "fullVerif" "removeEvents" "keepEvents" "induction" "noInduction" "precise" "hypothesis" "conclusion" "ignoreAFewTimes" "inductionOn") "ProVerif builtins")
+
+(defvar proverif-pv-kw-regexp (regexp-opt proverif-pv-kw 'words))
+(defvar proverif-pv-builtin-regexp (regexp-opt proverif-pv-builtin 'words))
+
+(defvar proverif-pv-connectives-regexp "\|\|\\|&&\\|->\\|<->\\|<=>\\|<-R\\|<-\\|==>\\|<=\\|!")
+
+(setq proverif-pvKeywords
+ `((,proverif-pv-kw-regexp . font-lock-keyword-face)
+   (,proverif-pv-builtin-regexp . font-lock-builtin-face)
+   (,proverif-pv-connectives-regexp . font-lock-reference-face)
+  )
+)
+
+(defvar proverif-pv-mode-syntax-table
+  (let ((st (make-syntax-table)))
+    ;; Define `(* ... *)` style comments
+    (modify-syntax-entry ?\( "()1n" st)   ; '(' is open paren and comment starter
+    (modify-syntax-entry ?\) ")(4n" st)   ; ')' is close paren and comment ender
+    (modify-syntax-entry ?*  ". 23n" st)  ; '*' is comment delimiter (2=start, 3=end)
+    ;; Define word syntax, etc. as needed
+    (modify-syntax-entry ?_ "w" st)
+    st)
+  "Syntax table for `mylang-mode`.")
+
+(define-derived-mode proverif-pv-mode prog-mode
+  :syntax-table proverif-pv-mode-syntax-table
+  (setq font-lock-defaults '(proverif-pvKeywords))
+  (setq mode-name "ProVerif Typed Pi")
+  (setq-local evil-shift-width 2)
+  (setq-local tab-width 2)
+  (setq-local comment-start "(*")
+  (setq-local comment-end "*)")
+  (setq-local comment-start-skip "(\\*+\\s-*")
+  (setq-local comment-end-skip "\\s-*\\*+)"))
+
+
+(setq auto-mode-alist (cons '("\\.pv[l]?$" . proverif-pv-mode) auto-mode-alist))
+(autoload 'proverif-pv-mode "proverif" "Major mode for editing ProVerif code." t)
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
