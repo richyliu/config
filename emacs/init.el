@@ -48,10 +48,9 @@
 (use-package delight
   :demand t)
 
-;; Install Company for the UI popup
-(use-package company)
-
 (straight-use-package '(eglot :type built-in))
+(setq eldoc-idle-delay 100000000)
+
 (straight-use-package '(jsonrpc :type built-in))
 
 (use-package emacs
@@ -125,7 +124,7 @@
   (add-to-list 'safe-local-variable-values '(eval auto-revert-mode 1))
   (add-to-list 'safe-local-variable-values '(display-line-numbers . visual))
 
-  (setq display-line-numbers-type 'visual)
+  (setq display-line-numbers-type 'relative)
   (add-hook 'prog-mode-hook #'display-line-numbers-mode)
   (add-hook 'text-mode-hook #'display-line-numbers-mode)
 
@@ -139,6 +138,26 @@
   (add-hook 'vterm-mode-hook #'my/hide-trailing-whitespace)
 
   (add-hook 'text-mode-hook #'visual-line-mode)
+  (setq-default fill-column 70)
+  (add-hook 'text-mode-hook #'turn-on-auto-fill)
+
+  ;; hanging indent for lists
+  (setq paragraph-start  "[ \t]*$\\|[ \t]*\\(?:[0-9]+\\.\\|[-*+]\\)[ \t]")
+  (setq paragraph-separate "[ \t]*$")
+
+  ;; Return the hanging-indent prefix for continuation lines
+  (defun my-list-fill-function ()
+    (save-excursion
+      (beginning-of-line)
+      (cond
+       ((looking-at "[ \t]*[0-9]+\\.[ \t]+")
+        (make-string (length (match-string 0)) ?\s))
+       ((looking-at "[ \t]*[-*+][ \t]+")
+        (make-string (length (match-string 0)) ?\s))
+       (t nil))))
+
+  (setq adaptive-fill-function #'my-list-fill-function)
+
 
   (setq project-switch-commands #'project-find-file)
 
@@ -173,7 +192,7 @@
   (and (fboundp 'eglot-shutdown-all)
        ;; shutdown all eglot servers
        (eglot-shutdown-all))
-  (ignore-errors (mapc #'kill-buffer (buffer-list)))
+  (desktop-clear)
   (cd "~/")
   (delete-other-windows)
   (tab-bar-close-other-tabs)
@@ -249,13 +268,13 @@ With non-nil prefix INCLUDE-ROOT, also include the project's root."
          proj-root-path
        proj-root))))
 
-;; (defun my/kill-non-project-buffers ()
-;;   "Kill all buffers that are not associated with a project."
-;;   (interactive)
-;;   (dolist (buffer (buffer-list))
-;;     (with-current-buffer buffer
-;;       (unless (project-current)
-;;         (kill-buffer buffer)))))
+(defun my/restart-emacs-and-restore ()
+  "Save the current session (buffers, windows, tabs) and restart Emacs."
+  (interactive)
+  ;; 1. Save the desktop to a specific temporary file
+  (desktop-save "~/.emacs.d/" t)
+  ;; 2. Restart Emacs
+  (restart-emacs))
 
 (use-package general
   :demand t
@@ -318,6 +337,7 @@ With non-nil prefix INCLUDE-ROOT, also include the project's root."
     "qQ" #'kill-emacs
     "qa" #'my/kill-all
     "qr" #'restart-emacs
+    "qR" #'my/restart-emacs-and-restore
     "qp" #'kill-process
 
     "tw" #'visual-line-mode
@@ -443,8 +463,7 @@ With non-nil prefix INCLUDE-ROOT, also include the project's root."
         evil-want-Y-yank-to-eol t
         evil-symbol-word-search t
         evil-search-module 'evil-search
-        evil-undo-system 'undo-redo
-        evil-respect-visual-line-mode t)
+        evil-undo-system 'undo-redo)
   (defun my/toggle-window-maximize ()
     "Temporarily maximize the buffer"
     (interactive)
@@ -539,6 +558,7 @@ With non-nil prefix INCLUDE-ROOT, also include the project's root."
     ;; "fr" #'consult-recent-file
     "ss" #'consult-line
     "sb" #'consult-line-multi
+    "sd" (lambda () (interactive) (consult-ripgrep default-directory))
     "si" #'consult-imenu
     "," #'consult-buffer
     "p," #'consult-project-buffer
@@ -642,7 +662,7 @@ some useful ones, such as Org Agenda and vterm"
 
   (setq consult-project-buffer-sources '(consult--source-project-buffer-no-magit
                                          consult--source-project-recent-file))
- 
+
 
   (defun consult-buffer-all (&rest all)
     "Wrapper around consult-buffer which shows all buffer sources."
@@ -753,7 +773,7 @@ some useful ones, such as Org Agenda and vterm"
                     ;; 2. Strip the leading indentation
                     (org-do-remove-indentation)
                     (copy-region-as-kill (point-min) (point-max))
-                    (message "%s content (length %d) unescaped and copied." 
+                    (message "%s content (length %d) unescaped and copied."
                              (capitalize (symbol-name type))
                              (length (current-kill 0)))))
               (user-error "Block is empty")))
@@ -1024,7 +1044,7 @@ some useful ones, such as Org Agenda and vterm"
         ;; hidden drawers, or VISIBILITY properties. `nil' is equivalent, but
         ;; respects these settings.
         org-startup-folded nil)
-  
+
   (setq org-refile-targets
         '((nil :maxlevel . 3)
           (org-agenda-files :maxlevel . 3))
@@ -1221,7 +1241,7 @@ these tasks will be hidden."
 
   (setq org-agenda-custom-commands '(("d" "Daily agenda and TODOs"
                                       ((todo "TODO" ((org-agenda-overriding-header "Inbox")
-                                                     (org-agenda-files '("inbox.org")))) 
+                                                     (org-agenda-files '("inbox.org"))))
                                        (todo "PROJ" ((org-agenda-overriding-header "Projects")
                                                      (org-agenda-files '("agenda.org"))
                                                      (org-agenda-dim-blocked-tasks nil)))
@@ -1392,7 +1412,7 @@ per-entry setting LOG_RESCHEDULE is set to a non-nil value. This
 prevents org-date-later from accidentally bypassing any logging that
 the user intended to have for rescheduling an item from the agenda."
     (let ((my/org--reschedule ""))
-      (progn 
+      (progn
         (org-agenda-check-type t 'agenda)
         (org-agenda-check-no-diary)
         (let* ((marker (or (org-get-at-bol 'org-marker)
@@ -1440,7 +1460,7 @@ the user intended to have for rescheduling an item from the agenda."
   :demand t
   :straight (evil-org :host github
                       :repo "doomelpa/evil-org-mode"
-                      ;; don't compile due to issues with evil-org-select-inner-element 
+                      ;; don't compile due to issues with evil-org-select-inner-element
                       ;; NOTE: be sure ~/.emacs.d/straight/build/evil-org/*.elc files are deleted
                       :build (:not compile))
   :after org
@@ -1897,7 +1917,7 @@ fd 0 to something different than fd 1 and 2."
 
 (use-package markdown-mode
   :mode ("\\.md\\'" . gfm-mode)
-  :hook (markdown-mode . (lambda () 
+  :hook (markdown-mode . (lambda ()
                            (setq-local evil-shift-width 2)
                            (setq-local tab-width 2)
                            (setq-local markdown-list-indent-width 2)))
@@ -1910,7 +1930,7 @@ fd 0 to something different than fd 1 and 2."
    "C-<return>" #'(lambda ()
                     (interactive)
                     (end-of-line)
-                    (call-interactively #'markdown-insert-list-item) 
+                    (call-interactively #'markdown-insert-list-item)
                     (evil-insert-state)))
   (:states 'insert
    :keymaps 'markdown-mode-map
@@ -1926,8 +1946,82 @@ fd 0 to something different than fd 1 and 2."
     (add-to-list 'eglot-server-programs
                  '(typst-ts-mode . ("tinymist" "lsp"))))
 
-  (add-hook 'typst-ts-mode-hook #'eglot-ensure))
+  (add-hook 'typst-ts-mode-hook #'eglot-ensure)
+
+  (setq typst-ts-indent-offset 2)
+  (add-hook 'typst-ts-mode-hook (lambda ()
+                                  (auto-fill-mode 1)
+                                  (setq-local auto-fill-function 'do-auto-fill))))
 
 
 (setq treesit-language-source-alist
       '((typst "https://github.com/uben0/tree-sitter-typst")))
+
+
+(use-package company
+  :ensure t
+  :init
+  (global-company-mode)
+  :config
+  ;; 1. Disable automatic popups
+  (setq company-idle-delay nil
+        company-minimum-prefix-length 1)
+
+  ;; 2. Bind C-p to manual completion in Evil's insert state
+  (with-eval-after-load 'evil
+    (define-key evil-insert-state-map (kbd "C-p") 'company-manual-begin)
+    (define-key evil-insert-state-map (kbd "C-n") 'company-manual-begin))
+
+  ;; 3. Navigate the menu once it's open
+  (with-eval-after-load 'company
+    (define-key company-active-map (kbd "C-n") 'company-select-next)
+    (define-key company-active-map (kbd "C-p") 'company-select-previous)
+    ;; Optional: Use Enter to confirm the selection
+    (define-key company-active-map (kbd "<return>") 'company-complete-selection))
+
+  (add-to-list 'company-dabbrev-code-modes 'typst-ts-mode)
+
+  (setq company-backends '((company-dabbrev company-dabbrev-code company-capf))
+        company-dabbrev-other-buffers (lambda (current-buf)
+                                        (pcase (buffer-local-value 'major-mode current-buf)
+                                          ('typst-ts-mode '(bibtex-mode))
+                                          (_              nil)))
+        company-selection-wrap-around t
+        company-dabbrev-downcase nil)
+
+  (defun my-typst-company-setup ()
+    "Ensure dabbrev is available in Typst buffers alongside LSP."
+    (when (derived-mode-p 'typst-ts-mode)
+      (setq-local company-backends '((company-dabbrev company-capf)))))
+
+  (add-hook 'eglot-managed-mode-hook #'my-typst-company-setup)
+  )
+
+;; restoring sessions from restart
+(let ((desktop-file "~/.emacs.d/.emacs.desktop"))
+  (when (file-exists-p desktop-file)
+    (desktop-read "~/.emacs.d/")
+    (delete-file desktop-file)
+    (message "Restored session from manual restart. Next boot will be clean.")))
+
+;; Ensure tabs are handled by the desktop saver
+(require 'desktop)
+(setq desktop-restore-forces-foreground t)
+(add-to-list 'desktop-globals-to-save 'tab-bar-mode)
+
+(use-package ibuffer-project
+  :ensure t
+  :after ibuffer)
+
+(use-package ibuffer
+  :ensure nil
+  :bind ("C-x C-b" . ibuffer)
+  :config
+  (require 'ibuf-ext)
+
+  (define-advice ibuffer-update (:before (&rest _) my/set-ibuffer-filter-groups)
+    (setq ibuffer-filter-groups
+          (append
+           '(("Internal" (name . "^\\*.*\\*$"))
+             ("Magit" (name . "magit")))
+           (ibuffer-project-generate-filter-groups)))))
