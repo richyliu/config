@@ -53,13 +53,14 @@
 
 (straight-use-package '(jsonrpc :type built-in))
 
+(defun display-startup-echo-area-message ()
+  (message ""))
+
 (use-package emacs
   :init
 
   ; disable startup message
   (setq initial-scratch-message nil)
-  (defun display-startup-echo-area-message ()
-    (message ""))
 
   ; shorter confirmation y/n
   (defalias 'yes-or-no-p 'y-or-n-p)
@@ -447,6 +448,15 @@ With non-nil prefix INCLUDE-ROOT, also include the project's root."
    "q" #'quit-window)
   )
 
+(defun my/toggle-window-maximize ()
+  "Temporarily maximize the buffer"
+  (interactive)
+  (if (= 1 (length (window-list)))
+      (jump-to-register '_)
+    (progn
+      (window-configuration-to-register '_)
+      (delete-other-windows))))
+
 (use-package evil
   :demand t
   :bind (("<escape>" . keyboard-escape-quit))
@@ -464,14 +474,6 @@ With non-nil prefix INCLUDE-ROOT, also include the project's root."
         evil-symbol-word-search t
         evil-search-module 'evil-search
         evil-undo-system 'undo-redo)
-  (defun my/toggle-window-maximize ()
-    "Temporarily maximize the buffer"
-    (interactive)
-    (if (= 1 (length (window-list)))
-        (jump-to-register '_)
-      (progn
-        (window-configuration-to-register '_)
-        (delete-other-windows))))
   :config
   (leader-def
     "ww" #'evil-window-mru
@@ -552,6 +554,38 @@ With non-nil prefix INCLUDE-ROOT, also include the project's root."
         which-key-side-window-slot -10)
     (which-key-mode))
 
+(defun allowed-consult-buffer-p (buf)
+  "Predicate to filter out most hidden buffers (with some exceptions).
+
+This makes consult-buffer more useful by hiding most of the
+hidden buffers (starting and ending with *), while allowing
+some useful ones, such as Org Agenda and vterm"
+  (let ((buf-name (buffer-name buf)))
+    (cond
+     ;; allow certain prefixes
+     ((let ((allowed-prefixes '("*Org Agenda" "*vterm" "*xwidget-webkit"))
+            (allowed-prefix-p (lambda (prefix) (string-prefix-p prefix buf-name))))
+        (cl-some allowed-prefix-p allowed-prefixes)) t)
+     ;; filter out hidden buffers (beginning with "*")
+     ((and (string-prefix-p "*" buf-name)
+           (string-suffix-p "*" buf-name))
+      nil)
+     ;; filter out magit buffers
+     ((string-prefix-p "magit" buf-name)
+      nil)
+     ;; default allow
+     (t t))))
+(defun consult-buffer-all (&rest all)
+  "Wrapper around consult-buffer which shows all buffer sources."
+  (interactive)
+  (let ((consult-buffer-sources
+         '(consult--source-modified-buffer
+           consult--source-buffer
+           consult--source-recent-file
+           consult--source-file-register
+           consult--source-bookmark)))
+    (apply #'consult-buffer all)))
+
 (use-package consult
   :general
   (leader-def
@@ -566,28 +600,6 @@ With non-nil prefix INCLUDE-ROOT, also include the project's root."
     "/" #'consult-ripgrep)
 
   :config
-
-  (defun allowed-consult-buffer-p (buf)
-    "Predicate to filter out most hidden buffers (with some exceptions).
-
-This makes consult-buffer more useful by hiding most of the
-hidden buffers (starting and ending with *), while allowing
-some useful ones, such as Org Agenda and vterm"
-    (let ((buf-name (buffer-name buf)))
-      (cond
-       ;; allow certain prefixes
-       ((let ((allowed-prefixes '("*Org Agenda" "*vterm" "*xwidget-webkit"))
-              (allowed-prefix-p (lambda (prefix) (string-prefix-p prefix buf-name))))
-          (cl-some allowed-prefix-p allowed-prefixes)) t)
-       ;; filter out hidden buffers (beginning with "*")
-       ((and (string-prefix-p "*" buf-name)
-             (string-suffix-p "*" buf-name))
-        nil)
-       ;; filter out magit buffers
-       ((string-prefix-p "magit" buf-name)
-        nil)
-       ;; default allow
-       (t t))))
 
   (defvar consult--source-buffer-no-hidden
     `( :name     "Buffer (no hidden)"
@@ -662,18 +674,6 @@ some useful ones, such as Org Agenda and vterm"
 
   (setq consult-project-buffer-sources '(consult--source-project-buffer-no-magit
                                          consult--source-project-recent-file))
-
-
-  (defun consult-buffer-all (&rest all)
-    "Wrapper around consult-buffer which shows all buffer sources."
-    (interactive)
-    (let ((consult-buffer-sources
-           '(consult--source-modified-buffer
-             consult--source-buffer
-             consult--source-recent-file
-             consult--source-file-register
-             consult--source-bookmark)))
-      (apply #'consult-buffer all)))
   )
 
 (use-package recentf
@@ -684,6 +684,407 @@ some useful ones, such as Org Agenda and vterm"
   (setq recentf-max-saved-items 100
         recentf-exclude '("/tmp/")))
 
+(defun my/temp-refile ()
+  "Refile item to heading '*Temporary' in file 'agenda.org'"
+  (interactive)
+  (org-schedule nil "+0d")
+  (org-todo "TEMP")
+  (let* ((org-buffer (get-buffer "agenda.org"))
+         (match-target-fn (lambda (refloc) (string-match "agenda.org/Temporary"
+                                                         (car refloc))))
+         (target-rfloc (cl-find-if match-target-fn
+                                   (org-refile-get-targets org-buffer))))
+    (org-refile nil nil target-rfloc nil)))
+
+(defun +org/dwim-at-point (&optional arg)
+  "Do-what-I-mean at point. Inspired by doom emacs function of the same name.
+
+    If on a:
+    - link: follow it
+    - otherwise, do nothing."
+  (interactive "P")
+  (if (button-at (point))
+      (call-interactively #'push-button)
+    (let* ((context (org-element-context))
+           (type (org-element-type context)))
+      ;; skip over unimportant contexts
+      (while (and context (memq type '(verbatim code bold italic underline strike-through subscript superscript)))
+        (setq context (org-element-property :parent context)
+              type (org-element-type context)))
+      (pcase type
+        (`link (org-open-at-point arg))
+
+        (_
+         (if (or (org-in-regexp org-ts-regexp-both nil t)
+                 (org-in-regexp org-tsr-regexp-both nil  t)
+                 (org-in-regexp org-link-any-re nil t))
+             (call-interactively #'org-open-at-point)))))))
+
+(defun my/org-copy-pair-inc-date ()
+  "Duplicate two headings (while on the second one) and increment date of both"
+  (interactive)
+  (org-clone-subtree-with-time-shift 1 "+1d")
+  (org-backward-element)
+  (org-clone-subtree-with-time-shift 1 "+1d")
+  (org-forward-element)
+  (org-metadown)
+  (org-forward-element))
+
+(defun my/org-open-link-secondary-browser ()
+  "Open link at point in secondary browser"
+  (interactive)
+  (let ((browse-url-browser-function browse-url-secondary-browser-function))
+    (org-open-at-point)))
+
+(defun my/org-copy-block-content ()
+  "Copy the content of the current Org block, stripping leading indentation."
+  (interactive)
+  (let* ((element (org-element-at-point))
+         (type (car element))
+         (allowed-blocks '(src-block example-block quote-block center-block verse-block)))
+    (if (memq type allowed-blocks)
+        (let* ((post-affiliated (org-element-property :post-affiliated element))
+               ;; For blocks, the content starts after the #+BEGIN line
+               (begin (save-excursion
+                        (goto-char post-affiliated)
+                        (forward-line 1)
+                        (point)))
+               ;; The content ends before the #+END line
+               (end (save-excursion
+                      (goto-char (org-element-property :end element))
+                      (skip-chars-backward " \r\t\n")
+                      (forward-line 0)
+                      (point))))
+          (if (and begin end (< begin end))
+              (let ((raw-content (buffer-substring-no-properties begin end)))
+                (with-temp-buffer
+                  (insert raw-content)
+                  ;; 1. Remove the Org-specific escape commas
+                  (org-unescape-code-in-region (point-min) (point-max))
+                  ;; 2. Strip the leading indentation
+                  (org-do-remove-indentation)
+                  (copy-region-as-kill (point-min) (point-max))
+                  (message "%s content (length %d) unescaped and copied."
+                           (capitalize (symbol-name type))
+                           (length (current-kill 0)))))
+            (user-error "Block is empty")))
+      (user-error "Not in a supported block (current: %s)" type))))
+
+(defun +org-habit-resize-graph-h ()
+  "Right align and resize the consistency graphs based on
+`+org-habit-graph-window-ratio'"
+  (require 'org-habit)
+  (let* ((total-days (float (+ org-habit-preceding-days org-habit-following-days)))
+         (preceding-days-ratio (/ org-habit-preceding-days total-days))
+         (graph-width (floor (* (window-width) +org-habit-graph-window-ratio)))
+         (preceding-days (floor (* graph-width preceding-days-ratio)))
+         (following-days (- graph-width preceding-days))
+         (graph-column (- (window-width) (+ preceding-days following-days)))
+         (graph-column-adjusted (if (> graph-column +org-habit-min-width)
+                                    (- graph-column +org-habit-graph-padding)
+                                  nil)))
+    (setq-local org-habit-preceding-days preceding-days)
+    (setq-local org-habit-following-days following-days)
+    (setq-local org-habit-graph-column graph-column-adjusted)))
+
+(defun +org--insert-item (direction)
+  (let ((context (org-element-lineage
+                  (org-element-context)
+                  '(table table-row headline inlinetask item plain-list)
+                  t)))
+    (pcase (org-element-type context)
+      ;; Add a new list item (carrying over checkboxes if necessary)
+      ((or `item `plain-list)
+       (let ((orig-point (point)))
+         ;; Position determines where org-insert-todo-heading and `org-insert-item'
+         ;; insert the new list item.
+         (if (eq direction 'above)
+             (org-beginning-of-item)
+           (end-of-line))
+         (let* ((ctx-item? (eq 'item (org-element-type context)))
+                (ctx-cb (org-element-property :contents-begin context))
+                ;; Hack to handle edge case where the point is at the
+                ;; beginning of the first item
+                (beginning-of-list? (and (not ctx-item?)
+                                         (= ctx-cb orig-point)))
+                (item-context (if beginning-of-list?
+                                  (org-element-context)
+                                context))
+                ;; Horrible hack to handle edge case where the
+                ;; line of the bullet is empty
+                (ictx-cb (org-element-property :contents-begin item-context))
+                (empty? (and (eq direction 'below)
+                             ;; in case contents-begin is nil, or contents-begin
+                             ;; equals the position end of the line, the item is
+                             ;; empty
+                             (or (not ictx-cb)
+                                 (= ictx-cb
+                                    (1+ (point))))))
+                (pre-insert-point (point)))
+           ;; Insert dummy content, so that `org-insert-item'
+           ;; inserts content below this item
+           (when empty?
+             (insert " "))
+           ;; (my modification) Don't split the line so that we can
+           ;; insert past any children. I don't know why this is
+           ;; tied to the org-M-RET-may-split-line variable, but it
+           ;; seems like allowing for split lines forces the list
+           ;; item to be inserted immediately after the current one.
+           ;; See also: https://emacs.stackexchange.com/a/79066
+           (let ((org-M-RET-may-split-line nil))
+             (org-insert-item (org-element-property :checkbox context)))
+           ;; Remove dummy content
+           (when empty?
+             (delete-region pre-insert-point (1+ pre-insert-point))))))
+      ;; Add a new table row
+      ((or `table `table-row)
+       (pcase direction
+         ('below (save-excursion (org-table-insert-row t))
+                 (org-table-next-row))
+         ('above (save-excursion (org-shiftmetadown))
+                 (+org/table-previous-row))))
+
+      ;; Otherwise, add a new heading, carrying over any todo state, if
+      ;; necessary.
+      (_
+       (let ((level (or (org-current-level) 1)))
+         ;; I intentionally avoid `org-insert-heading' and the like because they
+         ;; impose unpredictable whitespace rules depending on the cursor
+         ;; position. It's simpler to express this command's responsibility at a
+         ;; lower level than work around all the quirks in org's API.
+         (pcase direction
+           (`below
+            (let (org-insert-heading-respect-content)
+              (goto-char (line-end-position))
+              (org-end-of-subtree)
+              (insert "\n" (make-string level ?*) " ")))
+           (`above
+            (org-back-to-heading)
+            (insert (make-string level ?*) " ")
+            (save-excursion (insert "\n"))))
+         (run-hooks 'org-insert-heading-hook)
+         (when-let* ((todo-keyword (org-element-property :todo-keyword context))
+                     (todo-type    (org-element-property :todo-type context)))
+           (org-todo
+            (cond ((eq todo-type 'done)
+                   ;; Doesn't make sense to create more "DONE" headings
+                   (car (+org-get-todo-keywords-for todo-keyword)))
+                  (todo-keyword)
+                  ('todo)))))))
+
+    (when (org-invisible-p)
+      (org-show-hidden-entry))
+    (when (and (bound-and-true-p evil-local-mode)
+               (not (evil-emacs-state-p)))
+      (evil-insert 1))))
+
+(defun +org/insert-item-below (count)
+  "Inserts a new heading, table cell or item below the current one."
+  (interactive "p")
+  (dotimes (_ count) (+org--insert-item 'below)))
+(defun +org/insert-item-above (count)
+  "Inserts a new heading, table cell or item above the current one."
+  (interactive "p")
+  (dotimes (_ count) (+org--insert-item 'above)))
+
+(defun my/org-agenda-custom-sort (a b)
+  "Like the `time-up' sorting strategy, but keep deadline items first.
+
+This is very similar to the `time-up' options for `org-agenda-sorting-strategy',
+but it always sorts deadline items first, then timestamp items, then everything else."
+  (let ((a-timep (get-text-property 1 'time-of-day a))
+        (b-timep (get-text-property 1 'time-of-day b))
+        (a-type (get-text-property 1 'type a))
+        (b-type (get-text-property 1 'type b))
+        (a-todo-state (get-text-property 1 'todo-state a))
+        (b-todo-state (get-text-property 1 'todo-state b)))
+    (cond
+     ((and (string= a-type "upcoming-deadline")
+           (not (string= b-type "upcoming-deadline"))) +1)
+     ((and (not (string= a-type "upcoming-deadline"))
+           (string= b-type "upcoming-deadline")) -1)
+     ((and a-timep b-timep) (org-cmp-time a b))
+     (a-timep -1)
+     (b-timep +1)
+     )))
+
+(defun my/org-agenda-skip-entry-if (&rest conditions)
+  "Skip entry if any of CONDITIONS is true.
+Similar to org-agenda-skip-entry-if, except it supports 'tag and
+'nottag, which accept one argument and matches for or against that tag
+in the heading."
+  (org-back-to-heading t)
+  (let* ((end (org-entry-end-position))
+         (planning-end (line-end-position 2))
+         m)
+    (and
+     (or (and (memq 'scheduled conditions)
+              (re-search-forward org-scheduled-time-regexp planning-end t))
+         (and (memq 'notscheduled conditions)
+              (not
+               (save-excursion
+                 (re-search-forward org-scheduled-time-regexp planning-end t))))
+         (and (memq 'deadline conditions)
+              (re-search-forward org-deadline-time-regexp planning-end t))
+         (and (memq 'notdeadline conditions)
+              (not
+               (save-excursion
+                 (re-search-forward org-deadline-time-regexp planning-end t))))
+         (and (memq 'timestamp conditions)
+              (re-search-forward org-ts-regexp end t))
+         (and (memq 'nottimestamp conditions)
+              (not (save-excursion (re-search-forward org-ts-regexp end t))))
+         (and (setq m (memq 'regexp conditions))
+              (stringp (nth 1 m))
+              (re-search-forward (nth 1 m) end t))
+         (and (setq m (memq 'notregexp conditions))
+              (stringp (nth 1 m))
+              (not (save-excursion (re-search-forward (nth 1 m) end t))))
+         (and (or
+               (setq m (memq 'nottodo conditions))
+               (setq m (memq 'todo-unblocked conditions))
+               (setq m (memq 'nottodo-unblocked conditions))
+               (setq m (memq 'todo conditions)))
+              (org-agenda-skip-if-todo m end))
+         (and (setq m (memq 'tag conditions))
+              (listp (nth 1 m))
+              ;; check if any of the search list of tags is in the heading's tags
+              (let ((heading-tags (org-get-tags nil nil))
+                    (search-tags (nth 1 m)))
+                (cl-intersection heading-tags search-tags :test #'string=))))
+     end)))
+
+(defvar my/org-spaced-repetition-success 1.4
+  "Ratio applied to repeater on success for spaced repetition system.")
+(defvar my/org-spaced-repetition-failure 0.2
+  "Ratio applied to repeater on success for spaced repetition system.")
+(defvar my/org-spaced-repetition-max 120
+  "Maximum number of days for spaced repetition.")
+(defun my/org-spaced-repetition (oldfun done-word)
+  "Advice for org-auto-repeat-maybe that implements spaced repetition.
+
+Any org item with the SPACED_REPETITION key set to non-nil value will
+have all its repeating timestamps affected. The spaced repetition
+system will multiply the repeater by my/org-spaced-repetition-success on
+every successful (DONE) repetition and by
+my/org-spaced-repetition-failure on every unsuccessful (KILL)
+repetition, with the minimum being 1. On successful repetition, always
+round up. Otherwise, round down."
+  (let* ((repeat (org-get-repeat))
+         (is-spaced-repetition (and repeat
+                                    (not (= 0 (string-to-number (substring repeat 1))))
+                                    (org-entry-get nil "SPACED_REPETITION" t)))
+         (is-success (string= done-word "DONE"))
+         (end (copy-marker (org-entry-end-position)))
+         (check-spaced-repetition-fn
+          (lambda ()
+            (when is-spaced-repetition
+              (save-excursion
+                (org-back-to-heading t)
+                ;; update every repeating timestamp
+                (while (re-search-forward org-repeat-re end t)
+                  (when-let
+                      ((new-repeater
+                        (save-match-data
+                          ;; change the repeater in the timestamp
+                          (when-let* ((ts (match-string 0))
+                                      (repeater-regexp "\\([.+]\\)?\\(\\+[0-9]+\\)\\([hdwmy]\\)")
+                                      (has-repeater (string-match repeater-regexp ts))
+                                      (n (string-to-number (match-string 2 ts)))
+                                      (new-n (if is-success
+                                                 (min my/org-spaced-repetition-max
+                                                      (ceiling (* n my/org-spaced-repetition-success)))
+                                               (floor (* n my/org-spaced-repetition-failure)))))
+                            (format "%s+%d%s" (match-string 1 ts) (max 1 new-n) (match-string 3 ts))))))
+                    ;; only do this replacement if we have a valid repeater
+                    ;; note that this replaces the string found with org-repeat-re
+                    (replace-match new-repeater nil nil nil 1))))))))
+    ;; run our code after if this was a success (increments repeater)
+    (if is-success
+        (prog1 (funcall oldfun done-word) (funcall check-spaced-repetition-fn))
+      ;; run our code before if this was a failure (decrements repeater)
+      (progn (funcall check-spaced-repetition-fn) (funcall oldfun done-word)))))
+(defun my/org-agenda-skip-special ()
+  "Skip several kinds of agenda entries.
+
+Skip habits.
+
+Skip tasks with a scheduled repeater that have the first scheduled
+occurrence in the future. This way, any past active timestamps from
+these tasks will be hidden."
+  (let* ((scheduled (org-entry-get (point) "SCHEDULED"))
+         (todo-state (org-get-todo-state)))
+    (when scheduled
+      (let* ((ts (org-element-parse-secondary-string
+                  scheduled '(timestamp)))
+             (repeater (org-element-property :repeater-type ts))
+             (time (org-timestamp-to-time ts)))
+        (when (and repeater
+                   (time-less-p (current-time) time))
+          (or (outline-next-heading) (point-max)))))))
+(defun my/time-grid-override (func list ndays todayp)
+  "Show time grid items during scheduled blocks with org-scheduled face."
+  (let* (
+         (time-grid-list (nth 1 org-agenda-time-grid))
+         (time-grid-interval (float (- (nth 1 time-grid-list) (nth 0 time-grid-list))))
+         (scheduled-times (mapcan #'(lambda (el)
+                                      ;; only consider items with a scheduled time
+                                      (if (and el (get-text-property 0 'time-of-day el))
+                                          ;; get all scheduled items as pairs of (start time, end time)
+                                          ;; end time is rounded to nearest time-grid-interval
+                                          ;; all times are in minutes since midnight
+                                          (let* ((time-num (get-text-property 0 'time-of-day el))
+                                                 (duration (or (get-text-property 0 'duration el) 0))
+                                                 (time-in-minutes (+ (* (/ time-num 100) 60) (mod time-num 100)))
+                                                 (time-end (+ time-in-minutes duration))
+                                                 (round-up #'(lambda (num)
+                                                               "Like round, but always round up from 0.5"
+                                                               (if (< (- (abs (- num (round num))) 0.5) 0.000001)
+                                                                   (ceiling num)
+                                                                 (round num))))
+                                                 (time-end-rounded (* (funcall round-up (/ time-end time-grid-interval)) time-grid-interval)))
+                                            (list (list time-in-minutes time-end-rounded)))))
+                                  list))
+         (additional (mapcan #'(lambda (time)
+                                 (let ((time-in-minutes (+ (* (/ time 100) 60) (mod time 100))))
+                                   ;; check if this time-grid item is near a scheduled item
+                                   (if-let (cur-scheduled (cl-find-if
+                                                           #'(lambda (scheduled)
+                                                               (let* ((sched-start (nth 0 scheduled))
+                                                                      (sched-end (nth 1 scheduled)))
+                                                                 ;; only show during scheduled time
+                                                                 (and (> time-in-minutes sched-start)
+                                                                      (< time-in-minutes sched-end))))
+                                                           scheduled-times))
+                                       ;; don't show this time-grid if it's the start of another scheduled item since the
+                                       ;; scheduled item itself takes up a line
+                                       (unless (cl-some #'(lambda (scheduled)
+                                                            (let* ((sched-start (nth 0 scheduled))
+                                                                   (sched-end (nth 1 scheduled)))
+                                                              (= time-in-minutes sched-start)))
+                                                        scheduled-times)
+                                         (let* ((rawtimestr (replace-regexp-in-string " " "0" (format "%04s" time)))
+                                                (timestr (concat (substring rawtimestr 0 -2) ":" (substring rawtimestr -2)))
+                                                ;; show a different char for the last time-grid item for a particular scheduled item
+                                                (indicator-char (if-let ((end (nth 1 cur-scheduled))
+                                                                         (end-diff (- end time-in-minutes))
+                                                                         (diff-in-range (and (>= end-diff 0)
+                                                                                             (<= end-diff time-grid-interval))))
+                                                                    "┘"
+                                                                  "│"))
+                                                (newel (org-agenda-format-item indicator-char (nth 3 org-agenda-time-grid)
+                                                                               nil "" nil timestr)))
+                                           (put-text-property 2 (length newel) 'face 'org-scheduled newel)
+                                           (list newel))))))
+                             ;; needs to be the same text as time grid to get formatted correctly
+                             (nth 1 org-agenda-time-grid)))
+         (newlist (append additional list)))
+    ;; call the original function (org-agenda-add-time-grid-maybe)
+    (apply (cons func (list
+                       ;; use the added list if we are using a time grid
+                       (if org-agenda-use-time-grid newlist list)
+                       ndays todayp)))))
+
 (use-package org
   :demand t
   :straight (org :host github
@@ -693,92 +1094,6 @@ some useful ones, such as Org Agenda and vterm"
   (setq org-agenda-files '("inbox.org" "agenda.org"))
 
   :general
-  (defun my/temp-refile ()
-    "Refile item to heading '*Temporary' in file 'agenda.org'"
-    (interactive)
-    (org-schedule nil "+0d")
-    (org-todo "TEMP")
-    (let* ((org-buffer (get-buffer "agenda.org"))
-           (match-target-fn (lambda (refloc) (string-match "agenda.org/Temporary"
-                                                           (car refloc))))
-           (target-rfloc (cl-find-if match-target-fn
-                                     (org-refile-get-targets org-buffer))))
-      (org-refile nil nil target-rfloc nil)))
-
-  (defun +org/dwim-at-point (&optional arg)
-    "Do-what-I-mean at point. Inspired by doom emacs function of the same name.
-
-    If on a:
-    - link: follow it
-    - otherwise, do nothing."
-    (interactive "P")
-    (if (button-at (point))
-      (call-interactively #'push-button)
-      (let* ((context (org-element-context))
-             (type (org-element-type context)))
-        ;; skip over unimportant contexts
-        (while (and context (memq type '(verbatim code bold italic underline strike-through subscript superscript)))
-               (setq context (org-element-property :parent context)
-                     type (org-element-type context)))
-        (pcase type
-               (`link (org-open-at-point arg))
-
-               (_
-                 (if (or (org-in-regexp org-ts-regexp-both nil t)
-                         (org-in-regexp org-tsr-regexp-both nil  t)
-                         (org-in-regexp org-link-any-re nil t))
-                   (call-interactively #'org-open-at-point)))))))
-
-  (defun my/org-copy-pair-inc-date ()
-    "Duplicate two headings (while on the second one) and increment date of both"
-    (interactive)
-    (org-clone-subtree-with-time-shift 1 "+1d")
-    (org-backward-element)
-    (org-clone-subtree-with-time-shift 1 "+1d")
-    (org-forward-element)
-    (org-metadown)
-    (org-forward-element))
-
-  (defun my/org-open-link-secondary-browser ()
-    "Open link at point in secondary browser"
-    (interactive)
-    (let ((browse-url-browser-function browse-url-secondary-browser-function))
-      (org-open-at-point)))
-
-  (defun my/org-copy-block-content ()
-    "Copy the content of the current Org block, stripping leading indentation."
-    (interactive)
-    (let* ((element (org-element-at-point))
-           (type (car element))
-           (allowed-blocks '(src-block example-block quote-block center-block verse-block)))
-      (if (memq type allowed-blocks)
-          (let* ((post-affiliated (org-element-property :post-affiliated element))
-                 ;; For blocks, the content starts after the #+BEGIN line
-                 (begin (save-excursion
-                          (goto-char post-affiliated)
-                          (forward-line 1)
-                          (point)))
-                 ;; The content ends before the #+END line
-                 (end (save-excursion
-                        (goto-char (org-element-property :end element))
-                        (skip-chars-backward " \r\t\n")
-                        (forward-line 0)
-                        (point))))
-            (if (and begin end (< begin end))
-                (let ((raw-content (buffer-substring-no-properties begin end)))
-                  (with-temp-buffer
-                    (insert raw-content)
-                    ;; 1. Remove the Org-specific escape commas
-                    (org-unescape-code-in-region (point-min) (point-max))
-                    ;; 2. Strip the leading indentation
-                    (org-do-remove-indentation)
-                    (copy-region-as-kill (point-min) (point-max))
-                    (message "%s content (length %d) unescaped and copied."
-                             (capitalize (symbol-name type))
-                             (length (current-kill 0)))))
-              (user-error "Block is empty")))
-        (user-error "Not in a supported block (current: %s)" type))))
-
   (general-define-key
     :prefix my-leader
     :non-normal-prefix my-insert-leader
@@ -899,123 +1214,7 @@ some useful ones, such as Org Agenda and vterm"
   (defvar +org-habit-graph-window-ratio 0.3
     "The ratio of the consistency graphs relative to the window width")
 
-  (add-hook 'org-agenda-mode-hook
-            (defun +org-habit-resize-graph-h ()
-              "Right align and resize the consistency graphs based on
-`+org-habit-graph-window-ratio'"
-              (require 'org-habit)
-              (let* ((total-days (float (+ org-habit-preceding-days org-habit-following-days)))
-                     (preceding-days-ratio (/ org-habit-preceding-days total-days))
-                     (graph-width (floor (* (window-width) +org-habit-graph-window-ratio)))
-                     (preceding-days (floor (* graph-width preceding-days-ratio)))
-                     (following-days (- graph-width preceding-days))
-                     (graph-column (- (window-width) (+ preceding-days following-days)))
-                     (graph-column-adjusted (if (> graph-column +org-habit-min-width)
-                                                (- graph-column +org-habit-graph-padding)
-                                              nil)))
-                (setq-local org-habit-preceding-days preceding-days)
-                (setq-local org-habit-following-days following-days)
-                (setq-local org-habit-graph-column graph-column-adjusted))))
-
-  (defun +org--insert-item (direction)
-    (let ((context (org-element-lineage
-                    (org-element-context)
-                    '(table table-row headline inlinetask item plain-list)
-                    t)))
-      (pcase (org-element-type context)
-        ;; Add a new list item (carrying over checkboxes if necessary)
-        ((or `item `plain-list)
-         (let ((orig-point (point)))
-           ;; Position determines where org-insert-todo-heading and `org-insert-item'
-           ;; insert the new list item.
-           (if (eq direction 'above)
-               (org-beginning-of-item)
-             (end-of-line))
-           (let* ((ctx-item? (eq 'item (org-element-type context)))
-                  (ctx-cb (org-element-property :contents-begin context))
-                  ;; Hack to handle edge case where the point is at the
-                  ;; beginning of the first item
-                  (beginning-of-list? (and (not ctx-item?)
-                                           (= ctx-cb orig-point)))
-                  (item-context (if beginning-of-list?
-                                    (org-element-context)
-                                  context))
-                  ;; Horrible hack to handle edge case where the
-                  ;; line of the bullet is empty
-                  (ictx-cb (org-element-property :contents-begin item-context))
-                  (empty? (and (eq direction 'below)
-                               ;; in case contents-begin is nil, or contents-begin
-                               ;; equals the position end of the line, the item is
-                               ;; empty
-                               (or (not ictx-cb)
-                                   (= ictx-cb
-                                      (1+ (point))))))
-                  (pre-insert-point (point)))
-             ;; Insert dummy content, so that `org-insert-item'
-             ;; inserts content below this item
-             (when empty?
-               (insert " "))
-             ;; (my modification) Don't split the line so that we can
-             ;; insert past any children. I don't know why this is
-             ;; tied to the org-M-RET-may-split-line variable, but it
-             ;; seems like allowing for split lines forces the list
-             ;; item to be inserted immediately after the current one.
-             ;; See also: https://emacs.stackexchange.com/a/79066
-             (let ((org-M-RET-may-split-line nil))
-                (org-insert-item (org-element-property :checkbox context)))
-             ;; Remove dummy content
-             (when empty?
-               (delete-region pre-insert-point (1+ pre-insert-point))))))
-        ;; Add a new table row
-        ((or `table `table-row)
-         (pcase direction
-           ('below (save-excursion (org-table-insert-row t))
-                   (org-table-next-row))
-           ('above (save-excursion (org-shiftmetadown))
-                   (+org/table-previous-row))))
-
-        ;; Otherwise, add a new heading, carrying over any todo state, if
-        ;; necessary.
-        (_
-         (let ((level (or (org-current-level) 1)))
-           ;; I intentionally avoid `org-insert-heading' and the like because they
-           ;; impose unpredictable whitespace rules depending on the cursor
-           ;; position. It's simpler to express this command's responsibility at a
-           ;; lower level than work around all the quirks in org's API.
-           (pcase direction
-             (`below
-              (let (org-insert-heading-respect-content)
-                (goto-char (line-end-position))
-                (org-end-of-subtree)
-                (insert "\n" (make-string level ?*) " ")))
-             (`above
-              (org-back-to-heading)
-              (insert (make-string level ?*) " ")
-              (save-excursion (insert "\n"))))
-           (run-hooks 'org-insert-heading-hook)
-           (when-let* ((todo-keyword (org-element-property :todo-keyword context))
-                       (todo-type    (org-element-property :todo-type context)))
-             (org-todo
-              (cond ((eq todo-type 'done)
-                     ;; Doesn't make sense to create more "DONE" headings
-                     (car (+org-get-todo-keywords-for todo-keyword)))
-                    (todo-keyword)
-                    ('todo)))))))
-
-      (when (org-invisible-p)
-        (org-show-hidden-entry))
-      (when (and (bound-and-true-p evil-local-mode)
-                 (not (evil-emacs-state-p)))
-        (evil-insert 1))))
-
-  (defun +org/insert-item-below (count)
-    "Inserts a new heading, table cell or item below the current one."
-    (interactive "p")
-    (dotimes (_ count) (+org--insert-item 'below)))
-  (defun +org/insert-item-above (count)
-    "Inserts a new heading, table cell or item above the current one."
-    (interactive "p")
-    (dotimes (_ count) (+org--insert-item 'above)))
+  (add-hook 'org-agenda-mode-hook '+org-habit-resize-graph-h)
 
   ;; END from doom emacs
 
@@ -1095,123 +1294,6 @@ some useful ones, such as Org Agenda and vterm"
   (setq org-use-effective-time t)
   (setq org-M-RET-may-split-line '((default . t)))
 
-  (defun my/org-agenda-custom-sort (a b)
-    "Like the `time-up' sorting strategy, but keep deadline items first.
-
-This is very similar to the `time-up' options for `org-agenda-sorting-strategy',
-but it always sorts deadline items first, then timestamp items, then everything else."
-    (let ((a-timep (get-text-property 1 'time-of-day a))
-          (b-timep (get-text-property 1 'time-of-day b))
-          (a-type (get-text-property 1 'type a))
-          (b-type (get-text-property 1 'type b))
-          (a-todo-state (get-text-property 1 'todo-state a))
-          (b-todo-state (get-text-property 1 'todo-state b)))
-      (cond
-       ((and (string= a-type "upcoming-deadline")
-             (not (string= b-type "upcoming-deadline"))) +1)
-       ((and (not (string= a-type "upcoming-deadline"))
-             (string= b-type "upcoming-deadline")) -1)
-       ((and a-timep b-timep) (org-cmp-time a b))
-       (a-timep -1)
-       (b-timep +1)
-       )))
-
-  (defun my/org-agenda-skip-entry-if (&rest conditions)
-    "Skip entry if any of CONDITIONS is true.
-Similar to org-agenda-skip-entry-if, except it supports 'tag and
-'nottag, which accept one argument and matches for or against that tag
-in the heading."
-    (org-back-to-heading t)
-    (let* ((end (org-entry-end-position))
-           (planning-end (line-end-position 2))
-           m)
-      (and
-       (or (and (memq 'scheduled conditions)
-                (re-search-forward org-scheduled-time-regexp planning-end t))
-           (and (memq 'notscheduled conditions)
-                (not
-                 (save-excursion
-                   (re-search-forward org-scheduled-time-regexp planning-end t))))
-           (and (memq 'deadline conditions)
-                (re-search-forward org-deadline-time-regexp planning-end t))
-           (and (memq 'notdeadline conditions)
-                (not
-                 (save-excursion
-                   (re-search-forward org-deadline-time-regexp planning-end t))))
-           (and (memq 'timestamp conditions)
-                (re-search-forward org-ts-regexp end t))
-           (and (memq 'nottimestamp conditions)
-                (not (save-excursion (re-search-forward org-ts-regexp end t))))
-           (and (setq m (memq 'regexp conditions))
-                (stringp (nth 1 m))
-                (re-search-forward (nth 1 m) end t))
-           (and (setq m (memq 'notregexp conditions))
-                (stringp (nth 1 m))
-                (not (save-excursion (re-search-forward (nth 1 m) end t))))
-           (and (or
-                 (setq m (memq 'nottodo conditions))
-                 (setq m (memq 'todo-unblocked conditions))
-                 (setq m (memq 'nottodo-unblocked conditions))
-                 (setq m (memq 'todo conditions)))
-                (org-agenda-skip-if-todo m end))
-           (and (setq m (memq 'tag conditions))
-                (listp (nth 1 m))
-                ;; check if any of the search list of tags is in the heading's tags
-                (let ((heading-tags (org-get-tags nil nil))
-                      (search-tags (nth 1 m)))
-                  (cl-intersection heading-tags search-tags :test #'string=))))
-       end)))
-
-  (defvar my/org-spaced-repetition-success 1.4
-    "Ratio applied to repeater on success for spaced repetition system.")
-  (defvar my/org-spaced-repetition-failure 0.2
-    "Ratio applied to repeater on success for spaced repetition system.")
-  (defvar my/org-spaced-repetition-max 120
-    "Maximum number of days for spaced repetition.")
-  (defun my/org-spaced-repetition (oldfun done-word)
-    "Advice for org-auto-repeat-maybe that implements spaced repetition.
-
-Any org item with the SPACED_REPETITION key set to non-nil value will
-have all its repeating timestamps affected. The spaced repetition
-system will multiply the repeater by my/org-spaced-repetition-success on
-every successful (DONE) repetition and by
-my/org-spaced-repetition-failure on every unsuccessful (KILL)
-repetition, with the minimum being 1. On successful repetition, always
-round up. Otherwise, round down."
-    (let* ((repeat (org-get-repeat))
-           (is-spaced-repetition (and repeat
-                                      (not (= 0 (string-to-number (substring repeat 1))))
-                                      (org-entry-get nil "SPACED_REPETITION" t)))
-           (is-success (string= done-word "DONE"))
-           (end (copy-marker (org-entry-end-position)))
-           (check-spaced-repetition-fn
-            (lambda ()
-              (when is-spaced-repetition
-                (save-excursion
-                  (org-back-to-heading t)
-                  ;; update every repeating timestamp
-                  (while (re-search-forward org-repeat-re end t)
-                    (when-let
-                        ((new-repeater
-                          (save-match-data
-                            ;; change the repeater in the timestamp
-                            (when-let* ((ts (match-string 0))
-                                        (repeater-regexp "\\([.+]\\)?\\(\\+[0-9]+\\)\\([hdwmy]\\)")
-                                        (has-repeater (string-match repeater-regexp ts))
-                                        (n (string-to-number (match-string 2 ts)))
-                                        (new-n (if is-success
-                                                   (min my/org-spaced-repetition-max
-                                                        (ceiling (* n my/org-spaced-repetition-success)))
-                                                 (floor (* n my/org-spaced-repetition-failure)))))
-                              (format "%s+%d%s" (match-string 1 ts) (max 1 new-n) (match-string 3 ts))))))
-                      ;; only do this replacement if we have a valid repeater
-                      ;; note that this replaces the string found with org-repeat-re
-                      (replace-match new-repeater nil nil nil 1))))))))
-      ;; run our code after if this was a success (increments repeater)
-      (if is-success
-          (prog1 (funcall oldfun done-word) (funcall check-spaced-repetition-fn))
-        ;; run our code before if this was a failure (decrements repeater)
-        (progn (funcall check-spaced-repetition-fn) (funcall oldfun done-word)))))
   (advice-add 'org-auto-repeat-maybe :around #'my/org-spaced-repetition)
 
   (setq org-agenda-sorting-strategy '((agenda user-defined-up deadline-up priority-down scheduled-up todo-state-up tag-up effort-up habit-down)
@@ -1219,25 +1301,6 @@ round up. Otherwise, round down."
                                       (tags priority-down todo-state-up deadline-up ts-up effort-up)
                                       (search scheduled-up priority-down todo-state-up effort-up)))
   (setq org-agenda-cmp-user-defined #'my/org-agenda-custom-sort)
-
-  (defun my/org-agenda-skip-special ()
-    "Skip several kinds of agenda entries.
-
-Skip habits.
-
-Skip tasks with a scheduled repeater that have the first scheduled
-occurrence in the future. This way, any past active timestamps from
-these tasks will be hidden."
-    (let* ((scheduled (org-entry-get (point) "SCHEDULED"))
-           (todo-state (org-get-todo-state)))
-      (when scheduled
-        (let* ((ts (org-element-parse-secondary-string
-                    scheduled '(timestamp)))
-               (repeater (org-element-property :repeater-type ts))
-               (time (org-timestamp-to-time ts)))
-          (when (and repeater
-                     (time-less-p (current-time) time))
-            (or (outline-next-heading) (point-max)))))))
 
   (setq org-agenda-custom-commands '(("d" "Daily agenda and TODOs"
                                       ((todo "TODO" ((org-agenda-overriding-header "Inbox")
@@ -1326,68 +1389,6 @@ these tasks will be hidden."
   ;; NOTE: from my own fork of org
   (setq org-agenda-skip-timestamp-if-scheduled-repeater t)
 
-  (defun my/time-grid-override (func list ndays todayp)
-    "Show time grid items during scheduled blocks with org-scheduled face."
-    (let* (
-           (time-grid-list (nth 1 org-agenda-time-grid))
-           (time-grid-interval (float (- (nth 1 time-grid-list) (nth 0 time-grid-list))))
-           (scheduled-times (mapcan #'(lambda (el)
-                                        ;; only consider items with a scheduled time
-                                        (if (and el (get-text-property 0 'time-of-day el))
-                                            ;; get all scheduled items as pairs of (start time, end time)
-                                            ;; end time is rounded to nearest time-grid-interval
-                                            ;; all times are in minutes since midnight
-                                            (let* ((time-num (get-text-property 0 'time-of-day el))
-                                                   (duration (or (get-text-property 0 'duration el) 0))
-                                                   (time-in-minutes (+ (* (/ time-num 100) 60) (mod time-num 100)))
-                                                   (time-end (+ time-in-minutes duration))
-                                                   (round-up #'(lambda (num)
-                                                                 "Like round, but always round up from 0.5"
-                                                                 (if (< (- (abs (- num (round num))) 0.5) 0.000001)
-                                                                     (ceiling num)
-                                                                   (round num))))
-                                                   (time-end-rounded (* (funcall round-up (/ time-end time-grid-interval)) time-grid-interval)))
-                                              (list (list time-in-minutes time-end-rounded)))))
-                                    list))
-           (additional (mapcan #'(lambda (time)
-                                   (let ((time-in-minutes (+ (* (/ time 100) 60) (mod time 100))))
-                                     ;; check if this time-grid item is near a scheduled item
-                                     (if-let (cur-scheduled (cl-find-if
-                                                             #'(lambda (scheduled)
-                                                                 (let* ((sched-start (nth 0 scheduled))
-                                                                        (sched-end (nth 1 scheduled)))
-                                                                   ;; only show during scheduled time
-                                                                   (and (> time-in-minutes sched-start)
-                                                                        (< time-in-minutes sched-end))))
-                                                             scheduled-times))
-                                         ;; don't show this time-grid if it's the start of another scheduled item since the
-                                         ;; scheduled item itself takes up a line
-                                         (unless (cl-some #'(lambda (scheduled)
-                                                              (let* ((sched-start (nth 0 scheduled))
-                                                                     (sched-end (nth 1 scheduled)))
-                                                                (= time-in-minutes sched-start)))
-                                                          scheduled-times)
-                                           (let* ((rawtimestr (replace-regexp-in-string " " "0" (format "%04s" time)))
-                                                  (timestr (concat (substring rawtimestr 0 -2) ":" (substring rawtimestr -2)))
-                                                  ;; show a different char for the last time-grid item for a particular scheduled item
-                                                  (indicator-char (if-let ((end (nth 1 cur-scheduled))
-                                                                           (end-diff (- end time-in-minutes))
-                                                                           (diff-in-range (and (>= end-diff 0)
-                                                                                               (<= end-diff time-grid-interval))))
-                                                                      "┘"
-                                                                    "│"))
-                                                  (newel (org-agenda-format-item indicator-char (nth 3 org-agenda-time-grid)
-                                                                                 nil "" nil timestr)))
-                                             (put-text-property 2 (length newel) 'face 'org-scheduled newel)
-                                             (list newel))))))
-                               ;; needs to be the same text as time grid to get formatted correctly
-                               (nth 1 org-agenda-time-grid)))
-           (newlist (append additional list)))
-      ;; call the original function (org-agenda-add-time-grid-maybe)
-      (apply (cons func (list
-                         ;; use the added list if we are using a time grid
-                         (if org-agenda-use-time-grid newlist list)
-                         ndays todayp)))))
 
   (advice-add 'org-agenda-add-time-grid-maybe :around #'my/time-grid-override)
 
@@ -1568,111 +1569,111 @@ the user intended to have for rescheduling an item from the agenda."
     "hTt" #'profiler-stop
     "hTr" #'profiler-report))
 
-(use-package beancount
-  :config
+(defun +beancount/balance ()
+  "Display a balance report with bean-report (bean-report bal)."
+  (interactive)
+  (let (compilation-read-command)
+    (beancount--run "bean-report" buffer-file-name "bal")))
 
-  ;; Defined in ~/.emacs.d/modules/lang/beancount/autoload.el
-
-  (defun +beancount/balance ()
-    "Display a balance report with bean-report (bean-report bal)."
-    (interactive)
-    (let (compilation-read-command)
-      (beancount--run "bean-report" buffer-file-name "bal")))
-
-  (defun my/presorted-completion-table (completions)
-    "Return a completion table sorted by the order of the completions.
+(defun my/presorted-completion-table (completions)
+  "Return a completion table sorted by the order of the completions.
 
 Requires lexical binding to be enabled."
-    (lambda (string pred action)
-      (if (eq action 'metadata)
-          `(metadata (display-sort-function . ,#'identity))
-        (complete-with-action action completions string pred))))
+  (lambda (string pred action)
+    (if (eq action 'metadata)
+        `(metadata (display-sort-function . ,#'identity))
+      (complete-with-action action completions string pred))))
 
-  (defun +beancount/clone-transaction (arg)
-    "Clones a transaction to just beneath the current transaction.
+(defun +beancount/clone-transaction (arg)
+  "Clones a transaction to just beneath the current transaction.
 
 Updates the date to the date of the previous transaction, unless at
 the end of the buffer, in which case use today's date. Or, with a
 prefix arg, updates the date to today.
 
 Transactions must be separated by a blank line."
-    (interactive "P")
-    (let* ((start-date-regex "^[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}")
-           (transaction-regex (concat start-date-regex " [!*] "))
-           (use-today-date (or arg (eobp))))
-      (save-restriction
-        (widen)
-        (when-let ((transaction
-                    (completing-read
-                     "Clone transaction: "
-                     (my/presorted-completion-table (reverse (string-lines (buffer-string))))
-                     (apply-partially #'string-match-p transaction-regex)
-                     t)))
-          (let* ((transaction
-                  (save-excursion
-                    (goto-char (point-min))
-                    (re-search-forward (concat "^" (regexp-quote transaction)))
-                    (buffer-substring-no-properties
-                     (save-excursion
-                       (beancount-goto-transaction-begin)
-                       (re-search-forward " [!*] ")
-                       (point))
-                     (save-excursion
-                       (beancount-goto-transaction-end)
-                       (point)))))
-                 (previous-date
-                  (save-excursion
-                    (forward-line)
-                    (re-search-backward start-date-regex nil t)
-                    (buffer-substring-no-properties
-                     (point)
-                     (re-search-forward start-date-regex))))
-                 (today-date
-                  (beancount--format-date (current-time)))
-                 (date (if use-today-date
-                           today-date
-                         previous-date)))
-            (re-search-forward "^$")
-            (newline)
-            (insert date " ! " transaction)
-            ;; go to the amount on the last line of the transaction
-            (forward-line -1)
-            (re-search-forward "  " nil t)
-            (re-search-forward "[0-9]" nil t)
-            (backward-char))))))
+  (interactive "P")
+  (let* ((start-date-regex "^[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}")
+         (transaction-regex (concat start-date-regex " [!*] "))
+         (use-today-date (or arg (eobp))))
+    (save-restriction
+      (widen)
+      (when-let ((transaction
+                  (completing-read
+                   "Clone transaction: "
+                   (my/presorted-completion-table (reverse (string-lines (buffer-string))))
+                   (apply-partially #'string-match-p transaction-regex)
+                   t)))
+        (let* ((transaction
+                (save-excursion
+                  (goto-char (point-min))
+                  (re-search-forward (concat "^" (regexp-quote transaction)))
+                  (buffer-substring-no-properties
+                   (save-excursion
+                     (beancount-goto-transaction-begin)
+                     (re-search-forward " [!*] ")
+                     (point))
+                   (save-excursion
+                     (beancount-goto-transaction-end)
+                     (point)))))
+               (previous-date
+                (save-excursion
+                  (forward-line)
+                  (re-search-backward start-date-regex nil t)
+                  (buffer-substring-no-properties
+                   (point)
+                   (re-search-forward start-date-regex))))
+               (today-date
+                (beancount--format-date (current-time)))
+               (date (if use-today-date
+                         today-date
+                       previous-date)))
+          (re-search-forward "^$")
+          (newline)
+          (insert date " ! " transaction)
+          ;; go to the amount on the last line of the transaction
+          (forward-line -1)
+          (re-search-forward "  " nil t)
+          (re-search-forward "[0-9]" nil t)
+          (backward-char))))))
 
-  (defun +beancount/clone-this-transaction (&optional arg)
-    "Clones the transaction at point to the bottom of the ledger.
+(defun +beancount/clone-this-transaction (&optional arg)
+  "Clones the transaction at point to the bottom of the ledger.
 
     Updates the date to today."
-    (interactive "P")
-    (if (and (not arg) (looking-at-p "^$"))
-        (call-interactively #'+beancount/clone-transaction)
-      (save-restriction
-        (widen)
-        (let ((transaction
-               (buffer-substring-no-properties
-                (save-excursion
-                  (beancount-goto-transaction-begin)
-                  (re-search-forward " [!*] " nil t)
-                  (point))
-                (save-excursion
-                  (beancount-goto-transaction-end)
-                  (point)))))
-          (goto-char (point-max))
-          (delete-blank-lines)
-          (newline)
-          (beancount-insert-date)
-          (insert " ! ")
-          (insert transaction)))))
+  (interactive "P")
+  (if (and (not arg) (looking-at-p "^$"))
+      (call-interactively #'+beancount/clone-transaction)
+    (save-restriction
+      (widen)
+      (let ((transaction
+             (buffer-substring-no-properties
+              (save-excursion
+                (beancount-goto-transaction-begin)
+                (re-search-forward " [!*] " nil t)
+                (point))
+              (save-excursion
+                (beancount-goto-transaction-end)
+                (point)))))
+        (goto-char (point-max))
+        (delete-blank-lines)
+        (newline)
+        (beancount-insert-date)
+        (insert " ! ")
+        (insert transaction)))))
 
-  (defun +beancount/fava-stop ()
-    "Stop the fava server."
-    (interactive)
-    (when beancount--fava-process
-      (delete-process beancount--fava-process)
-      (setq beancount--fava-process nil)
-      (message "Fava process killed")))
+(defun +beancount/fava-stop ()
+  "Stop the fava server."
+  (interactive)
+  (when beancount--fava-process
+    (delete-process beancount--fava-process)
+    (setq beancount--fava-process nil)
+    (message "Fava process killed")))
+
+(use-package beancount
+  :config
+
+  ;; Defined in ~/.emacs.d/modules/lang/beancount/autoload.el
 
   (general-define-key
    :prefix my-leader
@@ -1703,6 +1704,26 @@ Transactions must be separated by a blank line."
   :config
   (solaire-global-mode +1))
 
+(defun my/copilot--get-source (orig-fun &rest args)
+  "Advice to disable warnings"
+  (let ((warning-minimum-level :emergency))
+    (apply orig-fun args)))
+
+;; Sometimes, the copilot-balancer-debug-buffer will be deleted and
+;; the copilot-balancer--debug function will error. I override the
+;; function and catch the "Selecting deleted buffer" error,
+;; recreating the buffer if necessary
+(defun my/copilot-balancer--debug-wrapper (func &rest args)
+  "Advice to catch error when debug buffer is deleted"
+  (condition-case err
+      (apply func args)
+    (error
+     (if (string= (cadr err) "Selecting deleted buffer")
+         (progn
+           (setq copilot-balancer-debug-buffer (get-buffer-create "*copilot-balancer-debug*"))
+           (apply func args))
+       (signal (car err) (cdr err))))))
+
 (use-package copilot
   :straight (:host github :repo "copilot-emacs/copilot.el" :files ("*.el"))
   :hook (prog-mode . copilot-mode)
@@ -1715,10 +1736,6 @@ Transactions must be separated by a blank line."
   ;; to reduce memory use (can increase for debugging)
   (setq copilot-log-max 50)
 
-  (defun my/copilot--get-source (orig-fun &rest args)
-    "Advice to disable warnings"
-    (let ((warning-minimum-level :emergency))
-      (apply orig-fun args)))
   (advice-add #'copilot--get-source :around #'my/copilot--get-source)
 
   (add-to-list 'copilot-indentation-alist '(prog-mode 2))
@@ -1726,25 +1743,17 @@ Transactions must be separated by a blank line."
   (add-to-list 'copilot-indentation-alist '(text-mode 2))
   (add-to-list 'copilot-indentation-alist '(emacs-lisp-mode 2))
   (add-to-list 'copilot-indentation-alist '(vimrc-mode 2))
-
-  ;; Sometimes, the copilot-balancer-debug-buffer will be deleted and
-  ;; the copilot-balancer--debug function will error. I override the
-  ;; function and catch the "Selecting deleted buffer" error,
-  ;; recreating the buffer if necessary
-  (defun my/copilot-balancer--debug-wrapper (func &rest args)
-    "Advice to catch error when debug buffer is deleted"
-    (condition-case err
-        (apply func args)
-      (error
-       (if (string= (cadr err) "Selecting deleted buffer")
-           (progn
-             (setq copilot-balancer-debug-buffer (get-buffer-create "*copilot-balancer-debug*"))
-             (apply func args))
-         (signal (car err) (cdr err))))))
   (advice-add #'copilot-balancer--debug :around #'my/copilot-balancer--debug-wrapper)
   )
 
 (use-package magit)
+
+;; add indicator to mode line only for vterm mode that shows value
+;; of evil-collection-vterm-send-escape-to-vterm-p
+(defun my/vterm-send-escape-indicator ()
+  (if (and (eq major-mode 'vterm-mode)
+           evil-collection-vterm-send-escape-to-vterm-p)
+      " <esc>"))
 
 (use-package vterm
   :after evil-collection
@@ -1807,12 +1816,6 @@ Transactions must be separated by a blank line."
   ;; counterintuitively, this actually stops the cursor from moving back when set to t
   (setq evil-collection-vterm-move-cursor-back t)
 
-  ;; add indicator to mode line only for vterm mode that shows value
-  ;; of evil-collection-vterm-send-escape-to-vterm-p
-  (defun my/vterm-send-escape-indicator ()
-    (if (and (eq major-mode 'vterm-mode)
-             evil-collection-vterm-send-escape-to-vterm-p)
-        " <esc>"))
   (add-to-list 'mode-line-position
                '(:eval (my/vterm-send-escape-indicator))
                :append)
@@ -1957,6 +1960,10 @@ fd 0 to something different than fd 1 and 2."
 (setq treesit-language-source-alist
       '((typst "https://github.com/uben0/tree-sitter-typst")))
 
+(defun my-typst-company-setup ()
+  "Ensure dabbrev is available in Typst buffers alongside LSP."
+  (when (derived-mode-p 'typst-ts-mode)
+    (setq-local company-backends '((company-dabbrev company-capf)))))
 
 (use-package company
   :ensure t
@@ -1988,11 +1995,6 @@ fd 0 to something different than fd 1 and 2."
                                           (_              nil)))
         company-selection-wrap-around t
         company-dabbrev-downcase nil)
-
-  (defun my-typst-company-setup ()
-    "Ensure dabbrev is available in Typst buffers alongside LSP."
-    (when (derived-mode-p 'typst-ts-mode)
-      (setq-local company-backends '((company-dabbrev company-capf)))))
 
   (add-hook 'eglot-managed-mode-hook #'my-typst-company-setup)
   )
