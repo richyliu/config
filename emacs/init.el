@@ -448,14 +448,30 @@ With non-nil prefix INCLUDE-ROOT, also include the project's root."
    "q" #'quit-window)
   )
 
-(defun my/toggle-window-maximize ()
-  "Temporarily maximize the buffer"
+(defvar my/zen-saved-config nil
+  "Storage for the window configuration before entering zen mode.")
+
+(defun my/toggle-zen ()
+  "Toggle a centered, narrowed, and maximized 'zen' workspace."
   (interactive)
-  (if (= 1 (length (window-list)))
-      (jump-to-register '_)
-    (progn
-      (window-configuration-to-register '_)
-      (delete-other-windows))))
+  (if my/zen-saved-config
+      ;; EXIT ZEN MODE
+      (progn
+        (when (and (derived-mode-p 'org-mode) (buffer-narrowed-p))
+          (widen))
+        (set-window-configuration my/zen-saved-config)
+        (setq-local visual-fill-column-center-text nil)
+        (setq my/zen-saved-config nil)
+        (message "Zen mode deactivated."))
+    ;; ENTER ZEN MODE
+    (setq my/zen-saved-config (current-window-configuration))
+    (when (derived-mode-p 'org-mode)
+      (org-narrow-to-subtree))
+    (delete-other-windows)
+    (let* ((width (window-total-width))
+           (margin (max 0 (/ (- width 80) 2))))
+      (set-window-margins nil margin margin))
+    (message "Zen mode activated. Focus on the work.")))
 
 (use-package evil
   :demand t
@@ -484,7 +500,7 @@ With non-nil prefix INCLUDE-ROOT, also include the project's root."
     "wv" #'evil-window-vsplit
     "ws" #'evil-window-split
     "wd" #'evil-window-delete
-    "wz" #'my/toggle-window-maximize
+    "wz" #'my/toggle-zen
     )
   (general-define-key
     :kemaps 'minibuffer-mode-map
