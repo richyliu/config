@@ -42,10 +42,17 @@
 
 (setq use-package-always-ensure t)
 
+(add-to-list 'load-path "~/config/emacs/")
+
 
 (use-package delight
   :demand t)
 
+;; Install Company for the UI popup
+(use-package company)
+
+(straight-use-package '(eglot :type built-in))
+(straight-use-package '(jsonrpc :type built-in))
 
 (use-package emacs
   :init
@@ -79,7 +86,14 @@
     (setq mac-control-modifier 'control))
 
   (setq create-lockfiles nil
-        make-backup-files nil
+        backup-directory-alist `(("." . "~/.emacs.d/backups/")) ; Keep backups in one place
+        backup-by-copying t    ; Don't clobber symlinks
+        kept-new-versions 3    ; Keep this many newest versions
+        kept-old-versions 0    ; Don't keep the oldest
+        delete-old-versions t  ; Clean up the middle versions
+        version-control t      ; Use numbered backups
+        delete-by-moving-to-trash t
+        vc-make-backup-files t
         vc-follow-symlinks nil
         compilation-window-height 20
         auto-save-default t
@@ -98,6 +112,9 @@
                     (concat auto-save-list-file-prefix "tramp-\\2") t)
               (list ".*" auto-save-list-file-prefix t)))
 
+  (savehist-mode 1)
+  (add-to-list 'savehist-additional-variables 'register-alist)
+
   (set-frame-font (font-spec
                    :family "iosevka term ss07"
                    :width 'expanded
@@ -108,7 +125,7 @@
   (add-to-list 'safe-local-variable-values '(eval auto-revert-mode 1))
   (add-to-list 'safe-local-variable-values '(display-line-numbers . visual))
 
-  (setq display-line-numbers-type 'relative)
+  (setq display-line-numbers-type 'visual)
   (add-hook 'prog-mode-hook #'display-line-numbers-mode)
   (add-hook 'text-mode-hook #'display-line-numbers-mode)
 
@@ -146,10 +163,13 @@
   (doom-themes-org-config)
   )
 
+
 (defun my/kill-all ()
   "Kill all buffers in buffer-list and cd back to home"
   (interactive)
-  (tramp-cleanup-all-connections)
+  ;; only clean up tramp if it's already loaded, otherwise it complains about symbol definition
+  (when (fboundp 'tramp-cleanup-all-connections)
+    (tramp-cleanup-all-connections))
   (and (fboundp 'eglot-shutdown-all)
        ;; shutdown all eglot servers
        (eglot-shutdown-all))
@@ -423,7 +443,8 @@ With non-nil prefix INCLUDE-ROOT, also include the project's root."
         evil-want-Y-yank-to-eol t
         evil-symbol-word-search t
         evil-search-module 'evil-search
-        evil-undo-system 'undo-redo)
+        evil-undo-system 'undo-redo
+        evil-respect-visual-line-mode t)
   (defun my/toggle-window-maximize ()
     "Temporarily maximize the buffer"
     (interactive)
@@ -704,6 +725,40 @@ some useful ones, such as Org Agenda and vterm"
     (let ((browse-url-browser-function browse-url-secondary-browser-function))
       (org-open-at-point)))
 
+  (defun my/org-copy-block-content ()
+    "Copy the content of the current Org block, stripping leading indentation."
+    (interactive)
+    (let* ((element (org-element-at-point))
+           (type (car element))
+           (allowed-blocks '(src-block example-block quote-block center-block verse-block)))
+      (if (memq type allowed-blocks)
+          (let* ((post-affiliated (org-element-property :post-affiliated element))
+                 ;; For blocks, the content starts after the #+BEGIN line
+                 (begin (save-excursion
+                          (goto-char post-affiliated)
+                          (forward-line 1)
+                          (point)))
+                 ;; The content ends before the #+END line
+                 (end (save-excursion
+                        (goto-char (org-element-property :end element))
+                        (skip-chars-backward " \r\t\n")
+                        (forward-line 0)
+                        (point))))
+            (if (and begin end (< begin end))
+                (let ((raw-content (buffer-substring-no-properties begin end)))
+                  (with-temp-buffer
+                    (insert raw-content)
+                    ;; 1. Remove the Org-specific escape commas
+                    (org-unescape-code-in-region (point-min) (point-max))
+                    ;; 2. Strip the leading indentation
+                    (org-do-remove-indentation)
+                    (copy-region-as-kill (point-min) (point-max))
+                    (message "%s content (length %d) unescaped and copied." 
+                             (capitalize (symbol-name type))
+                             (length (current-kill 0)))))
+              (user-error "Block is empty")))
+        (user-error "Not in a supported block (current: %s)" type))))
+
   (general-define-key
     :prefix my-leader
     :non-normal-prefix my-insert-leader
@@ -725,9 +780,19 @@ some useful ones, such as Org Agenda and vterm"
     "mt" #'org-todo
     "mx" #'org-toggle-checkbox
 
-    ;; "msb" #'org-tree-to-indirect-buffer
     "msc" #'org-clone-subtree-with-time-shift
-    "msd" #'org-cut-subtree
+    "msd" (lambda ()
+            (interactive)
+            (call-interactively #'org-cut-subtree)
+            (let* ((text (current-kill 0 t))
+                   (new-text (propertize text 'yank-handler '(evil-yank-line-handler))))
+              (kill-new new-text t)))
+    "msy" (lambda ()
+            (interactive)
+            (call-interactively #'org-copy-subtree)
+            (let* ((text (current-kill 0 t))
+                   (new-text (propertize text 'yank-handler '(evil-yank-line-handler))))
+              (kill-new new-text t)))
     "msh" #'org-promote-subtree
     "msj" #'org-move-subtree-down
     "msk" #'org-move-subtree-up
@@ -737,6 +802,10 @@ some useful ones, such as Org Agenda and vterm"
     "msA" #'org-archive-subtree-default
     "msN" #'widen
     "msP" #'my/org-copy-pair-inc-date
+
+    "mba" #'org-insert-structure-template
+    "mbe" #'org-edit-special
+    "mby" #'my/org-copy-block-content
 
     "mrr" #'org-refile
 
@@ -767,7 +836,12 @@ some useful ones, such as Org Agenda and vterm"
   (general-define-key
     :states '(motion insert)
     :keymaps 'org-mode-map
-    "s-k" #'org-insert-link)
+    "s-k" #'org-insert-link
+    "C-c C-'" #'org-edit-special)
+  (general-define-key
+    :keymaps 'org-src-mode-map
+    "C-c C-'" #'org-edit-src-exit
+    "C-c C-c" #'org-edit-src-exit)
   (general-define-key
     :states 'motion
     :keymaps 'org-agenda-mode-map
@@ -793,6 +867,9 @@ some useful ones, such as Org Agenda and vterm"
     "C-j" #'(lambda () (interactive) (calendar-forward-week 1)))
 
   :config
+  (require 'ox-md)
+  (require 'ox-org)
+
   ;; BEGIN from doom emacs
 
   (defvar +org-habit-graph-padding 2
@@ -925,10 +1002,12 @@ some useful ones, such as Org Agenda and vterm"
   (setq org-startup-indented t)
   (setq org-special-ctrl-a/e t)
   (setq org-blank-before-new-entry nil)
+  (setq org-src-content-indentation 0)
 
   (setq org-indirect-buffer-display 'current-window
         org-enforce-todo-dependencies t
         org-checkbox-hierarchical-statistics nil
+        org-hierarchical-todo-statistics nil
         org-entities-user
         '(("flat"  "\\flat" nil "" "" "266D" "♭")
           ("sharp" "\\sharp" nil "" "" "266F" "♯"))
@@ -968,10 +1047,19 @@ some useful ones, such as Org Agenda and vterm"
   (setq org-agenda-files '("inbox.org" "agenda.org"))
   (setq org-agenda-prefix-format '((agenda . " %i %?-12t%-3s%2e ")
                                    (todo . " %i%3e ")
-                                   (tags . " %i")
+                                   (tags . " %i%3e ")
                                    (search . " %i")))
-  (setq org-agenda-time-grid '((daily today remove-match)
-                               (900 930 1000 1030 1100 1130 1200 1230 1300 1330 1400 1430 1500 1530 1600 1630 1700 1730 1800 1830 1900 1930 2000 2030 2100 2130 2200 2230 2300 2330)
+  (setq org-time-stamp-rounding-minutes '(0 15))
+  (setq org-agenda-time-grid `((daily weekly remove-match)
+                               ,(let* ((interval 30)
+                                       (start-minutes (* 8 60))    ; start at 08:00
+                                       (end-minutes (* 24 60))     ; end at 24:00
+                                       times)
+                                  (cl-loop for mins from start-minutes below end-minutes by interval
+                                           do (let ((hour (/ mins 60))
+                                                    (minute (mod mins 60)))
+                                                (push (+ (* hour 100) minute) times)))
+                                  (nreverse times))
                                " ┄┄┄┄┄ " ""))
   (setq org-agenda-scheduled-leaders '("S:" "!%d"))
   (setq org-agenda-deadline-leaders '("D:" "-%d" "%2dd ago: "))
@@ -979,12 +1067,11 @@ some useful ones, such as Org Agenda and vterm"
   (setq org-agenda-window-setup 'current-window)
   (setq org-deadline-warning-days 7)
   (setq org-modules '(org-habit))
-  (setq org-time-stamp-rounding-minutes '(0 30))
   (setq org-habit-show-habits-only-for-today nil)
   (setq org-habit-show-done-always-green t)
   (setq org-habit-following-days 3)
   (setq +org-habit-graph-window-ratio 0.2)
-  (setq org-extend-today-until 3)
+  (setq org-extend-today-until 3) ; show items scheduled today until 3am the next day
   (setq org-use-effective-time t)
   (setq org-M-RET-may-split-line '((default . t)))
 
@@ -1107,50 +1194,53 @@ round up. Otherwise, round down."
         (progn (funcall check-spaced-repetition-fn) (funcall oldfun done-word)))))
   (advice-add 'org-auto-repeat-maybe :around #'my/org-spaced-repetition)
 
-  (setq org-agenda-sorting-strategy '((agenda user-defined-up deadline-up priority-down scheduled-up todo-state-up effort-up habit-down)
+  (setq org-agenda-sorting-strategy '((agenda user-defined-up deadline-up priority-down scheduled-up todo-state-up tag-up effort-up habit-down)
                                       (todo todo-state-up priority-down deadline-up ts-up effort-up tag-up)
                                       (tags priority-down todo-state-up deadline-up ts-up effort-up)
                                       (search scheduled-up priority-down todo-state-up effort-up)))
   (setq org-agenda-cmp-user-defined #'my/org-agenda-custom-sort)
 
+  (defun my/org-agenda-skip-special ()
+    "Skip several kinds of agenda entries.
+
+Skip habits.
+
+Skip tasks with a scheduled repeater that have the first scheduled
+occurrence in the future. This way, any past active timestamps from
+these tasks will be hidden."
+    (let* ((scheduled (org-entry-get (point) "SCHEDULED"))
+           (todo-state (org-get-todo-state)))
+      (when scheduled
+        (let* ((ts (org-element-parse-secondary-string
+                    scheduled '(timestamp)))
+               (repeater (org-element-property :repeater-type ts))
+               (time (org-timestamp-to-time ts)))
+          (when (and repeater
+                     (time-less-p (current-time) time))
+            (or (outline-next-heading) (point-max)))))))
+
   (setq org-agenda-custom-commands '(("d" "Daily agenda and TODOs"
                                       ((todo "TODO" ((org-agenda-overriding-header "Inbox")
                                                      (org-agenda-files '("inbox.org")))) 
+                                       (todo "PROJ" ((org-agenda-overriding-header "Projects")
+                                                     (org-agenda-files '("agenda.org"))
+                                                     (org-agenda-dim-blocked-tasks nil)))
                                        (agenda "" ((org-agenda-overriding-header "3 days of non-HABTs")
                                                    (org-agenda-span 3)
                                                    (org-agenda-start-day "0d")
                                                    (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo '("HABT")))))
-                                       (tags "fun"
-                                             ;; see https://orgmode.org/manual/Matching-tags-and-properties.html for syntax
-                                             ((org-agenda-overriding-header "For fun")
-                                              (org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled 'nottodo '("TODO")))
-                                              (org-agenda-dim-blocked-tasks nil)))
-                                       (todo "PROJ" ((org-agenda-overriding-header "Fun projects")
-                                                     (org-agenda-files '("agenda.org"))
-                                                     (org-agenda-dim-blocked-tasks nil)))
                                        ))
-                                     ("p" "Projects and for fun"
-                                      ((todo "PROJ" ((org-agenda-overriding-header "Projects")
-                                                     (org-agenda-files '("agenda.org"))
-                                                     (org-agenda-dim-blocked-tasks nil)))
-                                       (tags "fun"
-                                             ;; see https://orgmode.org/manual/Matching-tags-and-properties.html for syntax
-                                             ((org-agenda-overriding-header "For fun")
-                                              (org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled 'nottodo '("TODO")))
-                                              (org-agenda-dim-blocked-tasks 'invisible)))
+                                     ("u" "Unscheduled TODOs and pending projects"
+                                      ((todo "TODO|PROJ"
+                                             ;; need to also select PROJ so that its children TODOs can be correctly hidden
+                                             ((org-agenda-overriding-header "Unscheduled TODOs (excluding subtasks)")
+                                              (org-agenda-files '("agenda.org"))
+                                              (org-agenda-todo-list-sublevels nil)
+                                              (org-agenda-dim-blocked-tasks 'invisible)
+                                              (org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))))
                                        (todo "PEND" ((org-agenda-overriding-header "Pending projects")
                                                      (org-agenda-dim-blocked-tasks nil)
                                                      ))))
-                                     ("g" "Time grid and TODOs for 3 days with effort sums"
-                                      ((agenda "" ((org-agenda-span 1)
-                                                   (org-agenda-start-day "0d")
-                                                   (org-agenda-dim-blocked-tasks nil)))
-                                       (agenda "" ((org-agenda-span 1)
-                                                   (org-agenda-start-day "+1d")
-                                                   (org-agenda-dim-blocked-tasks nil)))
-                                       (agenda "" ((org-agenda-span 1)
-                                                   (org-agenda-start-day "+2d")
-                                                   (org-agenda-dim-blocked-tasks nil)))))
                                      ("D" "Daily TODOs for a week"
                                       ((agenda "" ((org-agenda-overriding-header "Nonhabits")
                                                    (org-agenda-span 8)
@@ -1158,48 +1248,32 @@ round up. Otherwise, round down."
                                                    (org-agenda-dim-blocked-tasks nil)
                                                    (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo '("HABT")))
                                                    (org-agenda-use-time-grid nil)))))
-                                     ("c" "Calendar"
-                                      ((agenda "" ((org-agenda-overriding-header "Calendar")
-                                                   (org-agenda-span 7)
+                                     ("c" "Calendar (excluding LOOPs)"
+                                      ((agenda "" ((org-agenda-overriding-header "Calendar (excluding repeats)")
+                                                   (org-agenda-span 14)
                                                    (org-agenda-start-day "0d")
                                                    (org-agenda-dim-blocked-tasks nil)
-                                                   (org-agenda-use-time-grid nil)
-                                                   (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo '("HABT" "LOOP")))))))
-                                     ("x" "test"
-                                      ((agenda "" ((org-agenda-span 1)
-                                                   (org-agenda-start-day "0d")
+                                                   (org-agenda-show-future-repeats nil)
                                                    (org-agenda-use-time-grid nil)))))
-                                     ("tp" "Project TODOs"
-                                      ((tags-todo "projects/TODO"
-                                                  ((org-agenda-overriding-header "Project TODOs")))
-                                       (todo "PROJ" ((org-agenda-overriding-header "Projects")
-                                                     (org-agenda-dim-blocked-tasks nil)))))
-                                     ("te" "Entertainment"
-                                      ((tags-todo "entertainment/TODO"
-                                                  ((org-agenda-overriding-header "Entertainment TODOs")))))
-                                     ("ta" "Fine Arts"
-                                      ((tags-todo "arts/TODO"
-                                                  ((org-agenda-overriding-header "Fine Arts TODOs")))))
-                                     ("w" "Week-long daily agenda"
-                                      ((agenda "" ((org-agenda-span 1) (org-agenda-start-day "0d")))
-                                       (agenda "" ((org-agenda-span 1) (org-agenda-start-day "+1d")))
-                                       (agenda "" ((org-agenda-span 1) (org-agenda-start-day "+2d")))
-                                       (agenda "" ((org-agenda-span 1) (org-agenda-start-day "+3d")))
-                                       (agenda "" ((org-agenda-span 1) (org-agenda-start-day "+4d")))
-                                       (agenda "" ((org-agenda-span 1) (org-agenda-start-day "+5d")))
-                                       (agenda "" ((org-agenda-span 1) (org-agenda-start-day "+6d")))
-                                       (agenda "" ((org-agenda-span 1) (org-agenda-start-day "+7d")))))))
+                                     ("A" "Including archive"
+                                      ((agenda "" ((org-agenda-span 8)
+                                                   (org-agenda-start-day "-7d")
+                                                   (org-agenda-dim-blocked-tasks nil)
+                                                   (org-agenda-files (append org-agenda-files (list "agenda_archive.org")))
+                                                   (org-agenda-include-inactive-timestamps t)
+                                                   (org-agenda-skip-timestamp-if-scheduled-repeater nil)))))))
 
   (setq org-log-into-drawer t)
   (setq +org-capture-todo-file (expand-file-name "inbox.org" org-directory))
   (setq +org-capture-journal-file (expand-file-name "journal.org" org-directory))
-  (setq org-capture-templates '(("T" "Immediate todo" entry
-                                 (file +org-capture-todo-file)
-                                 "* TODO %?\n%U\n%i")
+  (setq org-capture-templates '(("T" "Temporary todo" entry
+                                 (file+olp "agenda.org" "Temporary")
+                                 "* TEMP %?\nSCHEDULED: %t\n%U\n%i")
                                 ("j" "Journal" entry
                                  (file+olp+datetree +org-capture-journal-file)
                                  "* %U %?\n%i" :prepend t)))
   (setq org-archive-location "agenda_archive.org::")
+  (setq org-archive-save-context-info '(olpath itags))
 
   (setq org-use-fast-todo-selection 'expert)
 
@@ -1220,13 +1294,23 @@ round up. Otherwise, round down."
                                  ("SOMEDAY" . +org-todo-someday)
                                  ("KILL" . org-agenda-dimmed-todo-face)
                                  ("NOTE" . org-agenda-dimmed-todo-face)))
+  (setq org-log-note-headings '((done . "CLOSING NOTE %t")
+                                (state . "State %s from %S %t%c")
+                                (note . "Note taken on %t")
+                                (reschedule . "Rescheduled from %S on %t")
+                                (delschedule . "Not scheduled, was %S on %t")
+                                (redeadline . "New deadline from %S on %t")
+                                (deldeadline . "Removed deadline, was %S on %t")
+                                (refile . "Refiled on %t")
+                                (clock-out . "")))
+  ;; NOTE: from my own fork of org
+  (setq org-agenda-skip-timestamp-if-scheduled-repeater t)
 
   (defun my/time-grid-override (func list ndays todayp)
     "Show time grid items during scheduled blocks with org-scheduled face."
     (let* (
-           ;; How frequent in minutes to have time grid intervals. This must match
-           ;; the times in org-agenda-time-grid
-           (time-grid-interval 30.0)
+           (time-grid-list (nth 1 org-agenda-time-grid))
+           (time-grid-interval (float (- (nth 1 time-grid-list) (nth 0 time-grid-list))))
            (scheduled-times (mapcan #'(lambda (el)
                                         ;; only consider items with a scheduled time
                                         (if (and el (get-text-property 0 'time-of-day el))
@@ -1296,6 +1380,37 @@ round up. Otherwise, round down."
                                 (delq (assoc clipboard-url org-stored-links)
                                       org-stored-links)))))
 
+  (define-advice org--deadline-or-schedule (:around (fn &rest args) my/org-log-reschedule-inherit)
+    "Allow per-entry control over whether rescheduling is logged."
+    (let* ((reschedule (org-entry-get nil "LOG_RESCHEDULE" t)))
+      (let ((org-log-reschedule reschedule))
+        (apply fn args))))
+
+  (define-advice org-agenda-date-later (:around (fn &rest args) my/org-restrict-date-later)
+    "Don't allow org-date-later in agenda to change the time if
+per-entry setting LOG_RESCHEDULE is set to a non-nil value. This
+prevents org-date-later from accidentally bypassing any logging that
+the user intended to have for rescheduling an item from the agenda."
+    (let ((my/org--reschedule ""))
+      (progn 
+        (org-agenda-check-type t 'agenda)
+        (org-agenda-check-no-diary)
+        (let* ((marker (or (org-get-at-bol 'org-marker)
+                           (org-agenda-error)))
+               (buffer (marker-buffer marker))
+               (pos (marker-position marker))
+               cdate today)
+          (org-with-remote-undo buffer
+            (with-current-buffer buffer
+              (widen)
+              (goto-char pos)
+              (setq my/org--reschedule (org-entry-get nil "LOG_RESCHEDULE" t))))))
+      (let ((reschedule-nil-p (or (null my/org--reschedule) (string= my/org--reschedule "nil"))))
+        (if reschedule-nil-p
+            (apply fn args)
+          ;; show an error
+          (user-error "Reschedule this entry directly instead of shifting in the agenda.")))))
+
   (add-hook 'org-mode-hook 'auto-revert-mode)
 
   ;; open pdfs in emacs (with pdf-tools)
@@ -1303,6 +1418,11 @@ round up. Otherwise, round down."
 
   (evil-add-command-properties #'org-up-element :jump t)
   (evil-add-command-properties #'org-agenda-goto :jump t)
+
+  (org-babel-do-load-languages
+   'org-babel-load-languages '((python . t)
+                               (emacs-lisp . t)
+                               (shell . t)))
   )
 
 (use-package evil-nerd-commenter
@@ -1318,20 +1438,32 @@ round up. Otherwise, round down."
 
 (use-package evil-org
   :demand t
+  :straight (evil-org :host github
+                      :repo "doomelpa/evil-org-mode"
+                      ;; don't compile due to issues with evil-org-select-inner-element 
+                      ;; NOTE: be sure ~/.emacs.d/straight/build/evil-org/*.elc files are deleted
+                      :build (:not compile))
   :after org
   :hook (org-mode . evil-org-mode)
+  :hook (org-agenda-mode . evil-org-agenda-mode)
   :config
   (setq evil-org-key-theme '(navigation insert textobjects additional calendar))
   (evil-org-set-key-theme)
   (require 'evil-org-agenda)
   (evil-org-agenda-set-keys)
-                                        ; have to do this to override the default evil-org definitions
+
+  ;; have to do this to override the default evil-org definitions
   (evil-define-key 'normal 'evil-org-mode (kbd "C-<return>") #'+org/insert-item-below)
   (evil-define-key 'normal 'evil-org-mode (kbd "C-S-<return>") #'+org/insert-item-above)
   (evil-define-key 'insert 'evil-org-mode (kbd "C-<return>") #'+org/insert-item-below)
   (evil-define-key 'insert 'evil-org-mode (kbd "C-S-<return>") #'+org/insert-item-above)
   (evil-define-key 'motion 'org-agenda-mode-map "H" #'org-agenda-date-earlier-minutes)
   (evil-define-key 'motion 'org-agenda-mode-map "L" #'org-agenda-date-later-minutes)
+  (evil-define-key 'motion 'org-agenda-mode-map (kbd "C-S-H") #'org-agenda-date-earlier-hours)
+  (evil-define-key 'motion 'org-agenda-mode-map (kbd "C-S-L") #'org-agenda-date-later-hours)
+  ;; (evil-define-key 'motion 'org-agenda-mode-map (kbd "C-J") #'org-agenda-next-item)
+  ;; (evil-define-key 'motion 'org-agenda-mode-map (kbd "C-K") #'org-agenda-previous-item)
+  ;; (evil-define-key 'motion 'org-agenda-mode-map "dd" #'org-agenda-kill)
   )
 
 (use-package evil-surround
@@ -1369,6 +1501,7 @@ round up. Otherwise, round down."
     )
   :config
   (setq magit-delete-by-moving-to-trash nil)
+  (setq magit-diff-refine-hunk 'all)
   ;; :custom-face
   ;; (magit-diff-revision-summary-highlight ((t (:weight bold :inherit magit-section-secondary-heading))))
   ;; (magit-diff-revision-summary ((t (:weight semi-bold :inherit magit-diff-revision-summary-highlight))))
@@ -1750,51 +1883,7 @@ fd 0 to something different than fd 1 and 2."
   :init
   (setq rustic-lsp-setup-p nil))
 
-;;
-;; mode for .pv files (typed pi calculus)
-;;
-
-(defvar proverif-pv-kw '("lemma" "axiom" "restriction" "among" "channel" "choice" "clauses" "const" "def" "diff" "do" "elimtrue" "else" "equation" "equivalence" "event" "expand" "fail" "for" "forall" "foreach" "free" "fun" "get" "if" "implementation" "in" "inj-event" "insert" "let" "letfun" "letproba" "new" "noninterf" "noselect" "not" "nounif" "or" "otherwise" "out" "param" "phase" "pred" "proba" "process" "proof" "public_vars" "putbegin" "query" "reduc" "secret" "select" "set" "suchthat" "sync" "table" "then" "type" "weaksecret" "yield") "ProVerif keywords")
-
-(defvar proverif-pv-builtin '("private" "data" "typeConverter" "reachability" "pv_reachability" "real_or_random" "pv_real_or_random" "memberOptim" "decompData" "decompDataSelect" "block" "attacker" "mess" "maxSubset" "proveAll" "noneSat" "noneVerif" "discardSat" "discardVerif" "instantiateSat" "instantiateVerif" "fullSat" "fullVerif" "removeEvents" "keepEvents" "induction" "noInduction" "precise" "hypothesis" "conclusion" "ignoreAFewTimes" "inductionOn") "ProVerif builtins")
-
-(defvar proverif-pv-kw-regexp (regexp-opt proverif-pv-kw 'words))
-(defvar proverif-pv-builtin-regexp (regexp-opt proverif-pv-builtin 'words))
-
-(defvar proverif-pv-connectives-regexp "\|\|\\|&&\\|->\\|<->\\|<=>\\|<-R\\|<-\\|==>\\|<=\\|!")
-
-(setq proverif-pvKeywords
- `((,proverif-pv-kw-regexp . font-lock-keyword-face)
-   (,proverif-pv-builtin-regexp . font-lock-builtin-face)
-   (,proverif-pv-connectives-regexp . font-lock-reference-face)
-  )
-)
-
-(defvar proverif-pv-mode-syntax-table
-  (let ((st (make-syntax-table)))
-    ;; Define `(* ... *)` style comments
-    (modify-syntax-entry ?\( "()1n" st)   ; '(' is open paren and comment starter
-    (modify-syntax-entry ?\) ")(4n" st)   ; ')' is close paren and comment ender
-    (modify-syntax-entry ?*  ". 23n" st)  ; '*' is comment delimiter (2=start, 3=end)
-    ;; Define word syntax, etc. as needed
-    (modify-syntax-entry ?_ "w" st)
-    st)
-  "Syntax table for `mylang-mode`.")
-
-(define-derived-mode proverif-pv-mode prog-mode
-  :syntax-table proverif-pv-mode-syntax-table
-  (setq font-lock-defaults '(proverif-pvKeywords))
-  (setq mode-name "ProVerif Typed Pi")
-  (setq-local evil-shift-width 2)
-  (setq-local tab-width 2)
-  (setq-local comment-start "(*")
-  (setq-local comment-end "*)")
-  (setq-local comment-start-skip "(\\*+\\s-*")
-  (setq-local comment-end-skip "\\s-*\\*+)"))
-
-
-(setq auto-mode-alist (cons '("\\.pv[l]?$" . proverif-pv-mode) auto-mode-alist))
-(autoload 'proverif-pv-mode "proverif" "Major mode for editing ProVerif code." t)
+(require 'proverif-mode)
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -1803,3 +1892,42 @@ fd 0 to something different than fd 1 and 2."
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
    '("9f297216c88ca3f47e5f10f8bd884ab24ac5bc9d884f0f23589b0a46a608fe14" "88f7ee5594021c60a4a6a1c275614103de8c1435d6d08cc58882f920e0cec65e" default)))
+
+(use-package swift-mode)
+
+(use-package markdown-mode
+  :mode ("\\.md\\'" . gfm-mode)
+  :hook (markdown-mode . (lambda () 
+                           (setq-local evil-shift-width 2)
+                           (setq-local tab-width 2)
+                           (setq-local markdown-list-indent-width 2)))
+  :general
+  (:states 'normal
+   :keymaps 'markdown-mode-map
+   "M-k" #'markdown-move-up
+   "M-j" #'markdown-move-down
+   "s-<up>" #'markdown-up-list
+   "C-<return>" #'(lambda ()
+                    (interactive)
+                    (end-of-line)
+                    (call-interactively #'markdown-insert-list-item) 
+                    (evil-insert-state)))
+  (:states 'insert
+   :keymaps 'markdown-mode-map
+   "C-<return>" #'markdown-insert-list-item))
+
+(use-package typst-ts-mode
+  :straight (:host github :repo "meowking/typst-ts-mode")
+  :custom
+  ;; Enable watch-as-you-type preview if desired
+  (typst-ts-mode-watch-options "--open")
+  :config
+  (with-eval-after-load 'eglot
+    (add-to-list 'eglot-server-programs
+                 '(typst-ts-mode . ("tinymist" "lsp"))))
+
+  (add-hook 'typst-ts-mode-hook #'eglot-ensure))
+
+
+(setq treesit-language-source-alist
+      '((typst "https://github.com/uben0/tree-sitter-typst")))

@@ -7,7 +7,6 @@ autoload zmv
 export PATH="$PATH:$HOME/config/bin"
 
 # Add cargo bin to path
-export PATH="$HOME/.cargo/bin:$PATH"
 
 export PATH=/opt/homebrew/bin:$PATH
 

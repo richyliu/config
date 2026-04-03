@@ -74,3 +74,13 @@ PROMPT=$PROMPT'%{$(vterm_prompt_end)%}'
 . "$HOME/.atuin/bin/env"
 
 eval "$(atuin init zsh --disable-up-arrow)"
+
+# bun completions
+[ -s "/Users/richard/.bun/_bun" ] && source "/Users/richard/.bun/_bun"
+
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+
+# Added by Antigravity
+export PATH="/Users/richard/.antigravity/antigravity/bin:$PATH"

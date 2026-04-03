@@ -9,7 +9,7 @@ Plug 'rickhowe/diffchar.vim'          " Character wise diff
 Plug 'junegunn/fzf.vim'               " Fuzzy finder
 Plug '/opt/homebrew/opt/fzf'          " Needed for fzf vim plugin (M1 homebrew)
 
-Plug 'richyliu/ultisnips'             " Snippet support
+"Plug 'richyliu/ultisnips'             " Snippet support
 Plug 'honza/vim-snippets'             " Provides the snippets
 
 Plug 'tpope/vim-surround'             " For changing surroundings characters
