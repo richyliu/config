@@ -9,7 +9,6 @@ Plug 'rickhowe/diffchar.vim'          " Character wise diff
 Plug 'junegunn/fzf.vim'               " Fuzzy finder
 Plug '/opt/homebrew/opt/fzf'          " Needed for fzf vim plugin (M1 homebrew)
 
-"Plug 'richyliu/ultisnips'             " Snippet support
 Plug 'honza/vim-snippets'             " Provides the snippets
 
 Plug 'tpope/vim-surround'             " For changing surroundings characters
@@ -158,14 +157,6 @@ let g:markdown_fenced_languages = ['rust', 'latex=tex', 'tex', 'bash', 'sh', 'c'
 " R markdown code highlighting
 let g:rmd_fenced_languages = ['r', 'mma', 'tex', 'latex=tex', 'python']
 
-" Ultisnip open edit window in horizontal split
-let g:UltiSnipsEditSplit="vertical"
-" Set default Ultisnip edit directory
-let g:UltiSnipsSnippetStorageDirectoryForUltiSnipsEdit="~/.config/nvim/UltiSnips"
-" Set Ultisnip expand trigger
-let g:UltiSnipsExpandTrigger="<c-e>"
-let g:UltiSnipsJumpForwardTrigger="<c-e>"
-
 " Configure python3 for codi
 let g:codi#interpreters = {
       \ 'python': {
@@ -261,8 +252,6 @@ noremap <leader>o :source %<cr>
 noremap <leader>r :!!<cr>
 " Open vimrc file
 nnoremap <leader>ev :e $MYVIMRC<cr>
-" Open snippets
-nnoremap <leader>es :UltiSnipsEdit<cr>
 " Open file in current folder
 nnoremap <leader>e :e <c-d>
 nnoremap <leader>ee :e <c-d>
@@ -574,17 +563,12 @@ augroup filetype_js
   autocmd Filetype typescriptreact,javascript,typescript,jsx,tsx setlocal tabstop=2
   " replace class with className (for React)
   autocmd Filetype typescriptreact,javascript,typescript,jsx,tsx nnoremap <buffer> <localleader>c :%s/class=/className=/ge<cr>:%s/fill-rule/fillRule/ge<cr>:%s/clip-rule/clipRule/ge<cr>
-  " use correct snippets
-  autocmd Filetype typescriptreact,tsx UltiSnipsAddFiletypes tsx.jsx.javascript
-  autocmd Filetype typescript UltiSnipsAddFiletypes typescript.javascript
-  autocmd Filetype jsx UltiSnipsAddFiletypes jsx.javascript
 augroup END
 
 augroup filetype_svelte
   " invoke prettier to format document
   autocmd Filetype svelte nnoremap <buffer> <localleader>p :Prettier<cr>
   autocmd Filetype svelte setlocal tabstop=2
-  autocmd Filetype svelte UltiSnipsAddFiletypes svelte.javascript
 augroup END
 
 augroup filetype_rs
