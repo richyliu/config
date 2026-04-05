@@ -2040,6 +2040,5 @@ fd 0 to something different than fd 1 and 2."
   (define-advice ibuffer-update (:before (&rest _) my/set-ibuffer-filter-groups)
     (setq ibuffer-filter-groups
           (append
-           '(("Internal" (name . "^\\*.*\\*$"))
-             ("Magit" (name . "magit")))
+           '(("Internal" (name . "^\\*.*\\*$")))
            (ibuffer-project-generate-filter-groups)))))
