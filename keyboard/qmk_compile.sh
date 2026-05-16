@@ -7,4 +7,4 @@ set -ex
 cd "$QMK_DIR"
 
 # build
-./util/docker_build.sh ergodox_ez:richyliu
+SKIP_FLASHING_SUPPORT=1 ./util/docker_build.sh ergodox_ez:richyliu

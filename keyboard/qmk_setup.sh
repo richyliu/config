@@ -17,14 +17,11 @@ rm -rf \
   lib/chibios-contrib/ext/mcux-sdk \
   .git
 
-# copy over keymap (can't use symlink due to docker mount)
+# link over keymap (can't use symlink due to docker mount)
 mkdir -p "$KEYMAP_DIR"
 ln "$KEYBOARD_DIR"/keymap.c \
   "$KEYBOARD_DIR"/rules.mk \
   "$KEYBOARD_DIR"/config.h \
   "$KEYMAP_DIR"
-
-# remove any checks for docker-machine (since it's not necessary when compiling)
-sed -i '' -e 's/^if .*! docker-machine.* then$/if false; then/' util/docker_cmd.sh
 
 echo "QMK is set up."
