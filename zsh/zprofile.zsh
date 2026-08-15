@@ -33,3 +33,7 @@ export PATH="$PATH:$HOME/.gem/ruby/2.6.0/bin"
 export LESS="-R -M"
 # go to end of file and back to beginning so that less shows percentage info
 export MANPAGER="less +Gg"
+
+
+# Added by Antigravity CLI installer
+export PATH="/Users/richard/.local/bin:$PATH"

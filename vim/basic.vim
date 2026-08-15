@@ -290,6 +290,7 @@ let g:currentmode={
 set laststatus=2
 set statusline=
 set statusline+=%0*\ %{g:currentmode[mode()]}             " Current mode
+set statusline+=%0*%{&paste?'\ [PASTE]\ ':''}             " Paste indicator
 set statusline+=%1*\ [%n]                                 " Buffer number
 set statusline+=%1*\ %<%F\ %m\ %w\                        " File path
 set statusline+=%1#warningmsg#

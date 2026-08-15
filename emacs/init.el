@@ -44,7 +44,6 @@
 
 (add-to-list 'load-path "~/config/emacs/")
 
-
 (use-package delight
   :demand t)
 
@@ -128,6 +127,7 @@
   (setq display-line-numbers-type 'relative)
   (add-hook 'prog-mode-hook #'display-line-numbers-mode)
   (add-hook 'text-mode-hook #'display-line-numbers-mode)
+  (column-number-mode 1)
 
   (setq-default show-trailing-whitespace nil)
   ;; disable trailing whitespace in certain modes
@@ -139,8 +139,7 @@
   (add-hook 'vterm-mode-hook #'my/hide-trailing-whitespace)
 
   (add-hook 'text-mode-hook #'visual-line-mode)
-  (setq-default fill-column 70)
-  (add-hook 'text-mode-hook #'turn-on-auto-fill)
+  (setq-default fill-column 120)
 
   ;; hanging indent for lists
   (setq paragraph-start  "[ \t]*$\\|[ \t]*\\(?:[0-9]+\\.\\|[-*+]\\)[ \t]")
@@ -170,6 +169,8 @@
   (setq url-privacy-level 'high)
 
   (setq project-vc-merge-submodules nil)
+
+  (add-to-list 'auto-mode-alist '("\\.mm\\'" . objc-mode))
   )
 
 (use-package doom-themes
@@ -317,6 +318,8 @@ With non-nil prefix INCLUDE-ROOT, also include the project's root."
     "he" #'view-echo-area-messages
     "hl" #'view-lossage
     "hm" #'describe-mode
+    "hF" #'describe-face
+    "hc" #'describe-char
     "ht" #'load-theme
 
     "na" #'org-agenda
@@ -468,10 +471,27 @@ With non-nil prefix INCLUDE-ROOT, also include the project's root."
     (when (derived-mode-p 'org-mode)
       (org-narrow-to-subtree))
     (delete-other-windows)
-    (let* ((width (window-total-width))
-           (margin (max 0 (/ (- width 80) 2))))
+    (let* ((desired-width 120)
+           (width (window-total-width))
+           (margin (max 0 (/ (- width desired-width) 2))))
       (set-window-margins nil margin margin))
-    (message "Zen mode activated. Focus on the work.")))
+    (message "Zen mode activated.")))
+
+(defun my/toggle-fullscreen ()
+  "Toggle fullscreen mode (without menu bar and modeline)."
+  (interactive)
+  (let ((fullscreen? (frame-parameter nil 'fullscreen)))
+    (if fullscreen?
+        ;; EXIT FULLSCREEN MODE
+        (progn
+          (setq mode-line-format (default-value 'mode-line-format))
+          (toggle-frame-fullscreen)
+          (tab-bar-mode 1)
+          (message "Fullscreen mode deactivated."))
+      ;; ENTER FULLSCREEN MODE
+      (setq mode-line-format nil)
+      (toggle-frame-fullscreen)
+      (tab-bar-mode -1))))
 
 (use-package evil
   :demand t
@@ -501,6 +521,7 @@ With non-nil prefix INCLUDE-ROOT, also include the project's root."
     "ws" #'evil-window-split
     "wd" #'evil-window-delete
     "wz" #'my/toggle-zen
+    "wf" #'my/toggle-fullscreen
     )
   (general-define-key
     :kemaps 'minibuffer-mode-map
@@ -1327,7 +1348,8 @@ these tasks will be hidden."
                                        (agenda "" ((org-agenda-overriding-header "3 days of non-HABTs")
                                                    (org-agenda-span 3)
                                                    (org-agenda-start-day "0d")
-                                                   (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo '("HABT")))))
+                                                   (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo '("HABT")))
+                                                   (org-agenda-dim-blocked-tasks nil)))
                                        ))
                                      ("u" "Unscheduled TODOs and pending projects"
                                       ((todo "TODO|PROJ"
@@ -1345,7 +1367,7 @@ these tasks will be hidden."
                                                    (org-agenda-span 8)
                                                    (org-agenda-start-day "0d")
                                                    (org-agenda-dim-blocked-tasks nil)
-                                                   (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo '("HABT")))
+                                                   (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo '("HABT" "REM")))
                                                    (org-agenda-use-time-grid nil)))))
                                      ("c" "Calendar (excluding LOOPs)"
                                       ((agenda "" ((org-agenda-overriding-header "Calendar (excluding repeats)")
@@ -1380,7 +1402,7 @@ these tasks will be hidden."
     (custom-declare-face '+org-todo-active  '((t (:inherit (bold font-lock-constant-face org-todo)))) "")
     (custom-declare-face '+org-todo-project '((t (:inherit (bold font-lock-doc-face org-todo)))) "")
     (custom-declare-face '+org-todo-someday '((t (:inherit (bold font-lock-comment-face org-todo)))) "" ))
-  (setq org-todo-keywords '((sequence "TEMP(e)" "TODO(t)" "PROJ(p)" "LOOP(l!)" "HABT(h!)" "WAIT(w@/@)" "PEND(n)" "IDEA(i)" "SOMEDAY(m)" "NOTE(o)" "|" "DONE(d!)" "KILL(k!)")))
+  (setq org-todo-keywords '((sequence "TEMP(e)" "TODO(t)" "PROJ(p)" "LOOP(l!)" "HABT(h!)" "WAIT(w@/@)" "PEND(n)" "IDEA(i)" "REMB(r)" "NOTE(o)" "|" "DONE(d!)" "KILL(k!)")))
   (setq org-todo-repeat-to-state t)
   (setq org-todo-keyword-faces '(("TODO" . org-todo)
                                  ("TEMP" . org-level-2)
@@ -1390,7 +1412,7 @@ these tasks will be hidden."
                                  ("HABT" . org-table)
                                  ("WAIT" . org-level-4)
                                  ("IDEA" . +org-todo-project)
-                                 ("SOMEDAY" . +org-todo-someday)
+                                 ("REMB" . +org-todo-someday)
                                  ("KILL" . org-agenda-dimmed-todo-face)
                                  ("NOTE" . org-agenda-dimmed-todo-face)))
   (setq org-log-note-headings '((done . "CLOSING NOTE %t")
@@ -1535,13 +1557,13 @@ the user intended to have for rescheduling an item from the agenda."
   :general
   (leader-def
     "gg" #'magit-status
+    "gd" #'magit-diff
+    "gl" #'magit-log
+    "gc" #'magit-commit
     )
   :config
   (setq magit-delete-by-moving-to-trash nil)
   (setq magit-diff-refine-hunk 'all)
-  ;; :custom-face
-  ;; (magit-diff-revision-summary-highlight ((t (:weight bold :inherit magit-section-secondary-heading))))
-  ;; (magit-diff-revision-summary ((t (:weight semi-bold :inherit magit-diff-revision-summary-highlight))))
   )
 
 (use-package forge
@@ -1751,6 +1773,7 @@ Transactions must be separated by a blank line."
   (setq copilot-node-executable "/usr/local/bin/node")
   ;; to reduce memory use (can increase for debugging)
   (setq copilot-log-max 50)
+  (setq copilot-max-char 200000)
 
   (advice-add #'copilot--get-source :around #'my/copilot--get-source)
 
@@ -1761,8 +1784,6 @@ Transactions must be separated by a blank line."
   (add-to-list 'copilot-indentation-alist '(vimrc-mode 2))
   (advice-add #'copilot-balancer--debug :around #'my/copilot-balancer--debug-wrapper)
   )
-
-(use-package magit)
 
 ;; add indicator to mode line only for vterm mode that shows value
 ;; of evil-collection-vterm-send-escape-to-vterm-p
@@ -1800,7 +1821,10 @@ Transactions must be separated by a blank line."
     (kbd "C-y") 'vterm--self-insert
     ;; no C-z since it's used as a prefix key
     (kbd "C-6") #'(lambda () (interactive) (vterm-send (kbd "C-^")))
-    (kbd "<delete>") 'vterm-send-delete)
+    (kbd "<delete>") 'vterm-send-delete
+    (kbd "<prior>") 'vterm--self-insert
+    (kbd "<next>") 'vterm--self-insert
+    )
 
   (evil-collection-define-key '(normal insert) 'vterm-mode-map
     (kbd "C-z") #'vterm-send-next-key ; vterm "leader" (to send all ctrl keys)
@@ -1808,6 +1832,7 @@ Transactions must be separated by a blank line."
     (kbd "C-q C-z") #'evil-collection-vterm-toggle-send-escape
     (kbd "C-q C-q") #'evil-normal-state
     (kbd "C-q C-l") #'vterm-clear-scrollback
+    (kbd "C-q <escape>") #'vterm-send-escape
     ;; send C-g to vterm
     (kbd "C-q g") #'(lambda () (interactive) (vterm-send "C-g")))
 
@@ -2042,3 +2067,33 @@ fd 0 to something different than fd 1 and 2."
           (append
            '(("Internal" (name . "^\\*.*\\*$")))
            (ibuffer-project-generate-filter-groups)))))
+
+
+(use-package apheleia
+  :ensure t
+  :config
+  (add-to-list 'apheleia-formatters
+               '(swift-format . ("swift-format" "format" "--in-place" filepath)))
+
+  (setq apheleia-mode-alist
+        '((swift-mode . swift-format)
+          (objc-mode . clang-format)
+          (c++-mode . clang-format)
+          (csharp-mode . csharpier)))
+  
+  ;; Enable it globally
+  (apheleia-global-mode +1))
+
+(use-package agent-shell
+  :straight (agent-shell :type git :host github :repo "xenodium/agent-shell")
+  :config
+  (setq agent-shell-github-acp-command
+        '("copilot"
+          "--acp"
+          "--allow-tool='write'"
+          "--allow-tool='memory'"
+          "--allow-tool='shell(./scripts/build)'"
+          "--allow-tool='shell(cd:*)'"
+          "--allow-tool='shell(git diff:*)'"
+          "--allow-tool='shell(./test:*)'"))
+  )

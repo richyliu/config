@@ -84,3 +84,7 @@ export PATH="$BUN_INSTALL/bin:$PATH"
 
 # Added by Antigravity
 export PATH="/Users/richard/.antigravity/antigravity/bin:$PATH"
+
+
+# Added by Antigravity CLI installer
+export PATH="/Users/richard/.local/bin:$PATH"
