@@ -12,6 +12,6 @@
 (setq initial-frame-alist
       (append initial-frame-alist
               '((width . 120)
-                (height . 50))))
+                (height . 45))))
 
 (setq gc-cons-threshold most-positive-fixnum)

@@ -114,11 +114,7 @@
   (savehist-mode 1)
   (add-to-list 'savehist-additional-variables 'register-alist)
 
-  (set-frame-font (font-spec
-                   :family "iosevka term ss07"
-                   :width 'expanded
-                   :size 15
-                   ))
+  (set-face-attribute 'default nil :font "Menlo-12")
   (set-face-attribute 'default nil :height 150)
 
   (add-to-list 'safe-local-variable-values '(eval auto-revert-mode 1))
@@ -171,6 +167,20 @@
   (setq project-vc-merge-submodules nil)
 
   (add-to-list 'auto-mode-alist '("\\.mm\\'" . objc-mode))
+
+  (define-advice revert-buffer-quick (:before (&rest _) my/beorg-sync-before-revert-inbox)
+    (let ((inbox-path (expand-file-name "inbox.org" org-directory))
+          (beorg-sync-script (expand-file-name "../scripts/beorg_sync.sh" org-directory))
+          (beorg-sync-base "~/Library/Mobile Documents/iCloud~com~appsonthemove~beorg/Documents/org")
+          (beorg-sync-files '("inbox.org" "reminders-beorg.org")))
+      (when (string= (buffer-file-name) inbox-path)
+        (mapc (lambda (fname)
+                (call-process beorg-sync-script
+                              "/usr/bin/brctl" nil nil
+                              "download"
+                              (expand-file-name fname beorg-sync-base)))
+              beorg-sync-files)
+        (call-process beorg-sync-script nil nil nil))))
   )
 
 (use-package doom-themes
@@ -616,11 +626,11 @@ some useful ones, such as Org Agenda and vterm"
   "Wrapper around consult-buffer which shows all buffer sources."
   (interactive)
   (let ((consult-buffer-sources
-         '(consult--source-modified-buffer
-           consult--source-buffer
-           consult--source-recent-file
-           consult--source-file-register
-           consult--source-bookmark)))
+         '(consult-source-modified-buffer
+           consult-source-buffer
+           consult-source-recent-file
+           consult-source-file-register
+           consult-source-bookmark)))
     (apply #'consult-buffer all)))
 
 (use-package consult
@@ -702,15 +712,15 @@ some useful ones, such as Org Agenda and vterm"
                                             (and (buffer-modified-p buf)
                                                  (buffer-file-name buf)))))))
 
-  (setq consult-buffer-sources '(consult--source-modified-buffer
+  (setq consult-buffer-sources '(consult-source-modified-buffer
                                  consult--source-buffer-no-hidden
                                  consult--source-buffer-all
-                                 consult--source-recent-file
-                                 consult--source-file-register
-                                 consult--source-bookmark))
+                                 consult-source-recent-file
+                                 consult-source-file-register
+                                 consult-source-bookmark))
 
   (setq consult-project-buffer-sources '(consult--source-project-buffer-no-magit
-                                         consult--source-project-recent-file))
+                                         consult-source-project-recent-file))
   )
 
 (use-package recentf
@@ -995,7 +1005,7 @@ in the heading."
   "Ratio applied to repeater on success for spaced repetition system.")
 (defvar my/org-spaced-repetition-failure 0.2
   "Ratio applied to repeater on success for spaced repetition system.")
-(defvar my/org-spaced-repetition-max 120
+(defvar my/org-spaced-repetition-max 90
   "Maximum number of days for spaced repetition.")
 (defun my/org-spaced-repetition (oldfun done-word)
   "Advice for org-auto-repeat-maybe that implements spaced repetition.
@@ -1127,7 +1137,7 @@ these tasks will be hidden."
   :straight (org :host github
                  :repo "richyliu/org-mode")
   :init
-  (setq org-directory "/Users/richard/Documents/org/agenda/")
+  (setq org-directory (expand-file-name "~/Documents/org/agenda/"))
   (setq org-agenda-files '("inbox.org" "agenda.org"))
 
   :general
@@ -1504,7 +1514,7 @@ the user intended to have for rescheduling an item from the agenda."
                       :build (:not compile))
   :after org
   :hook (org-mode . evil-org-mode)
-  :hook (org-agenda-mode . evil-org-agenda-mode)
+  ;; :hook (org-agenda-mode . evil-org-agenda-mode)
   :config
   (setq evil-org-key-theme '(navigation insert textobjects additional calendar))
   (evil-org-set-key-theme)
@@ -1607,12 +1617,6 @@ the user intended to have for rescheduling an item from the agenda."
     "hTt" #'profiler-stop
     "hTr" #'profiler-report))
 
-(defun +beancount/balance ()
-  "Display a balance report with bean-report (bean-report bal)."
-  (interactive)
-  (let (compilation-read-command)
-    (beancount--run "bean-report" buffer-file-name "bal")))
-
 (defun my/presorted-completion-table (completions)
   "Return a completion table sorted by the order of the completions.
 
@@ -1700,13 +1704,44 @@ Transactions must be separated by a blank line."
         (insert " ! ")
         (insert transaction)))))
 
+(defun +beancount/fava ()
+  "Start/restart the fava server."
+  (interactive)
+
+  (let* ((existing-fava-msg
+          (if beancount--fava-process
+              (progn (delete-process beancount--fava-process)
+                     (setq beancount--fava-process nil)
+                     "Existing fava process killed. ")
+            ""))
+         (fava-path (expand-file-name "~/fava/.venv/bin/fava"))
+         (fava-port 5001) ; port 5000 used by airdrop
+         (beancount-path (expand-file-name "bin" beancount-install-dir))
+         (process-environment
+          (if beancount-install-dir
+              `(,(concat "PYTHONPATH=" beancount-install-dir)
+                ,(concat "PATH="
+                         beancount-path
+                         ":"
+                         (getenv "PATH"))
+                ,@process-environment)
+            process-environment))
+         (exec-path (if beancount-install-dir (cons beancount-path exec-path) exec-path)))
+    (setq beancount--fava-process
+          (start-process "fava" (get-buffer-create "*fava*") fava-path
+                         "--port" (number-to-string fava-port)
+                         (if (eq 'beancount-mode major-mode) (buffer-file-name)
+                           (read-file-name "File to load: "))))
+    (set-process-filter beancount--fava-process #'beancount--fava-filter)
+    (message "%sFava process started on port %d" existing-fava-msg fava-port)))
+
 (defun +beancount/fava-stop ()
   "Stop the fava server."
   (interactive)
   (when beancount--fava-process
     (delete-process beancount--fava-process)
     (setq beancount--fava-process nil)
-    (message "Fava process killed")))
+    (message "Fava process killed.")))
 
 (use-package beancount
   :config
@@ -1721,12 +1756,12 @@ Transactions must be separated by a blank line."
    "mid" #'beancount-insert-date
    "mic" #'+beancount/clone-transaction
    "miC" #'+beancount/clone-this-transaction
-   "mb" #'+beancount/balance
-   "mc" #'beancount-check
    "mx" #'beancount-context
-   "mf" #'beancount-fava
+   "mf" #'+beancount/fava
    "mF" #'+beancount/fava-stop
    )
+
+  (setq beancount-install-dir (expand-file-name "~/Documents/org/budgeting"))
   )
 
 (use-package marginalia
@@ -1742,48 +1777,48 @@ Transactions must be separated by a blank line."
   :config
   (solaire-global-mode +1))
 
-(defun my/copilot--get-source (orig-fun &rest args)
-  "Advice to disable warnings"
-  (let ((warning-minimum-level :emergency))
-    (apply orig-fun args)))
-
-;; Sometimes, the copilot-balancer-debug-buffer will be deleted and
-;; the copilot-balancer--debug function will error. I override the
-;; function and catch the "Selecting deleted buffer" error,
-;; recreating the buffer if necessary
-(defun my/copilot-balancer--debug-wrapper (func &rest args)
-  "Advice to catch error when debug buffer is deleted"
-  (condition-case err
-      (apply func args)
-    (error
-     (if (string= (cadr err) "Selecting deleted buffer")
-         (progn
-           (setq copilot-balancer-debug-buffer (get-buffer-create "*copilot-balancer-debug*"))
-           (apply func args))
-       (signal (car err) (cdr err))))))
-
-(use-package copilot
-  :straight (:host github :repo "copilot-emacs/copilot.el" :files ("*.el"))
-  :hook (prog-mode . copilot-mode)
-  :hook (tex-mode . copilot-mode)
-  :bind (("M-TAB" . 'copilot-accept-completion)
-         ("M-<tab>" . 'copilot-accept-completion))
-
-  :config
-  (setq copilot-node-executable "/usr/local/bin/node")
-  ;; to reduce memory use (can increase for debugging)
-  (setq copilot-log-max 50)
-  (setq copilot-max-char 200000)
-
-  (advice-add #'copilot--get-source :around #'my/copilot--get-source)
-
-  (add-to-list 'copilot-indentation-alist '(prog-mode 2))
-  (add-to-list 'copilot-indentation-alist '(org-mode 2))
-  (add-to-list 'copilot-indentation-alist '(text-mode 2))
-  (add-to-list 'copilot-indentation-alist '(emacs-lisp-mode 2))
-  (add-to-list 'copilot-indentation-alist '(vimrc-mode 2))
-  (advice-add #'copilot-balancer--debug :around #'my/copilot-balancer--debug-wrapper)
-  )
+;; (defun my/copilot--get-source (orig-fun &rest args)
+;;   "Advice to disable warnings"
+;;   (let ((warning-minimum-level :emergency))
+;;     (apply orig-fun args)))
+;;
+;; ;; Sometimes, the copilot-balancer-debug-buffer will be deleted and
+;; ;; the copilot-balancer--debug function will error. I override the
+;; ;; function and catch the "Selecting deleted buffer" error,
+;; ;; recreating the buffer if necessary
+;; (defun my/copilot-balancer--debug-wrapper (func &rest args)
+;;   "Advice to catch error when debug buffer is deleted"
+;;   (condition-case err
+;;       (apply func args)
+;;     (error
+;;      (if (string= (cadr err) "Selecting deleted buffer")
+;;          (progn
+;;            (setq copilot-balancer-debug-buffer (get-buffer-create "*copilot-balancer-debug*"))
+;;            (apply func args))
+;;        (signal (car err) (cdr err))))))
+;;
+;; (use-package copilot
+;;   :straight (:host github :repo "copilot-emacs/copilot.el" :files ("*.el"))
+;;   :hook (prog-mode . copilot-mode)
+;;   :hook (tex-mode . copilot-mode)
+;;   :bind (("M-TAB" . 'copilot-accept-completion)
+;;          ("M-<tab>" . 'copilot-accept-completion))
+;;
+;;   :config
+;;   (setq copilot-node-executable "/usr/local/bin/node")
+;;   ;; to reduce memory use (can increase for debugging)
+;;   (setq copilot-log-max 50)
+;;   (setq copilot-max-char 200000)
+;;
+;;   (advice-add #'copilot--get-source :around #'my/copilot--get-source)
+;;
+;;   (add-to-list 'copilot-indentation-alist '(prog-mode 2))
+;;   (add-to-list 'copilot-indentation-alist '(org-mode 2))
+;;   (add-to-list 'copilot-indentation-alist '(text-mode 2))
+;;   (add-to-list 'copilot-indentation-alist '(emacs-lisp-mode 2))
+;;   (add-to-list 'copilot-indentation-alist '(vimrc-mode 2))
+;;   (advice-add #'copilot-balancer--debug :around #'my/copilot-balancer--debug-wrapper)
+;;   )
 
 ;; add indicator to mode line only for vterm mode that shows value
 ;; of evil-collection-vterm-send-escape-to-vterm-p
@@ -1906,26 +1941,6 @@ fd 0 to something different than fd 1 and 2."
 
 (use-package vimrc-mode)
 
-(use-package gptel
-  :config
-
-  (setq gptel-directives '((default . "You are a large language model and a helpful assistant. Respond concisely.")
-                           (programming . "You are a large language model and a careful programmer. Provide code and only code as output without any additional text, prompt or note.")
-                           (writing . "You are a large language model and a writing assistant. Respond concisely.")
-                           (chat . "You are a large language model and a conversation partner. Respond concisely.")))
-  (setq gptel-model 'deepseek/deepseek-r1-distill-llama-70b:free)
-  (setq gptel-backend
-        ;; OpenRouter offers an OpenAI compatible API
-        (gptel-make-openai "OpenRouter"
-          :host "openrouter.ai"
-          :endpoint "/api/v1/chat/completions"
-          :stream t
-          :key (with-temp-buffer
-                 (insert-file-contents (expand-file-name "~/.openrouter_key"))
-                 (buffer-string))
-          :models '(deepseek/deepseek-r1-distill-llama-70b:free
-                    google/gemini-2.0-pro-exp-02-05:free))))
-
 (straight-use-package
  '(ultra-scroll
    :type git
@@ -1946,8 +1961,6 @@ fd 0 to something different than fd 1 and 2."
 (use-package rustic
   :init
   (setq rustic-lsp-setup-p nil))
-
-(require 'proverif-mode)
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -1981,7 +1994,7 @@ fd 0 to something different than fd 1 and 2."
    "C-<return>" #'markdown-insert-list-item))
 
 (use-package typst-ts-mode
-  :straight (:host github :repo "meowking/typst-ts-mode")
+  :straight (:host codeberg :repo "meow_king/typst-ts-mode")
   :custom
   ;; Enable watch-as-you-type preview if desired
   (typst-ts-mode-watch-options "--open")
@@ -2080,20 +2093,20 @@ fd 0 to something different than fd 1 and 2."
           (objc-mode . clang-format)
           (c++-mode . clang-format)
           (csharp-mode . csharpier)))
-  
+
   ;; Enable it globally
   (apheleia-global-mode +1))
 
-(use-package agent-shell
-  :straight (agent-shell :type git :host github :repo "xenodium/agent-shell")
-  :config
-  (setq agent-shell-github-acp-command
-        '("copilot"
-          "--acp"
-          "--allow-tool='write'"
-          "--allow-tool='memory'"
-          "--allow-tool='shell(./scripts/build)'"
-          "--allow-tool='shell(cd:*)'"
-          "--allow-tool='shell(git diff:*)'"
-          "--allow-tool='shell(./test:*)'"))
-  )
+;; (use-package agent-shell
+;;   :straight (agent-shell :type git :host github :repo "xenodium/agent-shell")
+;;   :config
+;;   (setq agent-shell-github-acp-command
+;;         '("copilot"
+;;           "--acp"
+;;           "--allow-tool='write'"
+;;           "--allow-tool='memory'"
+;;           "--allow-tool='shell(./scripts/build)'"
+;;           "--allow-tool='shell(cd:*)'"
+;;           "--allow-tool='shell(git diff:*)'"
+;;           "--allow-tool='shell(./test:*)'"))
+;;   )
