@@ -25,9 +25,6 @@ if [[ $- == *i* ]]; then
     bind '"\e[A": history-search-backward'
     bind '"\e[B": history-search-forward'
 
-    # z (quick jumper)
-    source "$(dirname "${BASH_SOURCE[0]}")"/zsh/z/z.sh
-
     vterm_printf() {
         if [ -n "$TMUX" ] \
             && { [ "${TERM%%-*}" = "tmux" ] \
@@ -53,7 +50,3 @@ if [[ $- == *i* ]]; then
 fi
 
 [ -r ~/.bash_aliases ] && source ~/.bash_aliases
-
-if command -v keychain &> /dev/null; then
-   eval "$(keychain --eval --agents ssh)"
-fi

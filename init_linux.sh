@@ -25,7 +25,7 @@ function clone_repo() {
   fi
 
   echo "Cloning repository..."
-  git clone --depth 1 --recurse-submodules --shallow-submodules https://github.com/richyliu/config.git
+  git clone --depth 1 https://github.com/richyliu/config.git
 }
 
 function install_with_apt() {
@@ -41,8 +41,7 @@ function install_with_apt() {
     htop \
     ripgrep \
     tmux \
-    mosh \
-    keychain
+    fzf
 }
 
 function install_dotfiles() {
@@ -137,11 +136,5 @@ fi
 clone_repo
 
 install_dotfiles
-
-if [ "$NON_INTERACTIVE" = false ]; then
-  ~/config/zsh/fzf/install
-else
-  yes | ~/config/zsh/fzf/install
-fi
 
 echo "Done."
