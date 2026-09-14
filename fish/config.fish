@@ -1,6 +1,6 @@
 if status is-interactive
     abbr -a _ less
-    abbr -a duhd du -hd1
+    abbr -a duhd 'du -hd1 | sort -h'
     abbr -a l ls -lah
     abbr -a ll ls -lh
     abbr -a lltr ls -lthr
