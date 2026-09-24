@@ -38,7 +38,28 @@ if status is-interactive
     end
     abbr --add dotdot --regex '^\.\.+$' --function multicd
 
+    function jqless --description 'Interactively view colorized JSON with jq and less'
+        if test (count $argv) -gt 0
+            jq -C . $argv | less -R
+        else
+            # Fallback for piped input (e.g., curl ... | jqless)
+            jq -C . | less -R
+        end
+    end
+
+    # option-backspace delete to word deliminated by symbols
+    bind \e\x7f backward-kill-word
+
     if command -q fzf
         fzf --fish | source
+    end
+end
+
+if test (uname) = Linux
+    set -gx SSH_AUTH_SOCK "$HOME/.ssh/agent.sock"
+
+    ssh-add -l >/dev/null 2>&1
+    if test $status -eq 2
+        eval (ssh-agent -c -a "$SSH_AUTH_SOCK")
     end
 end
