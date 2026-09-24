@@ -29,7 +29,7 @@ set incsearch
 set lazyredraw
 set linebreak
 set list
-set listchars=tab:>\ ,trail:-,extends:>,precedes:<
+set listchars=tab:>\ ,extends:>,precedes:<
 set nomodeline
 set mouse=a
 set nrformats-=octal
@@ -43,7 +43,7 @@ set sidescrolloff=10
 set shiftwidth=2
 set noshelltemp
 set shortmess-=S
-set showbreak=^
+set showbreak=>\ 
 set showcmd
 set smartcase
 set softtabstop=-1
@@ -218,6 +218,10 @@ nmap <M-6> :<c-u>BufTabLineGo6<cr>
 nmap <M-7> :<c-u>BufTabLineGo7<cr>
 nmap <M-8> :<c-u>BufTabLineGo8<cr>
 nmap <M-9> :<c-u>BufTabLineGo20<cr>
+
+" Show trailing space
+highlight ExtraWhitespace ctermbg=red guibg=red
+match ExtraWhitespace /\s\+$/
 
 " }}}1
 
