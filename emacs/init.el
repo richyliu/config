@@ -168,18 +168,22 @@
 
   (add-to-list 'auto-mode-alist '("\\.mm\\'" . objc-mode))
 
-  (define-advice revert-buffer-quick (:before (&rest _) my/beorg-sync-before-revert-inbox)
-    (let ((inbox-path (expand-file-name "inbox.org" org-directory))
-          (beorg-sync-script (expand-file-name "../scripts/beorg_sync.sh" org-directory))
-          (beorg-sync-base "~/Library/Mobile Documents/iCloud~com~appsonthemove~beorg/Documents/org")
-          (beorg-sync-files '("inbox.org" "reminders-beorg.org")))
-      (when (string= (buffer-file-name) inbox-path)
-        (mapc (lambda (fname)
-                (call-process beorg-sync-script
-                              "/usr/bin/brctl" nil nil
-                              "download"
-                              (expand-file-name fname beorg-sync-base)))
-              beorg-sync-files)
+  (define-advice revert-buffer-quick (:before (&rest _) my/beorg-sync-before-revert)
+    (let ((beorg-sync-script
+           (expand-file-name "../scripts/beorg_sync.sh" org-directory))
+          (beorg-sync-base
+           (expand-file-name
+            "~/Library/Mobile Documents/iCloud~com~appsonthemove~beorg/Documents/org"))
+          (beorg-sync-files
+           '("inbox.org" "reminders-beorg.org")))
+      (when (member (buffer-file-name)
+                    (mapcar (lambda (fname)
+                              (expand-file-name fname org-directory))
+                            beorg-sync-files))
+        (dolist (fname beorg-sync-files)
+          (call-process "/usr/bin/brctl" nil nil nil
+                        "download"
+                        (expand-file-name fname beorg-sync-base)))
         (call-process beorg-sync-script nil nil nil))))
   )
 
@@ -425,6 +429,7 @@ With non-nil prefix INCLUDE-ROOT, also include the project's root."
   (general-define-key
     "s-w" #'kill-current-buffer
     "s-s" #'save-buffer
+    "M-s" #'save-buffer
     "s-v" #'yank
     "s-1" #'(lambda () (interactive) (tab-bar-select-tab 1))
     "s-2" #'(lambda () (interactive) (tab-bar-select-tab 2))
@@ -942,9 +947,7 @@ but it always sorts deadline items first, then timestamp items, then everything 
   (let ((a-timep (get-text-property 1 'time-of-day a))
         (b-timep (get-text-property 1 'time-of-day b))
         (a-type (get-text-property 1 'type a))
-        (b-type (get-text-property 1 'type b))
-        (a-todo-state (get-text-property 1 'todo-state a))
-        (b-todo-state (get-text-property 1 'todo-state b)))
+        (b-type (get-text-property 1 'type b)))
     (cond
      ((and (string= a-type "upcoming-deadline")
            (not (string= b-type "upcoming-deadline"))) +1)
@@ -1230,6 +1233,7 @@ these tasks will be hidden."
     "cs" #'org-agenda-schedule
     "cd" #'org-agenda-deadline
     "s-s" #'org-save-all-org-buffers
+    "M-s" #'org-save-all-org-buffers
     "s-r" #'org-agenda-redo
     "r" #'org-agenda-redo
 
@@ -1343,8 +1347,8 @@ these tasks will be hidden."
 
   (advice-add 'org-auto-repeat-maybe :around #'my/org-spaced-repetition)
 
-  (setq org-agenda-sorting-strategy '((agenda user-defined-up deadline-up priority-down scheduled-up todo-state-up tag-up effort-up habit-down)
-                                      (todo todo-state-up priority-down deadline-up ts-up effort-up tag-up)
+  (setq org-agenda-sorting-strategy '((agenda user-defined-up priority-down todo-state-up deadline-up scheduled-up tag-up effort-up habit-down)
+                                      (todo todo-state-up priority-down deadline-up scheduled-up ts-up effort-up tag-up)
                                       (tags priority-down todo-state-up deadline-up ts-up effort-up)
                                       (search scheduled-up priority-down todo-state-up effort-up)))
   (setq org-agenda-cmp-user-defined #'my/org-agenda-custom-sort)
@@ -1355,29 +1359,24 @@ these tasks will be hidden."
                                        (todo "PROJ" ((org-agenda-overriding-header "Projects")
                                                      (org-agenda-files '("agenda.org"))
                                                      (org-agenda-dim-blocked-tasks nil)))
-                                       (agenda "" ((org-agenda-overriding-header "3 days of non-HABTs")
-                                                   (org-agenda-span 3)
+                                       (agenda "" ((org-agenda-span 3)
                                                    (org-agenda-start-day "0d")
-                                                   (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo '("HABT")))
                                                    (org-agenda-dim-blocked-tasks nil)))
                                        ))
                                      ("u" "Unscheduled TODOs and pending projects"
-                                      ((todo "TODO|PROJ"
-                                             ;; need to also select PROJ so that its children TODOs can be correctly hidden
-                                             ((org-agenda-overriding-header "Unscheduled TODOs (excluding subtasks)")
+                                      ((todo "UNSC"
+                                             ((org-agenda-overriding-header "Unscheduled TODOs")
                                               (org-agenda-files '("agenda.org"))
-                                              (org-agenda-todo-list-sublevels nil)
-                                              (org-agenda-dim-blocked-tasks 'invisible)
-                                              (org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))))
+                                              (org-agenda-todo-list-sublevels nil)))
                                        (todo "PEND" ((org-agenda-overriding-header "Pending projects")
                                                      (org-agenda-dim-blocked-tasks nil)
                                                      ))))
                                      ("D" "Daily TODOs for a week"
-                                      ((agenda "" ((org-agenda-overriding-header "Nonhabits")
+                                      ((agenda "" ((org-agenda-overriding-header "Non-REMB")
                                                    (org-agenda-span 8)
                                                    (org-agenda-start-day "0d")
                                                    (org-agenda-dim-blocked-tasks nil)
-                                                   (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo '("HABT" "REM")))
+                                                   (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo '("REMB")))
                                                    (org-agenda-use-time-grid nil)))))
                                      ("c" "Calendar (excluding LOOPs)"
                                       ((agenda "" ((org-agenda-overriding-header "Calendar (excluding repeats)")
@@ -1412,15 +1411,14 @@ these tasks will be hidden."
     (custom-declare-face '+org-todo-active  '((t (:inherit (bold font-lock-constant-face org-todo)))) "")
     (custom-declare-face '+org-todo-project '((t (:inherit (bold font-lock-doc-face org-todo)))) "")
     (custom-declare-face '+org-todo-someday '((t (:inherit (bold font-lock-comment-face org-todo)))) "" ))
-  (setq org-todo-keywords '((sequence "TEMP(e)" "TODO(t)" "PROJ(p)" "LOOP(l!)" "HABT(h!)" "WAIT(w@/@)" "PEND(n)" "IDEA(i)" "REMB(r)" "NOTE(o)" "|" "DONE(d!)" "KILL(k!)")))
+  (setq org-todo-keywords '((sequence "TEMP(e)" "TODO(t)" "UNSC" "PROJ(p)" "LOOP(l!)" "PEND(n)" "IDEA(i)" "REMB(r)" "NOTE(o)" "|" "DONE(d!)" "KILL(k!)")))
   (setq org-todo-repeat-to-state t)
   (setq org-todo-keyword-faces '(("TODO" . org-todo)
                                  ("TEMP" . org-level-2)
                                  ("PROJ" . org-level-1)
                                  ("PEND" . org-level-3)
                                  ("LOOP" . +org-todo-active)
-                                 ("HABT" . org-table)
-                                 ("WAIT" . org-level-4)
+                                 ("UNSC" . org-level-4)
                                  ("IDEA" . +org-todo-project)
                                  ("REMB" . +org-todo-someday)
                                  ("KILL" . org-agenda-dimmed-todo-face)
@@ -1434,8 +1432,6 @@ these tasks will be hidden."
                                 (deldeadline . "Removed deadline, was %S on %t")
                                 (refile . "Refiled on %t")
                                 (clock-out . "")))
-  ;; NOTE: from my own fork of org
-  (setq org-agenda-skip-timestamp-if-scheduled-repeater t)
 
 
   (advice-add 'org-agenda-add-time-grid-maybe :around #'my/time-grid-override)
