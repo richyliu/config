@@ -10,8 +10,10 @@
 ;;   - `C-w` and `C-u` work as expected
 ;;   - `C-f` enters normal mode
 
-(tool-bar-mode -1)             ; Hide the outdated icons
-(scroll-bar-mode -1)           ; Hide the always-visible scrollbar
+(when (fboundp 'tool-bar-mode)
+  (tool-bar-mode -1))          ; Hide the outdated icons
+(when (fboundp 'scroll-bar-mode)
+  (scroll-bar-mode -1))           ; Hide the always-visible scrollbar
 (setq inhibit-splash-screen t) ; Remove the "Welcome to GNU Emacs" splash screen
 (setq use-file-dialog nil)     ; Ask for textual confirmation instead of GUI
 
@@ -168,23 +170,24 @@
 
   (add-to-list 'auto-mode-alist '("\\.mm\\'" . objc-mode))
 
-  (define-advice revert-buffer-quick (:before (&rest _) my/beorg-sync-before-revert)
-    (let ((beorg-sync-script
-           (expand-file-name "../scripts/beorg_sync.sh" org-directory))
-          (beorg-sync-base
-           (expand-file-name
-            "~/Library/Mobile Documents/iCloud~com~appsonthemove~beorg/Documents/org"))
-          (beorg-sync-files
-           '("inbox.org" "reminders-beorg.org")))
-      (when (member (buffer-file-name)
-                    (mapcar (lambda (fname)
-                              (expand-file-name fname org-directory))
-                            beorg-sync-files))
-        (dolist (fname beorg-sync-files)
-          (call-process "/usr/bin/brctl" nil nil nil
-                        "download"
-                        (expand-file-name fname beorg-sync-base)))
-        (call-process beorg-sync-script nil nil nil))))
+  ;; (define-advice revert-buffer-quick (:before (&rest _) my/beorg-sync-before-revert)
+  ;;   (let ((beorg-sync-script
+  ;;          (expand-file-name "../scripts/beorg_sync.sh" org-directory))
+  ;;         (beorg-sync-base
+  ;;          (expand-file-name
+  ;;           "~/Library/Mobile Documents/iCloud~com~appsonthemove~beorg/Documents/org"))
+  ;;         (beorg-sync-files
+  ;;          '("inbox.org" "reminders-beorg.org")))
+  ;;     (when (member (buffer-file-name)
+  ;;                   (mapcar (lambda (fname)
+  ;;                             (expand-file-name fname org-directory))
+  ;;                           beorg-sync-files))
+  ;;       (dolist (fname beorg-sync-files)
+  ;;         (call-process "/usr/bin/brctl" nil nil nil
+  ;;                       "download"
+  ;;                       (expand-file-name fname beorg-sync-base)))
+  ;;       (call-process beorg-sync-script nil nil nil))))
+
   )
 
 (use-package doom-themes
@@ -222,8 +225,8 @@
   (setq current-prefix-arg t)
   ;; switch to org-directory project first to avoid projectile issues
   ;; (projectile-switch-project-by-name org-directory)
-  (find-file (concat org-directory "inbox.org"))
-  (find-file (concat org-directory "agenda.org"))
+  (find-file (expand-file-name "inbox.org" org-directory))
+  (find-file (expand-file-name "agenda.org"  org-directory))
   ;; open up org-agenda and agenda.org side by side
   (evil-window-vsplit)
   (org-agenda nil "d")
@@ -1140,7 +1143,7 @@ these tasks will be hidden."
   :straight (org :host github
                  :repo "richyliu/org-mode")
   :init
-  (setq org-directory (expand-file-name "~/Documents/org/agenda/"))
+  (setq org-directory (expand-file-name "/home/user/agenda/agenda-data"))
   (setq org-agenda-files '("inbox.org" "agenda.org"))
 
   :general
@@ -1522,13 +1525,14 @@ the user intended to have for rescheduling an item from the agenda."
   (evil-define-key 'normal 'evil-org-mode (kbd "C-S-<return>") #'+org/insert-item-above)
   (evil-define-key 'insert 'evil-org-mode (kbd "C-<return>") #'+org/insert-item-below)
   (evil-define-key 'insert 'evil-org-mode (kbd "C-S-<return>") #'+org/insert-item-above)
-  (evil-define-key 'motion 'org-agenda-mode-map "H" #'org-agenda-date-earlier-minutes)
-  (evil-define-key 'motion 'org-agenda-mode-map "L" #'org-agenda-date-later-minutes)
-  (evil-define-key 'motion 'org-agenda-mode-map (kbd "C-S-H") #'org-agenda-date-earlier-hours)
-  (evil-define-key 'motion 'org-agenda-mode-map (kbd "C-S-L") #'org-agenda-date-later-hours)
-  ;; (evil-define-key 'motion 'org-agenda-mode-map (kbd "C-J") #'org-agenda-next-item)
-  ;; (evil-define-key 'motion 'org-agenda-mode-map (kbd "C-K") #'org-agenda-previous-item)
-  ;; (evil-define-key 'motion 'org-agenda-mode-map "dd" #'org-agenda-kill)
+  (evil-define-key 'motion org-agenda-mode-map "H" #'org-agenda-date-earlier-minutes)
+  (evil-define-key 'motion org-agenda-mode-map "L" #'org-agenda-date-later-minutes)
+  (evil-define-key 'motion org-agenda-mode-map (kbd "C-S-H") #'org-agenda-date-earlier-hours)
+  (evil-define-key 'motion org-agenda-mode-map (kbd "C-S-L") #'org-agenda-date-later-hours)
+  (evil-define-key 'motion org-agenda-mode-map (kbd "C-J") #'org-agenda-next-item)
+  (evil-define-key 'motion org-agenda-mode-map (kbd "C-K") #'org-agenda-previous-item)
+  (evil-define-key 'motion org-agenda-mode-map (kbd "TAB") #'org-agenda-goto)
+  (evil-define-key 'motion org-agenda-mode-map (kbd "dd") #'org-agenda-kill)
   )
 
 (use-package evil-surround
