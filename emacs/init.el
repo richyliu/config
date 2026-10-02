@@ -226,6 +226,7 @@
   ;; switch to org-directory project first to avoid projectile issues
   ;; (projectile-switch-project-by-name org-directory)
   (find-file (expand-file-name "inbox.org" org-directory))
+  (find-file "/home/user/agenda/webdav/org/reminders-beorg.org")
   (find-file (expand-file-name "agenda.org"  org-directory))
   ;; open up org-agenda and agenda.org side by side
   (evil-window-vsplit)
@@ -329,6 +330,7 @@ With non-nil prefix INCLUDE-ROOT, also include the project's root."
 
     "fd" #'my/delete-this-file
     "fr" #'rename-visited-file
+    "fs" #'save-buffer
     "fy" #'my/yank-buffer-path
     "fY" #'my/yank-buffer-path-relative-to-project
 
@@ -443,6 +445,15 @@ With non-nil prefix INCLUDE-ROOT, also include the project's root."
     "s-7" #'(lambda () (interactive) (tab-bar-select-tab 7))
     "s-8" #'(lambda () (interactive) (tab-bar-select-tab 8))
     "s-9" #'tab-bar-switch-to-last-tab
+    "M-1" #'(lambda () (interactive) (tab-bar-select-tab 1))
+    "M-2" #'(lambda () (interactive) (tab-bar-select-tab 2))
+    "M-3" #'(lambda () (interactive) (tab-bar-select-tab 3))
+    "M-4" #'(lambda () (interactive) (tab-bar-select-tab 4))
+    "M-5" #'(lambda () (interactive) (tab-bar-select-tab 5))
+    "M-6" #'(lambda () (interactive) (tab-bar-select-tab 6))
+    "M-7" #'(lambda () (interactive) (tab-bar-select-tab 7))
+    "M-8" #'(lambda () (interactive) (tab-bar-select-tab 8))
+    "M-9" #'tab-bar-switch-to-last-tab
     "s-}" #'tab-bar-switch-to-next-tab
     "s-{" #'tab-bar-switch-to-prev-tab
     "C-<tab>" #'tab-bar-switch-to-next-tab
@@ -461,7 +472,8 @@ With non-nil prefix INCLUDE-ROOT, also include the project's root."
     "hf" #'helpful-callable
     "hx" #'helpful-command
     "hv" #'helpful-variable
-    "hk" #'helpful-key
+    "hK" #'helpful-key
+    "hk" #'describe-key-briefly
     "ha" #'apropos)
   (general-define-key
    :keymaps 'helpful-mode-map
@@ -1241,6 +1253,9 @@ these tasks will be hidden."
     "r" #'org-agenda-redo
 
     "gc" #'org-agenda-goto-calendar
+
+    (leader-def
+      "fs" #'org-save-all-org-buffers)
     )
   (general-define-key
     :keymaps 'org-read-date-minibuffer-local-map
@@ -1317,7 +1332,6 @@ these tasks will be hidden."
                              (?D . org-level-4)))
   (setq org-priority-start-cycle-with-default t)
 
-  (setq org-agenda-files '("inbox.org" "agenda.org"))
   (setq org-agenda-prefix-format '((agenda . " %i %?-12t%-3s%2e ")
                                    (todo . " %i%3e ")
                                    (tags . " %i%3e ")
@@ -1359,6 +1373,8 @@ these tasks will be hidden."
   (setq org-agenda-custom-commands '(("d" "Daily agenda and TODOs"
                                       ((todo "TODO" ((org-agenda-overriding-header "Inbox")
                                                      (org-agenda-files '("inbox.org"))))
+                                       (todo "TODO" ((org-agenda-overriding-header "From iOS Reminders")
+                                                     (org-agenda-files '("/home/user/agenda/webdav/org/reminders-beorg.org"))))
                                        (todo "PROJ" ((org-agenda-overriding-header "Projects")
                                                      (org-agenda-files '("agenda.org"))
                                                      (org-agenda-dim-blocked-tasks nil)))
@@ -1379,6 +1395,7 @@ these tasks will be hidden."
                                                    (org-agenda-span 8)
                                                    (org-agenda-start-day "0d")
                                                    (org-agenda-dim-blocked-tasks nil)
+                                                   (org-agenda-show-future-repeats 'next)
                                                    (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo '("REMB")))
                                                    (org-agenda-use-time-grid nil)))))
                                      ("c" "Calendar (excluding LOOPs)"
@@ -1527,12 +1544,18 @@ the user intended to have for rescheduling an item from the agenda."
   (evil-define-key 'insert 'evil-org-mode (kbd "C-S-<return>") #'+org/insert-item-above)
   (evil-define-key 'motion org-agenda-mode-map "H" #'org-agenda-date-earlier-minutes)
   (evil-define-key 'motion org-agenda-mode-map "L" #'org-agenda-date-later-minutes)
-  (evil-define-key 'motion org-agenda-mode-map (kbd "C-S-H") #'org-agenda-date-earlier-hours)
-  (evil-define-key 'motion org-agenda-mode-map (kbd "C-S-L") #'org-agenda-date-later-hours)
+  (evil-define-key 'motion org-agenda-mode-map (kbd "C-M-H") #'org-agenda-date-earlier-hours)
+  (evil-define-key 'motion org-agenda-mode-map (kbd "C-M-L") #'org-agenda-date-later-hours)
   (evil-define-key 'motion org-agenda-mode-map (kbd "C-J") #'org-agenda-next-item)
   (evil-define-key 'motion org-agenda-mode-map (kbd "C-K") #'org-agenda-previous-item)
   (evil-define-key 'motion org-agenda-mode-map (kbd "TAB") #'org-agenda-goto)
   (evil-define-key 'motion org-agenda-mode-map (kbd "dd") #'org-agenda-kill)
+  (evil-define-key 'motion org-agenda-mode-map (kbd "da") #'org-agenda-archive-default-with-confirmation)
+  (evil-define-key 'motion org-agenda-mode-map (kbd "a") #'org-agenda-add-note)
+  (evil-define-key 'motion org-agenda-mode-map (kbd "t") #'org-agenda-todo)
+  (evil-define-key 'motion org-agenda-mode-map (kbd "J") #'org-agenda-priority-down)
+  (evil-define-key 'motion org-agenda-mode-map (kbd "K") #'org-agenda-priority-up)
+  (evil-define-key 'motion org-agenda-mode-map (kbd "gd") #'org-agenda-goto-date)
   )
 
 (use-package evil-surround
