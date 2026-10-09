@@ -1,0 +1,4 @@
+theme = light:One Half Light,dark:One Half Dark
+macos-option-as-alt = true
+font-size = 14
+confirm-close-surface = always
