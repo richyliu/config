@@ -60,6 +60,8 @@ if test (uname) = Linux
 
     ssh-add -l >/dev/null 2>&1
     if test $status -eq 2
-        eval (ssh-agent -c -a "$SSH_AUTH_SOCK")
+        # A pod restart can leave the socket behind after the agent exits.
+        rm -f -- "$SSH_AUTH_SOCK"
+        and eval (ssh-agent -c -a "$SSH_AUTH_SOCK")
     end
 end
