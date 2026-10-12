@@ -1253,9 +1253,6 @@ these tasks will be hidden."
     "r" #'org-agenda-redo
 
     "gc" #'org-agenda-goto-calendar
-
-    (leader-def
-      "fs" #'org-save-all-org-buffers)
     )
   (general-define-key
     :keymaps 'org-read-date-minibuffer-local-map
@@ -1444,7 +1441,7 @@ these tasks will be hidden."
                                  ("KILL" . org-agenda-dimmed-todo-face)
                                  ("NOTE" . org-agenda-dimmed-todo-face)))
   (setq org-log-note-headings '((done . "CLOSING NOTE %t")
-                                (state . "State %s from %S %t%c")
+                                (state . "State %s from %S %c%t")
                                 (note . "Note taken on %t")
                                 (reschedule . "Rescheduled from %S on %t")
                                 (delschedule . "Not scheduled, was %S on %t")
@@ -1540,6 +1537,7 @@ the user intended to have for rescheduling an item from the agenda."
   ;; have to do this to override the default evil-org definitions
   (evil-define-key 'normal 'evil-org-mode (kbd "C-<return>") #'+org/insert-item-below)
   (evil-define-key 'normal 'evil-org-mode (kbd "C-S-<return>") #'+org/insert-item-above)
+  (evil-define-key 'normal 'evil-org-mode (kbd "RET") #'+org/dwim-at-point)
   (evil-define-key 'insert 'evil-org-mode (kbd "C-<return>") #'+org/insert-item-below)
   (evil-define-key 'insert 'evil-org-mode (kbd "C-S-<return>") #'+org/insert-item-above)
   (evil-define-key 'motion org-agenda-mode-map "H" #'org-agenda-date-earlier-minutes)
@@ -1991,7 +1989,10 @@ fd 0 to something different than fd 1 and 2."
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
-   '("9f297216c88ca3f47e5f10f8bd884ab24ac5bc9d884f0f23589b0a46a608fe14" "88f7ee5594021c60a4a6a1c275614103de8c1435d6d08cc58882f920e0cec65e" default)))
+   '("5c7720c63b729140ed88cf35413f36c728ab7c70f8cd8422d9ee1cedeb618de5"
+     "0325a6b5eea7e5febae709dab35ec8648908af12cf2d2b569bedc8da0a3a81c1"
+     "9f297216c88ca3f47e5f10f8bd884ab24ac5bc9d884f0f23589b0a46a608fe14"
+     "88f7ee5594021c60a4a6a1c275614103de8c1435d6d08cc58882f920e0cec65e" default)))
 
 (use-package swift-mode)
 
