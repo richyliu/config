@@ -18,6 +18,7 @@ if status is-interactive
     abbr -a gfo git fetch origin
     abbr -a gl git pull
     abbr -a gp git push
+    abbr -a grb git rebase
     abbr -a grs git restore
     abbr -a grst git restore --staged
     abbr -a gsh git show
