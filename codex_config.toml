@@ -1,0 +1,17 @@
+# link to ~/.codex/common.config.toml
+
+approval_policy = "on-request"
+approvals_reviewer = "auto_review"
+
+[tui]
+screen_reader_detection_done = true
+status_line = ["model-with-reasoning", "current-dir", "thread-name", "five-hour-limit", "weekly-limit", "used-tokens"]
+status_line_use_colors = true
+theme = "cushman"
+fullscreen_transcript = true
+
+[tui.keymap.pager]
+page_up = []
+page_down = []
+half_page_up = "page-up"
+half_page_down = "page-down"

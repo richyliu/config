@@ -5,6 +5,8 @@ if status is-interactive
     abbr -a ll ls -lh
     abbr -a lltr ls -lthr
 
+    abbr -a codex codex --profile common
+
     abbr -a ga git add
     abbr -a gaa git add -A
     abbr -a gau git add -u
