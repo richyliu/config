@@ -23,6 +23,7 @@ if status is-interactive
     abbr -a grb git rebase
     abbr -a grs git restore
     abbr -a grst git restore --staged
+    abbr -a grv git remote -v
     abbr -a gsh git show
     abbr -a gss git status --short
     abbr -a gst git status
