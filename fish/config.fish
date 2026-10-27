@@ -69,3 +69,24 @@ if test (uname) = Linux
         and eval (ssh-agent -c -a "$SSH_AUTH_SOCK")
     end
 end
+
+
+# Rename the original prompt function so we can still use it
+functions -c fish_prompt original_fish_prompt
+
+function fish_prompt
+    set -l nix_shell_info ""
+    if set -q IN_NIX_SHELL; or test "$SHLVL" -gt 1
+        set nix_shell_info "<nix-shell> "
+    end
+
+    # PREPEND: Put what you want BEFORE the prompt here
+    echo -n "$nix_shell_info"
+
+    # Call the original prompt
+    original_fish_prompt
+
+    # APPEND: Put what you want AFTER the prompt here
+    # (Note: Most prompts end with a newline, so appending here
+    # might place text on the next line unless edited carefully)
+end
