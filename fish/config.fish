@@ -76,7 +76,7 @@ functions -c fish_prompt original_fish_prompt
 
 function fish_prompt
     set -l nix_shell_info ""
-    if set -q IN_NIX_SHELL; or test "$SHLVL" -gt 1
+    if set -q IN_NIX_SHELL
         set nix_shell_info "<nix-shell> "
     end
 
