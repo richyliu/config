@@ -1,0 +1,353 @@
+{
+"TW-S/PWEU": "TWSBI",
+"TKPWAOU/HRAEU": "Goulet",
+"TPHAO*RLD": "Noodler's",
+"HRAO": "lmao",
+"R*L": "{>}rjliu3",
+"R*L/KWRAT": "{>}rjliu3@illinois.edu",
+"PHROEPBLG": "plojo",
+"REUFPLD": "Richard Liu",
+"R*EUFPLD": "Liu, Richard",
+"HRAO*U": "Liu",
+"REUFP/HRAO*U": "{>}richyliu",
+"REUFP/KWRAT": "{>}richy.liu.2002@gmail.com",
+"TPO*EPB": "4083862085",
+"PAORD": "password",
+"PAORD/ST*BGS": "{^}9WjKjT",
+"HRAOU/TPA": "luffa",
+"STPREU": "Safari",
+"KWRERPL": "iTerm",
+"OER/-G": "othering",
+"OER/-D": "othered",
+"PH*FT": "Monta Vista",
+"SKWRAO*ES": "Jesus",
+"SKAOL/OLG": "Schoology",
+"STOEUPB/TKPWRAEF": "stenography",
+"P-FGS": "perfection",
+"KHRAEUR/TKE/HRAOUPB": "Clair de Lune",
+"RAOEPBLG": "region",
+"OB": "ob",
+"SUPLT/-D": "summited",
+"SUPLT/-G": "summiting",
+"AULTD": "altitude",
+"A/KHRAOEUPL/TAOEUZ": "acclimatize",
+"PWAR/-D": "barred",
+"KHREUG": "callig",
+"T-D": "to do",
+"O*R/KWREU": "{^ory}",
+"SHRAO*EUT": "sleight",
+"R-F": "reflect",
+"R-FGS": "reflection",
+"AS/SAEU": "as say",
+"PH-RB": "{^}—{^}",
+"PH*RB": "—",
+"TPH-RB": "{^}–{^}",
+"TPH*RB": "–",
+"TP*UPBG/TOR": "functor",
+"STKOFL": "dissolve",
+"T*S": "it is",
+"A/SEPL": "assemble",
+"KAFRP/SAO*EUT": "campsite",
+"T*LD": "{~^}",
+"A*EP": "AP{-|}",
+"P*P/*EP/PWAFBGT/PWAUL": "PE Basketball",
+"SKWRURPBL/-G": "journaling",
+"WHAOEUT/*EPB": "whiten",
+"TKOEUFL": "difficulty",
+"S-D": "someday",
+"H-B": "had been",
+"STREUP/-D": "stripped",
+"WORBT": "worksheet",
+"HEBGS/TPHREBGS/TKPWOPB": "hexaflexagon",
+"KWEUZ/HRET": "Quizlet",
+"PUR": "pur",
+"S*ELT": "Zettelkasten",
+"O*URS": "ourselves",
+"OUR/SEF": "ourself",
+"OB/SEUPBD": "obsidian",
+"HOEB": "hobby",
+"P*/HA*T": "{>}p̂",
+"KW*/HA*T": "{>}q̂",
+"KWR*/HA*T": "{>}ŷ",
+"KP*/PWA*R": "{>}x̄",
+"KWR*/PWA*R": "{>}ȳ",
+"SEUG/PHA*": "{>}σ",
+"PHAO*U": "{>}μ",
+"TKPWAOUPBD/HREPB": "Gwendolen",
+"SKWRO*E/SKWRO*E/AES/PWEUZ/AR/SREPBG": "JoJo's Bizzare Adventure",
+"TOE/PHOE/REUFR": "Tomoe River",
+"PAO*EULT": "Pilot",
+"TKAOEU/PHAO*EPB": "Diamine",
+"EUR/SHEUZ/KU": "Iroshizuku",
+"TKRAOEU/-S": "dries",
+"SPAPBG/*L": "spangle",
+"SPAPBG/*L/-D": "spangled",
+"SPAPBG/-L": "spangle",
+"SPAPBG/-L/-D": "spangled",
+"HRAPL/KWREU": "Lamy",
+"KR*U": "UIUC",
+"EUPB/EFL/PWHREU": "inevitably",
+"AB/TPHA*F": "Abhinav",
+"PA*RT": "Parth",
+"KHEUBG/TPEUL/KWRA": "Chick-Fil-A",
+"TAOEUP/KWREU/TAOEUP": "TypeyType",
+"SHAPL/PA*EUPB": "Champaign",
+"PWRAO*EUPB/KRA*EUPB": "Brian Crain",
+"KORS/K-L": "Coursicle",
+"*EUL/TPHAOEU": "Illini",
+"SEUG/PO*EPB": "SIGPwny",
+"KPWUFT/-BL": "combustible",
+"PHAOUS/KA": "Muisca",
+"PHAOUS/KAPB": "Muiscan",
+"K*FD": "COVID",
+"K*FD/1-9": "COVID-19",
+"SEUS/KAUL": "syscall",
+"TPAPBT/SEU/EUPL/PROPLT/TAOU": "Fantaisie Impromptu",
+"KA/KAOPB": "kakoune",
+"KR*FT": "CTF",
+"R*L/KWRA*T": "{>}rjliu@protonmail.com",
+"WH*": "HW",
+"PROET/O*PB/PHAEUL": "ProtonMail",
+"SAOEUFR/KOPB": "Cyphercon",
+"KAOUP/TAOEPB": "Cupertino",
+"PWOURLD/-G": "bouldering",
+"PWOURLGD": "bouldering",
+"SWR-FB": "I have been",
+"TPHOET/TAEUBG/-G": "note taking",
+
+"A*FR/123U": "AFRO 132",
+"PHA*T/34-7": "MATH 347",
+"STA*T/4-Z": "STAT 400",
+"KR*Z/25D": "CS 225",
+"KR*Z/2-D": "CS 222",
+
+"KPWR*RPLT": {
+  "cmds": [
+    { "Keys": [{ "Layout": "k" }, ["Meta"]] },
+    { "Keys": [{ "Layout": "v" }, ["Meta"]] },
+    { "Keys": [{ "Special": "Return" }, []] }
+  ]
+},
+
+"STPH*T": {"cmds": [{ "Keys": [{"Layout": "k"}, ["Control", "Alt"]] }]},
+
+"1*678S": {"cmds": [{ "Shell": ["open", ["-a", "Arc"]] }]},
+"2*678S": {"cmds": [{ "Shell": ["open", ["-a", "Emacs"]] }]},
+"3*678S": {"cmds": [{ "Shell": ["open", ["-a", "iTerm"]] }]},
+"4*678S": {"cmds": [{ "Shell": ["open", ["-a", "Discord"]] }]},
+
+"SRAOEUS/PREZ": "vice president",
+"KPHAPBD/HRAOEUPB": "command line",
+"PWHR*ET": "{^}* {^}{-|}",
+"50UBG": "{^:05}",
+
+"1-BGS": "1:30",
+"2-BGS": "2:30",
+"3-BGS": "3:30",
+"4-BGS": "4:30",
+"5BGS": "5:30",
+"K-6S": "6:30",
+"K-7S": "7:30",
+"K-8S": "8:30",
+"K-9S": "9:30",
+"1K0S": "10:30",
+"1-BGDZ": "11:30",
+"12-BGS": "12:30",
+
+"1WR-BG": "1:00 a.m.",
+"2WR-BG": "2:00 a.m.",
+"3WR-BG": "3:00 a.m.",
+"W4R-BG": "4:00 a.m.",
+"WR5BG": "5:00 a.m.",
+"KWR-6": "6:00 a.m.",
+"KWR-7": "7:00 a.m.",
+"KWR-8": "8:00 a.m.",
+"KWR-9": "9:00 a.m.",
+"1KWR0": "10:00 a.m.",
+"1WR-BGD": "11:00 a.m.",
+"12WR-BG": "12:00 a.m.",
+
+"1WR-BGS": "1:30 a.m.",
+"2WR-BGS": "2:30 a.m.",
+"3WR-BGS": "3:30 a.m.",
+"W4R-BGS": "4:30 a.m.",
+"WR5BGS": "5:30 a.m.",
+"KWR-6S": "6:30 a.m.",
+"KWR-7S": "7:30 a.m.",
+"KWR-8S": "8:30 a.m.",
+"KWR-9S": "9:30 a.m.",
+"1KWR0S": "10:30 a.m.",
+"1WR-BGDZ": "11:30 a.m.",
+"12WR-BGS": "12:30 a.m.",
+
+"1W-BG": "1:00 p.m.",
+"2W-BG": "2:00 p.m.",
+"3W-BG": "3:00 p.m.",
+"W4-BG": "4:00 p.m.",
+"W5BG": "5:00 p.m.",
+"KW-6": "6:00 p.m.",
+"KW-7": "7:00 p.m.",
+"KW-8": "8:00 p.m.",
+"KW-9": "9:00 p.m.",
+"1KW0": "10:00 p.m.",
+"1W-BGD": "11:00 p.m.",
+"12W-BG": "12:00 p.m.",
+
+"1W-BGS": "1:30 p.m.",
+"2W-BGS": "2:30 p.m.",
+"3W-BGS": "3:30 p.m.",
+"W4-BGS": "4:30 p.m.",
+"W5BGS": "5:30 p.m.",
+"KW-6S": "6:30 p.m.",
+"KW-7S": "7:30 p.m.",
+"KW-8S": "8:30 p.m.",
+"KW-9S": "9:30 p.m.",
+"1KW0S": "10:30 p.m.",
+"1W-BGDZ": "11:30 p.m.",
+"12W-BGS": "12:30 p.m.",
+
+"STPH*P": {
+  "cmds": [
+    { "Keys": [{ "Special": "UpArrow" }, []] },
+    { "Keys": [{ "Special": "UpArrow" }, []] },
+    { "Keys": [{ "Special": "UpArrow" }, []] },
+    { "Keys": [{ "Special": "UpArrow" }, []] }
+  ]
+},
+"STPH*B": {
+  "cmds": [
+    { "Keys": [{ "Special": "DownArrow" }, []] },
+    { "Keys": [{ "Special": "DownArrow" }, []] },
+    { "Keys": [{ "Special": "DownArrow" }, []] },
+    { "Keys": [{ "Special": "DownArrow" }, []] }
+  ]
+},
+"SKPH-P": {"cmds": [{ "Keys": [{ "Special": "UpArrow" }, ["Meta", "Control"]] }]},
+"SKPH-B": {"cmds": [{ "Keys": [{ "Special": "DownArrow" }, ["Meta", "Control"]] }]},
+"SKPH-R": {"cmds": [{ "Keys": [{ "Special": "LeftArrow" }, ["Meta", "Control"]] }]},
+"SKPH-G": {"cmds": [{ "Keys": [{ "Special": "RightArrow" }, ["Meta", "Control"]] }]},
+
+"TP*RPLT": {
+  "cmds": [
+    { "Keys": [{"Layout": "f"}, ["Meta"]] },
+    { "TranslatorCommand": "clear_prev_strokes" }
+  ],
+  "text_after": "{^}"
+},
+"HR*RPLT": {
+  "cmds": [
+    { "Keys": [{"Layout": "l"}, ["Meta"]] },
+    { "TranslatorCommand": "clear_prev_strokes" }
+  ],
+  "text_after": "{^}"
+},
+"T*RPLT": {
+  "cmds": [
+    { "Keys": [{"Layout": "t"}, ["Meta"]] },
+    { "TranslatorCommand": "clear_prev_strokes" }
+  ],
+  "text_after": "{^}"
+},
+
+"SKR*PB": {"cmds": [{ "Keys": [{ "Layout": "4" }, ["Meta", "Shift"]] }]},
+"SKR*RPB": {"cmds": [{ "Keys": [{ "Layout": "4" }, ["Meta", "Control", "Shift"]] }]},
+
+"TK-FPS": "{*!}",
+"-RB": "{^^}",
+"KA*PD": "{*-|}",
+
+"TP-P": "{~|'^}",
+"TP-L": "{^~|'}",
+
+"SROPL": {"cmds": [{ "Shell": ["osascript", ["-e", "set volume output volume (output volume of (get volume settings) + 10)", "-e", "do shell script \"afplay /System/Library/Sounds/Morse.aiff\""]] }]},
+"SRO*PL": {"cmds": [{ "Shell": ["osascript", ["-e", "set volume output volume (output volume of (get volume settings) - 10)", "-e", "do shell script \"afplay /System/Library/Sounds/Morse.aiff\""]] }]},
+"PHAO*UT": {"cmds": [{ "Shell": ["osascript", ["-e", "if output muted of (get volume settings)", "-e", "set volume without output muted", "-e", "else", "-e", "set volume with output muted", "-e", "end if"]] }]},
+"SHR-BG": {"cmds": [{ "Shell": ["/System/Library/CoreServices/ScreenSaverEngine.app/Contents/MacOS/ScreenSaverEngine", []] }]},
+
+"SPA*EUS": {
+  "cmds": [ { "TranslatorCommand": "toggle_space_after" } ]
+},
+"STPH": {
+  "cmds": [ { "TranslatorCommand": "clear_prev_strokes" } ],
+  "text_after": "{^}",
+  "suppress_space_before": true
+},
+"STPH*": {
+  "cmds": [ { "TranslatorCommand": "clear_prev_strokes" } ],
+  "text_after": "{^}{-|}",
+  "suppress_space_before": true
+},
+"R-R": {
+  "cmds": [
+    { "Keys": [{ "Special": "Return" }, []] },
+    { "TranslatorCommand": "clear_prev_strokes" }
+  ],
+  "text_after": "{^}{-|}",
+  "suppress_space_before": true
+},
+"TA*B": {
+  "cmds": [
+    { "Keys": [{ "Special": "Tab" }, []] },
+    { "TranslatorCommand": "clear_prev_strokes" }
+  ],
+  "text_after": "{^}{-|}",
+  "suppress_space_before": true
+},
+"STA*B": {
+  "cmds": [{ "Keys": [{ "Special": "Tab" }, ["Shift"]] }],
+  "text_after": "{^}",
+  "suppress_space_before": true
+},
+"-FRL": {
+  "cmds": [{ "Keys": [{ "Special": "Space" }, ["Meta"]] }],
+  "text_after": "{^}",
+  "suppress_space_before":  true
+},
+"SK*": {"cmds": [{ "Keys": [{ "Special": "Escape" }, []] }]},
+"R-RB": {"cmds": [{ "Keys": [{ "Special": "Return" }, ["Shift"]] }]},
+"R-RBG": {
+  "cmds": [
+    { "Keys": [{ "Special": "Return" }, ["Meta"]] },
+    { "TranslatorCommand": "clear_prev_strokes" }
+  ],
+  "text_after": "{^}{-|}",
+  "suppress_space_before": true
+},
+"R-RG": {
+  "cmds": [
+    { "Keys": [{ "Special": "Return" }, ["Control"]] },
+    { "TranslatorCommand": "clear_prev_strokes" }
+  ],
+  "text_after": "{^}{-|}",
+  "suppress_space_before": true
+},
+
+"STPH-FBL": {"cmds": [{ "Keys": [{ "Special": "PageDown" }, []] }]},
+"STPH-RPG": {"cmds": [{ "Keys": [{ "Special": "PageUp" }, []] }]},
+
+"PW*RBG": {
+  "cmds": [
+    { "Keys": [{ "Special": "RightArrow" }, ["Meta", "Shift"]] },
+    { "Keys": [{ "Special": "Backspace" }, []] }
+  ]
+},
+
+"PHR*UP": {
+  "cmds": [
+    { "Replace": [ 0, " pjl ''" ] },
+    { "Keys": [{ "Special": "LeftArrow" }, []] },
+    { "TranslatorCommand": "clear_prev_strokes" }
+  ],
+  "text_after": "{^}"
+},
+
+"TKPWAO*LG": {"cmds": [{ "Keys": [{ "Special": "LeftArrow" }, ["Meta"]]}, {"Replace": [0, "!g "] }]},
+
+"KOED/EBGS": "codex",
+"KHRAUD": "claude",
+"HRAUBG": "{look^}",
+"PES/KA/TAEURPB": "pescatarian",
+"PES/KA/TAEUR/KWRAPB": "pescatarian",
+"PEFPB/TAEURPB": "pescatarian",
+"OE/SEUS": "oasis"
+}

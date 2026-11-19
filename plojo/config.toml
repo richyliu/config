@@ -1,0 +1,36 @@
+# Configuration for plojo
+#
+# This should be in the plojo config folder as config.toml
+# The config folder is by default located at ~/.plojo/
+# The dictionaries should be in dicts/ within the config folder
+
+dicts = [
+  "dict.json",
+  "jade-gg_phrasing.json",
+  "fingerspelling.json",
+  "fingerspelling-RBGS.json",
+  "numbers.json",
+  "thumb_numbers.json",
+  "nav.json",
+  "modifiers-single-stroke.json",
+  "plojo-use.json",
+  "user.json",
+]
+
+input_machine = { Geminipr = { port = "/dev/cu.usbmodem02" } }
+# input_machine = "Keyboard"
+
+output_dispatcher = "MacNative"
+# output_dispatcher = "Stdout"
+
+retrospective_add_space_strokes = [ "AFPS" ]
+
+space_stroke = "S-P"
+
+disable_input_strokes = [ "PHRO*F" ]
+enable_input_shortcuts = [
+  ["ShiftLeft", "F7"],
+  ["ShiftLeft", "F7", "Function"],
+]
+
+disable_scan_keymap = true
