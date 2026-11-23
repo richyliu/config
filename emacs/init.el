@@ -1157,6 +1157,7 @@ these tasks will be hidden."
   :init
   (setq org-directory (expand-file-name "/home/user/agenda/agenda-data"))
   (setq org-agenda-files '("inbox.org" "agenda.org"))
+  (setq diary-show-holidays-flag nil)
 
   :general
   (general-define-key
@@ -1696,8 +1697,7 @@ Transactions must be separated by a blank line."
           (insert date " ! " transaction)
           ;; go to the amount on the last line of the transaction
           (forward-line -1)
-          (re-search-forward "  " nil t)
-          (re-search-forward "[0-9]" nil t)
+          (re-search-forward "  -?[0-9]" nil t)
           (backward-char))))))
 
 (defun +beancount/clone-this-transaction (&optional arg)
